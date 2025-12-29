@@ -76,13 +76,14 @@
 2. **child_profiles → sessions** – 1:N (profil → sesje), ale max 1 aktywna.
 3. **child_profiles → task_results** – 1:N.
 4. **levels → task_results** – 1:N.
+5. **levels → sequence** – 1:N.
 
 ## 3. Indeksy
 | Tabela        | Nazwa indeksu                 | Definicja / Kolumny                            |
 |---------------|-------------------------------|------------------------------------------------|
 | child_profiles| idx_child_parent              | (parent_id)                                    |
 | sessions      | ux_active_session_per_child   | UNIQUE(child_id) WHERE is_active               |
-| task_results  | ux_child_seed                 | UNIQUE(child_id, generator_seed)               |
+| task_results  | ux_child_level                 | UNIQUE(child_id, level_id)               |
 | task_results  | idx_task_completed_at         | (completed_at)                                 |
 
 ## 4. Zasady PostgreSQL (RLS)

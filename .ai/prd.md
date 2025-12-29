@@ -7,7 +7,7 @@ Rytmik to web-owa gra edukacyjna dla dzieci, która rozwija umiejętność rozpo
 - Rodzic (Admin) – zakłada konto, tworzy profile dzieci, monitoruje postępy.
 - Dziecko – loguje się poprzez wybór profilu, rozwiązuje zadania melodyczne.
 
-Silnik zadań wykorzystuje proceduralny generator sekwencji (20 poziomów trudności). Kluczowe technologie: Astro 5 + React 19, Tone.js (audio), Tailwind 4 (UI), Supabase (baza danych i auth).
+Silnik gry losuje sekwencje spośród predefiniowanych sekwencji zgodnie z aktualnym poziomem gracza(20 poziomów trudności). Kluczowe technologie: Astro 5 + React 19, Tone.js (audio), Tailwind 4 (UI), Supabase (baza danych i auth).
 
 ## 2. Problem użytkownika
 
@@ -18,7 +18,7 @@ Dzieci mają trudności z przetwarzaniem wzorów rytmicznych; tradycyjne ćwicze
 1. Rejestracja i logowanie konta rodzica (e-mail + hasło).
 2. CRUD profili dzieci (max. n profili na konto).
 3. Wybór profilu dziecka po zalogowaniu rodzica.
-4. Proceduralny generator sekwencji dźwięków dla 20 poziomów (C-dur + czarne klawisze, rosnąca długość, interwały, tempo).
+4. Sekwencjie dźwięków są zapisane w bazie i każda ma 20 poziomów.
 5. Odtworzenie zagadki audio + podświetlenie klawiszy.
 6. Wirtualne pianinko (1 oktawa, monofoniczne, obsługa mysz/dotyk, kolory + litery).
 7. Panel slotów pokazujący długość brakującej sekwencji.
@@ -48,7 +48,7 @@ Dzieci mają trudności z przetwarzaniem wzorów rytmicznych; tradycyjne ćwicze
 | US-003 | Bezpieczne sesje          | Jako system chcę chronić dostęp do danych profili                                       | • Każde żądanie do API wymaga ważnego tokena • Wylogowanie usuwa token z LocalStorage/cookies                                                        |
 | US-004 | Tworzenie profilu dziecka | Jako rodzic chcę dodać profil dziecka z imieniem i wiekiem                              | • Formularz imię+wiek • Profil pojawia się na liście • Można dodać min. 1 max. n profili                                                             |
 | US-005 | Wybór profilu             | Jako rodzic chcę wybrać profil dziecka, aby rozpocząć grę                               | • Kliknięcie profilu otwiera ekran gry z poziomem tego dziecka                                                                                       |
-| US-006 | Generator sekwencji       | Jako system chcę wygenerować sekwencję zgodną z bieżącym poziomem                       | • Sekwencja ma odpowiednią długość, interwały i użycie czarnych klawiszy • Nowa sekwencja po każdej ukończonej lub nieudanej próbie                  |
+| US-006 | Losowanie sekwencji       | Jako system chcę wylosować sekwencję zgodną z bieżącym poziomem                       | • Sekwencja ma odpowiednią długość, interwały i użycie czarnych klawiszy • Nowa sekwencja po każdej ukończonej lub nieudanej próbie                  |
 | US-007 | Odtworzenie zagadki       | Jako dziecko chcę usłyszeć sekwencję i zobaczyć podświetlenie klawiszy                  | • Audio odtwarza się automatycznie • Klawisze podświetlają się synchronicznie                                                                        |
 | US-008 | Wprowadzanie odpowiedzi   | Jako dziecko chcę kliknąć klawisze pianinka, aby wpisać brakujące dźwięki               | • Kliknięcie klawisza dodaje dźwięk do slotu • Sloty aktualizują stan                                                                                |
 | US-009 | Czyszczenie odpowiedzi    | Jako dziecko chcę wyczyścić wpisane dźwięki przed sprawdzeniem                          | • Przycisk „Wyczyść” usuwa wszystkie sloty • Dźwięki nie są wysyłane do walidatora                                                                   |
