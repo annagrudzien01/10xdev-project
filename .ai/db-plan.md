@@ -15,7 +15,19 @@
 
 ---
 
-### 1.2 `child_profiles`
+### 1.2 `sequence`
+| Kolumna           | Typ         | Ograniczenia                                                   |
+|-------------------|-------------|---------------------------------------------------------------|
+| id                | SMALLINT    | PRIMARY KEY DEFAULT uuid_generate_v4    |
+| sequence_begining | VARCHAR(128)| NOT NULL                                |
+| sequence_end      | VARCHAR(32) | NOT NUL                                 |
+| level_id          | SMALLINT    | NOT NULL REFERENCES levels(id) |
+| created_at        | TIMESTAMPTZ | DEFAULT now() NOT NULL     |
+| updated_at        |TIMESTAMPTZ |       |                                  
+
+---
+
+### 1.3 `child_profiles`
 | Kolumna           | Typ          | Ograniczenia                                                                                                         |
 |-------------------|-------------|----------------------------------------------------------------------------------------------------------------------|
 | id                | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                                                                               |
@@ -33,7 +45,7 @@
 
 ---
 
-### 1.3 `sessions`
+### 1.4 `sessions`
 | Kolumna        | Typ          | Ograniczenia                                                     |
 |----------------|-------------|------------------------------------------------------------------|
 | id             | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                            |
@@ -46,14 +58,13 @@
 
 ---
 
-### 1.4 `task_results`
+### 1.5 `task_results`
 | Kolumna           | Typ          | Ograniczenia                                                                    |
 |-------------------|-------------|---------------------------------------------------------------------------------|
 | id                | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                                          |
 | child_id          | UUID        | NOT NULL REFERENCES child_profiles(id) ON DELETE CASCADE                        |
 | level_id          | SMALLINT    | NOT NULL REFERENCES levels(id)                                                  |
-| generator_seed    | BIGINT      | NOT NULL                                                                        |
-| generator_version | SMALLINT    | NOT NULL DEFAULT 1                                                              |
+| sequence_id    | UUID      | NOT NULL REFERENCES sequence(id)      |
 | attempts_used     | SMALLINT    | NOT NULL CHECK (attempts_used BETWEEN 1 AND 3)                                  |
 | score             | SMALLINT    | NOT NULL CHECK (score BETWEEN 0 AND 10)                                         |
 | completed_at      | TIMESTAMPTZ | DEFAULT now() NOT NULL                                                         |
