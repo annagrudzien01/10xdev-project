@@ -1,94 +1,94 @@
 # 10x Astro Starter
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+A modern, opinionated starter template for building fast, accessible web applications.  
+This MVP focuses on demonstrating an interactive piano and sound-sequence generation powered by Tone.js.
+
+---
+
+## Table of Contents
+1. [Project Description](#project-description)
+2. [Tech Stack](#tech-stack)
+3. [Getting Started Locally](#getting-started-locally)
+4. [Available Scripts](#available-scripts)
+5. [Project Scope](#project-scope)
+6. [Project Status](#project-status)
+7. [License](#license)
+
+---
+
+## Project Description
+
+10x Astro Starter is a boilerplate that combines Astro 5, React 19 and TypeScript 5 with Tailwind CSS 4 and shadcn/ui components.  
+The primary MVP feature showcased here is an **interactive piano** capable of **generating and playing sound sequences** via Tone.js. This repository acts as a learning playground as well as a kick-off template for more advanced apps.
 
 ## Tech Stack
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+| Layer                  | Technology |
+| ---------------------- | ---------- |
+| Web framework          | Astro 5 |
+| Client UI              | React 19 |
+| Language               | TypeScript 5 |
+| Styling                | Tailwind CSS 4 |
+| UI primitives          | shadcn/ui (Radix UI + class-variance-authority) |
+| Audio engine           | Tone.js 15 |
+| Backend-as-a-Service   | Supabase |
 
-## Prerequisites
+## Getting Started Locally
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
-
-## Getting Started
-
-1. Clone the repository:
+### Prerequisites
+* Node.js **v22.14.0** (see `.nvmrc`)
+* npm (bundled with Node)
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
+# 1. Clone the repo
+git clone https://github.com/your-org/10x-astro-starter.git
 cd 10x-astro-starter
-```
 
-2. Install dependencies:
-
-```bash
+# 2. Install dependencies
 npm install
-```
 
-3. Run the development server:
-
-```bash
+# 3. Start the dev server
 npm run dev
 ```
 
-4. Build for production:
+Optional commands:
 
 ```bash
+# Build for production
 npm run build
+
+# Preview the production build locally
+npm run preview
 ```
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+| Script               | Description                               |
+| -------------------- | ----------------------------------------- |
+| `npm run dev`        | Launches the development server with hot reload |
+| `npm run build`      | Generates an optimized production bundle |
+| `npm run preview`    | Serves the production build for testing  |
+| `npm run astro`      | Exposes the Astro CLI                    |
+| `npm run lint`       | Runs ESLint across the codebase          |
+| `npm run lint:fix`   | Attempts to automatically fix ESLint issues |
+| `npm run format`     | Formats files with Prettier              |
+| `npm run supabase`   | Executes the Supabase CLI (if installed) |
 
-## Project Structure
+## Project Scope
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── public/ # Public assets
-```
+The repository demonstrates two core capabilities:
+1. **Interactive Piano Component** – A clickable/keyboard-driven piano rendered in React.
+2. **Sound-Sequence Generation** – Simple note patterns produced and played via Tone.js.
 
-## AI Development Support
+All other advanced features (multi-user auth, payments, analytics, etc.) are purposefully excluded from this Proof of Concept.
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+## Project Status
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+![status-badge](https://img.shields.io/badge/status-in_progress-yellow.svg)
 
-### Cursor IDE
-
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
-
-### GitHub Copilot
-
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
-
-### Windsurf
-
-The `.windsurfrules` file contains AI configuration for Windsurf.
-
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+The project is in active development. Feedback and contributions are welcome!
 
 ## License
 
-MIT
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
