@@ -6,6 +6,7 @@ This MVP focuses on demonstrating an interactive piano and sound-sequence genera
 ---
 
 ## Table of Contents
+
 1. [Project Description](#project-description)
 2. [Tech Stack](#tech-stack)
 3. [Getting Started Locally](#getting-started-locally)
@@ -23,21 +24,22 @@ The primary MVP feature showcased here is an **interactive piano** capable of **
 
 ## Tech Stack
 
-| Layer                  | Technology |
-| ---------------------- | ---------- |
-| Web framework          | Astro 5 |
-| Client UI              | React 19 |
-| Language               | TypeScript 5 |
-| Styling                | Tailwind CSS 4 |
-| UI primitives          | shadcn/ui (Radix UI + class-variance-authority) |
-| Audio engine           | Tone.js 15 |
-| Backend-as-a-Service   | Supabase |
+| Layer                | Technology                                      |
+| -------------------- | ----------------------------------------------- |
+| Web framework        | Astro 5                                         |
+| Client UI            | React 19                                        |
+| Language             | TypeScript 5                                    |
+| Styling              | Tailwind CSS 4                                  |
+| UI primitives        | shadcn/ui (Radix UI + class-variance-authority) |
+| Audio engine         | Tone.js 15                                      |
+| Backend-as-a-Service | Supabase                                        |
 
 ## Getting Started Locally
 
 ### Prerequisites
-* Node.js **v22.14.0** (see `.nvmrc`)
-* npm (bundled with Node)
+
+- Node.js **v22.14.0** (see `.nvmrc`)
+- npm (bundled with Node)
 
 ```bash
 # 1. Clone the repo
@@ -63,20 +65,21 @@ npm run preview
 
 ## Available Scripts
 
-| Script               | Description                               |
-| -------------------- | ----------------------------------------- |
-| `npm run dev`        | Launches the development server with hot reload |
-| `npm run build`      | Generates an optimized production bundle |
-| `npm run preview`    | Serves the production build for testing  |
-| `npm run astro`      | Exposes the Astro CLI                    |
-| `npm run lint`       | Runs ESLint across the codebase          |
-| `npm run lint:fix`   | Attempts to automatically fix ESLint issues |
-| `npm run format`     | Formats files with Prettier              |
-| `npm run supabase`   | Executes the Supabase CLI (if installed) |
+| Script             | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `npm run dev`      | Launches the development server with hot reload |
+| `npm run build`    | Generates an optimized production bundle        |
+| `npm run preview`  | Serves the production build for testing         |
+| `npm run astro`    | Exposes the Astro CLI                           |
+| `npm run lint`     | Runs ESLint across the codebase                 |
+| `npm run lint:fix` | Attempts to automatically fix ESLint issues     |
+| `npm run format`   | Formats files with Prettier                     |
+| `npm run supabase` | Executes the Supabase CLI (if installed)        |
 
 ## Project Scope
 
 The repository demonstrates two core capabilities:
+
 1. **Interactive Piano Component** – A clickable/keyboard-driven piano rendered in React.
 2. **Sound-Sequence Generation** – Simple note patterns produced and played via Tone.js.
 
@@ -91,4 +94,3 @@ The project is in active development. Feedback and contributions are welcome!
 ## License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
