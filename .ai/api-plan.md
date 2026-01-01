@@ -5,10 +5,10 @@
 | Resource              | Backing Table    | Description                                                         |
 | --------------------- | ---------------- | ------------------------------------------------------------------- |
 | Levels                | `levels`         | Read-only catalogue of difficulty levels (1-20)                     |
-| Sequences             | `sequence`       | Melody fragments with correct answears linked o a level                                  |
+| Sequences             | `sequence`       | Melody fragments with correct answears linked o a level             |
 | Child Profiles        | `child_profiles` | Playable child account belonging to a parent (`auth.users`)         |
 | Sessions              | `sessions`       | A play session for a single child profile (max 1 active)            |
-| Task Results          | `task_results`   | A puzzle attempt for a child profile                         |
+| Task Results          | `task_results`   | A puzzle attempt for a child profile                                |
 | Dashboard (aggregate) | —                | Derived view combining `child_profiles`, `task_results`, `sessions` |
 
 ---

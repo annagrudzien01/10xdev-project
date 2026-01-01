@@ -1,0 +1,233 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "resources": [
+    {
+      "_type": "request_group",
+      "name": "Profiles API",
+      "description": "Child profile management endpoints"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Success",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Anna\",\n  \"dateOfBirth\": \"2018-05-24\"\n}"
+      },
+      "description": "Successfully creates a new child profile"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - No Auth (401)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Jan\",\n  \"dateOfBirth\": \"2016-03-15\"\n}"
+      },
+      "description": "Should return 401 when Authorization header is missing"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Invalid Name (400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Anna123\",\n  \"dateOfBirth\": \"2018-05-24\"\n}"
+      },
+      "description": "Should return 400 - name contains numbers"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Future Birth Date (400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Future Baby\",\n  \"dateOfBirth\": \"2030-01-01\"\n}"
+      },
+      "description": "Should return 400 - date is in the future"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Child Too Young (400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Baby\",\n  \"dateOfBirth\": \"2024-01-01\"\n}"
+      },
+      "description": "Should return 400 - child younger than 2 years"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Child Too Old (400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Adult\",\n  \"dateOfBirth\": \"2000-01-01\"\n}"
+      },
+      "description": "Should return 400 - person older than 18 years"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Name Too Long (400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Anna Maria Katarzyna Joanna Aleksandra Smith\",\n  \"dateOfBirth\": \"2018-05-24\"\n}"
+      },
+      "description": "Should return 400 - name exceeds 32 characters"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Duplicate Name (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Anna\",\n  \"dateOfBirth\": \"2016-08-10\"\n}"
+      },
+      "description": "Should return 409 - profile name already exists (run after first success)"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Polish Characters",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Łukasz Żółkowski\",\n  \"dateOfBirth\": \"2015-11-20\"\n}"
+      },
+      "description": "Should succeed - Polish characters are allowed"
+    },
+    {
+      "_type": "request",
+      "name": "Create Profile - Hyphenated Name",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/profiles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"profileName\": \"Anna-Maria\",\n  \"dateOfBirth\": \"2017-06-15\"\n}"
+      },
+      "description": "Should succeed - hyphens are allowed"
+    },
+    {
+      "_type": "environment",
+      "name": "Local Development",
+      "data": {
+        "base_url": "http://localhost:4321",
+        "jwt_token": "YOUR_JWT_TOKEN_HERE"
+      }
+    },
+    {
+      "_type": "environment",
+      "name": "Production",
+      "data": {
+        "base_url": "https://your-production-url.com",
+        "jwt_token": "YOUR_PRODUCTION_JWT_TOKEN_HERE"
+      }
+    }
+  ]
+}
