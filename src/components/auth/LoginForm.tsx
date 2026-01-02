@@ -1,0 +1,176 @@
+import { useState, type FormEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
+
+interface LoginFormState {
+  email: string;
+  password: string;
+  isSubmitting: boolean;
+  errors: {
+    email?: string;
+    password?: string;
+    general?: string;
+  };
+}
+
+export default function LoginForm() {
+  const [formState, setFormState] = useState<LoginFormState>({
+    email: "",
+    password: "",
+    isSubmitting: false,
+    errors: {},
+  });
+
+  const validateEmail = (email: string): string | null => {
+    if (!email) return "E-mail jest wymagany";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return "Podaj prawidłowy adres e-mail";
+    }
+    return null;
+  };
+
+  const validatePassword = (password: string): string | null => {
+    if (!password) return "Hasło jest wymagane";
+    return null;
+  };
+
+  const handleBlur = (field: "email" | "password") => {
+    const newErrors = { ...formState.errors };
+
+    if (field === "email") {
+      const emailError = validateEmail(formState.email);
+      if (emailError) {
+        newErrors.email = emailError;
+      } else {
+        delete newErrors.email;
+      }
+    } else if (field === "password") {
+      const passwordError = validatePassword(formState.password);
+      if (passwordError) {
+        newErrors.password = passwordError;
+      } else {
+        delete newErrors.password;
+      }
+    }
+
+    setFormState({ ...formState, errors: newErrors });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    // Reset messages
+    const newErrors: LoginFormState["errors"] = {};
+    setFormState({ ...formState, errors: {} });
+
+    // Validate all fields
+    const emailError = validateEmail(formState.email);
+    if (emailError) newErrors.email = emailError;
+
+    const passwordError = validatePassword(formState.password);
+    if (passwordError) newErrors.password = passwordError;
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormState({ ...formState, errors: newErrors });
+      // Focus first error field
+      const firstErrorField = Object.keys(newErrors)[0];
+      document.getElementById(firstErrorField)?.focus();
+      return;
+    }
+
+    // Submit form (placeholder - backend will be implemented later)
+    setFormState({ ...formState, isSubmitting: true });
+
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/auth/login', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   credentials: 'include',
+      //   body: JSON.stringify({ email: formState.email, password: formState.password }),
+      // });
+
+      // Simulate success for now
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Redirect to profiles page
+      window.location.href = "/profiles";
+    } catch (error) {
+      setFormState({
+        ...formState,
+        isSubmitting: false,
+        errors: { general: "Wystąpił błąd podczas logowania. Spróbuj ponownie później." },
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {formState.errors.general && <Alert variant="error">{formState.errors.general}</Alert>}
+
+      <div className="space-y-2">
+        <Label htmlFor="email" required>
+          Adres e-mail
+        </Label>
+        <Input
+          id="email"
+          type="email"
+          value={formState.email}
+          onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+          onBlur={() => handleBlur("email")}
+          error={!!formState.errors.email}
+          aria-invalid={!!formState.errors.email}
+          aria-describedby={formState.errors.email ? "email-error" : undefined}
+          disabled={formState.isSubmitting}
+          placeholder="twoj@email.pl"
+        />
+        {formState.errors.email && (
+          <p id="email-error" className="text-sm text-destructive">
+            {formState.errors.email}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password" required>
+            Hasło
+          </Label>
+          <a href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+            Zapomniałeś hasła?
+          </a>
+        </div>
+        <Input
+          id="password"
+          type="password"
+          value={formState.password}
+          onChange={(e) => setFormState({ ...formState, password: e.target.value })}
+          onBlur={() => handleBlur("password")}
+          error={!!formState.errors.password}
+          aria-invalid={!!formState.errors.password}
+          aria-describedby={formState.errors.password ? "password-error" : undefined}
+          disabled={formState.isSubmitting}
+          placeholder="Twoje hasło"
+        />
+        {formState.errors.password && (
+          <p id="password-error" className="text-sm text-destructive">
+            {formState.errors.password}
+          </p>
+        )}
+      </div>
+
+      <Button type="submit" disabled={formState.isSubmitting} className="w-full" size="lg">
+        {formState.isSubmitting ? "Logowanie..." : "Zaloguj się"}
+      </Button>
+
+      <div className="text-center text-sm">
+        <span className="text-muted-foreground">Nie masz jeszcze konta? </span>
+        <a href="/register" className="font-medium text-primary hover:underline">
+          Zarejestruj się
+        </a>
+      </div>
+    </form>
+  );
+}
