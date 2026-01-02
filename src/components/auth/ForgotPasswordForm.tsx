@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ interface ForgotPasswordFormState {
     general?: string;
   };
   successMessage?: string;
+  cooldownSeconds: number; // Countdown timer for resend cooldown
 }
 
 export default function ForgotPasswordForm() {
@@ -19,7 +20,18 @@ export default function ForgotPasswordForm() {
     email: "",
     isSubmitting: false,
     errors: {},
+    cooldownSeconds: 0,
   });
+
+  // Cooldown timer effect (60 seconds after successful submission)
+  useEffect(() => {
+    if (formState.cooldownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setFormState((prev) => ({ ...prev, cooldownSeconds: prev.cooldownSeconds - 1 }));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [formState.cooldownSeconds]);
 
   const validateEmail = (email: string): string | null => {
     if (!email) return "E-mail jest wymagany";
@@ -58,26 +70,56 @@ export default function ForgotPasswordForm() {
       return;
     }
 
-    // Submit form (placeholder - backend will be implemented later)
+    // Submit form to backend
     setFormState({ ...formState, isSubmitting: true });
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/forgot-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: formState.email }),
-      // });
-
-      // Simulate success for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setFormState({
-        ...formState,
-        isSubmitting: false,
-        successMessage: "Link do resetowania hasła został wysłany na podany adres e-mail. Sprawdź swoją skrzynkę.",
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formState.email }),
       });
-    } catch (error) {
+
+      if (response.ok) {
+        // Success - always returned (even if email doesn't exist)
+        const data = await response.json();
+
+        setFormState({
+          ...formState,
+          isSubmitting: false,
+          errors: {},
+          successMessage: data.message,
+          cooldownSeconds: 60, // Start 60 second cooldown
+        });
+      } else if (response.status === 400) {
+        // Validation errors
+        const data = await response.json();
+
+        if (data.details?.email) {
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: { email: data.details.email },
+          });
+        } else {
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: { general: data.message || "Błąd walidacji danych" },
+          });
+        }
+      } else {
+        // Other errors (500, rate limiting, etc.)
+        setFormState({
+          ...formState,
+          isSubmitting: false,
+          errors: {
+            general: "Wystąpił błąd podczas wysyłania linku. Spróbuj ponownie później.",
+          },
+        });
+      }
+    } catch {
+      // Network error or other unexpected error
       setFormState({
         ...formState,
         isSubmitting: false,
@@ -117,8 +159,17 @@ export default function ForgotPasswordForm() {
         <p className="text-xs text-muted-foreground">Wyślemy Ci link do resetowania hasła na podany adres e-mail</p>
       </div>
 
-      <Button type="submit" disabled={formState.isSubmitting} className="w-full" size="lg">
-        {formState.isSubmitting ? "Wysyłanie..." : "Wyślij link resetujący"}
+      <Button
+        type="submit"
+        disabled={formState.isSubmitting || formState.cooldownSeconds > 0}
+        className="w-full"
+        size="lg"
+      >
+        {formState.isSubmitting
+          ? "Wysyłanie..."
+          : formState.cooldownSeconds > 0
+            ? `Wyślij ponownie (${formState.cooldownSeconds}s)`
+            : "Wyślij link resetujący"}
       </Button>
 
       <div className="text-center text-sm">

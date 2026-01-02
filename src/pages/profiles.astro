@@ -1,0 +1,19 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import ProfilesView from "@/components/profiles/ProfilesView";
+
+// Server-side auth guard (middleware also enforces this)
+const token = Astro.cookies.get("sb-access-token");
+if (!token?.value) {
+  return Astro.redirect("/login");
+}
+
+export const prerender = false;
+---
+
+<Layout title="Wybór profilu - Rytmik">
+  <div class="min-h-screen flex flex-col bg-background">
+    <!-- Profiles view (client-side React) -->
+    <ProfilesView client:load />
+  </div>
+</Layout>

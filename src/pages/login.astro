@@ -3,6 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import LoginForm from "@/components/auth/LoginForm";
 
 // Check if user is already authenticated
+// Note: Middleware will handle this redirect automatically,
+// but we keep this check for explicit clarity and to avoid unnecessary rendering
 const token = Astro.cookies.get("sb-access-token");
 
 if (token?.value) {

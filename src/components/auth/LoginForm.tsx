@@ -80,24 +80,58 @@ export default function LoginForm() {
       return;
     }
 
-    // Submit form (placeholder - backend will be implemented later)
+    // Submit form to backend
     setFormState({ ...formState, isSubmitting: true });
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   credentials: 'include',
-      //   body: JSON.stringify({ email: formState.email, password: formState.password }),
-      // });
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important: sends cookies automatically
+        body: JSON.stringify({ email: formState.email, password: formState.password }),
+      });
 
-      // Simulate success for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (response.ok) {
+        // Login successful - cookies are set by the server
+        // Redirect to profiles page
+        window.location.href = "/profiles";
+      } else {
+        // Handle error responses
+        const data = await response.json();
 
-      // Redirect to profiles page
-      window.location.href = "/profiles";
+        if (response.status === 401) {
+          // Unauthorized - invalid credentials
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: { general: data.message || "Nieprawidłowy adres e-mail lub hasło" },
+          });
+        } else if (response.status === 400) {
+          // Validation errors
+          if (data.details) {
+            setFormState({
+              ...formState,
+              isSubmitting: false,
+              errors: data.details,
+            });
+          } else {
+            setFormState({
+              ...formState,
+              isSubmitting: false,
+              errors: { general: data.message || "Błąd walidacji danych" },
+            });
+          }
+        } else {
+          // Other errors (500, etc.)
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: { general: "Wystąpił błąd podczas logowania. Spróbuj ponownie później." },
+          });
+        }
+      }
     } catch (error) {
+      // Network error or other unexpected error
       setFormState({
         ...formState,
         isSubmitting: false,

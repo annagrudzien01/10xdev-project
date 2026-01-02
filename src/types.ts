@@ -344,6 +344,62 @@ export function toDashboardItemDTO(entity: ChildProfileEntity): DashboardItemDTO
 }
 
 // ============================================================================
+// Authentication DTOs
+// ============================================================================
+
+/**
+ * Auth User DTO - Response for GET /api/auth/me
+ *
+ * Minimal user information for authenticated requests.
+ */
+export interface AuthUserDTO {
+  /** User ID from Supabase Auth */
+  id: string;
+  /** User email address */
+  email: string;
+}
+
+/**
+ * Login Response DTO - Response for POST /api/auth/login
+ */
+export interface LoginResponseDTO {
+  /** Success message */
+  message: string;
+}
+
+/**
+ * Logout Response DTO - Response for POST /api/auth/logout
+ */
+export interface LogoutResponseDTO {
+  /** Success message */
+  message: string;
+}
+
+/**
+ * Register Response DTO - Response for POST /api/auth/register
+ */
+export interface RegisterResponseDTO {
+  /** Success message */
+  message: string;
+}
+
+/**
+ * Forgot Password Response DTO - Response for POST /api/auth/forgot-password
+ */
+export interface ForgotPasswordResponseDTO {
+  /** Success message (always returned, even if email doesn't exist) */
+  message: string;
+}
+
+/**
+ * Reset Password Response DTO - Response for POST /api/auth/reset-password
+ */
+export interface ResetPasswordResponseDTO {
+  /** Success message */
+  message: string;
+}
+
+// ============================================================================
 // Common API Response Types
 // ============================================================================
 
