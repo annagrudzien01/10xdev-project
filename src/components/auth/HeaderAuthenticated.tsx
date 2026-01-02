@@ -12,14 +12,12 @@ export default function HeaderAuthenticated({ userEmail }: HeaderAuthenticatedPr
     setIsLoggingOut(true);
 
     try {
-      // TODO: Replace with actual API call
-      // await fetch('/api/auth/logout', {
-      //   method: 'POST',
-      //   credentials: 'include',
-      // });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
 
       // Simulate logout for now
-      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Redirect to home page
       window.location.href = "/";
