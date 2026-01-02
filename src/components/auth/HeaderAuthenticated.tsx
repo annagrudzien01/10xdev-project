@@ -41,13 +41,16 @@ export default function HeaderAuthenticated({ userEmail }: HeaderAuthenticatedPr
             </a>
           </div>
 
-          {/* User info and logout */}
-          <div className="flex items-center space-x-4">
+          {/* Navigation */}
+          <nav className="flex items-center space-x-4">
+            <Button variant="ghost" asChild>
+              <a href="/dashboard">Dashboard</a>
+            </Button>
             <span className="text-sm text-muted-foreground hidden sm:inline">{userEmail}</span>
             <Button variant="outline" onClick={handleLogout} disabled={isLoggingOut}>
               {isLoggingOut ? "Wylogowywanie..." : "Wyloguj się"}
             </Button>
-          </div>
+          </nav>
         </div>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateChildProfileCommand, ChildProfileDTO } from "../../types";
+import type { CreateChildProfileCommand, ChildProfileDTO, PaginatedResponse, PaginationParams } from "../../types";
 import { toChildProfileDTO } from "../../types";
 import { ConflictError } from "../errors/api-errors";
 
@@ -11,6 +11,52 @@ import { ConflictError } from "../errors/api-errors";
  */
 export class ProfileService {
   constructor(private supabase: SupabaseClient) {}
+
+  /**
+   * Lists child profiles for a parent with pagination support.
+   *
+   * @param parentId - The authenticated parent's user ID
+   * @param params - Pagination parameters (page, pageSize)
+   * @returns PaginatedResponse<ChildProfileDTO>
+   */
+  async listChildProfiles(
+    parentId: string,
+    params: PaginationParams = {}
+  ): Promise<PaginatedResponse<ChildProfileDTO>> {
+    const page = params.page && params.page > 0 ? params.page : 1;
+    const pageSize = params.pageSize && params.pageSize > 0 ? params.pageSize : 20;
+
+    const offset = (page - 1) * pageSize;
+    const to = offset + pageSize - 1;
+
+    // Step 1: Fetch paginated data
+    const { data, error, count } = await this.supabase
+      .from("child_profiles")
+      .select("*", { count: "exact" })
+      .eq("parent_id", parentId)
+      .order("created_at", { ascending: true })
+      .range(offset, to);
+
+    if (error) {
+      throw new Error(`Failed to fetch profiles: ${error.message}`);
+    }
+
+    // Transform entities to DTOs
+    const dtoData = (data ?? []).map(toChildProfileDTO);
+
+    const totalItems = count ?? dtoData.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      data: dtoData,
+      pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+      },
+    };
+  }
 
   /**
    * Creates a new child profile for a parent

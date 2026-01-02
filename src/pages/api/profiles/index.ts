@@ -1,29 +1,90 @@
 import type { APIRoute } from "astro";
 import { createChildProfileSchema } from "../../../lib/schemas/profile.schema";
+import { paginationParamsSchema } from "../../../lib/schemas/pagination.schema";
 import { ProfileService } from "../../../lib/services/profile.service";
-import { ConflictError, UnauthorizedError } from "../../../lib/errors/api-errors";
+import { ConflictError, UnauthorizedError, ValidationError } from "../../../lib/errors/api-errors";
 import type { APIErrorResponse } from "../../../types";
 
 export const prerender = false;
 
-/**
- * POST /api/profiles
- *
- * Creates a new child profile for the authenticated parent.
- *
- * Request body:
- * {
- *   "profileName": "Anna",
- *   "dateOfBirth": "2018-05-24"
- * }
- *
- * Responses:
- * - 201: Profile created successfully
- * - 400: Validation failed
- * - 401: Authentication required
- * - 409: Conflict (duplicate name or profile limit exceeded)
- * - 500: Internal server error
- */
+// -----------------------------------------------------------------------------
+// GET /api/profiles - list child profiles (new implementation)
+// -----------------------------------------------------------------------------
+export const GET: APIRoute = async ({ url, locals }) => {
+  try {
+    const supabase = locals.supabase;
+    if (!supabase) {
+      throw new UnauthorizedError();
+    }
+
+    // Check auth
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      throw new UnauthorizedError();
+    }
+
+    // Validate query params
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const validationResult = paginationParamsSchema.safeParse(queryParams);
+    if (!validationResult.success) {
+      const details: Record<string, string> = {};
+      validationResult.error.errors.forEach((err) => {
+        const field = err.path.join(".");
+        details[field] = err.message;
+      });
+      throw new ValidationError(details);
+    }
+
+    const profileService = new ProfileService(supabase);
+    const result = await profileService.listChildProfiles(user.id, validationResult.data);
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          message: error.message,
+          details: error.details,
+        } as APIErrorResponse),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    if (error instanceof UnauthorizedError) {
+      return new Response(
+        JSON.stringify({
+          error: "unauthenticated",
+          message: error.message,
+        } as APIErrorResponse),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.error("Unexpected error in GET /api/profiles:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
+    });
+
+    return new Response(
+      JSON.stringify({
+        error: "internal_error",
+        message: "An unexpected error occurred",
+      } as APIErrorResponse),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};
+
+// -----------------------------------------------------------------------------
+// POST /api/profiles - create profile (existing implementation)
+// -----------------------------------------------------------------------------
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Step 1: Check authentication

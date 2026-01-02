@@ -100,31 +100,84 @@ export default function RegisterForm() {
       return;
     }
 
-    // Submit form (placeholder - backend will be implemented later)
+    // Submit form to backend
     setFormState({ ...formState, isSubmitting: true });
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: formState.email, password: formState.password }),
-      // });
-
-      // Simulate success for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setFormState({
-        ...formState,
-        isSubmitting: false,
-        successMessage: "Konto zostało utworzone! Za chwilę zostaniesz przekierowany do strony logowania.",
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formState.email, password: formState.password }),
       });
 
-      // Redirect after 2 seconds
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 2000);
+      if (response.ok) {
+        // Registration successful
+        setFormState({
+          ...formState,
+          isSubmitting: false,
+          errors: {},
+          successMessage: "Konto zostało utworzone! Za chwilę zostaniesz przekierowany do strony logowania.",
+        });
+
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 2000);
+      } else {
+        // Handle error responses
+        const data = await response.json();
+
+        if (response.status === 409) {
+          // Conflict - user already exists
+          // Show helpful message with link to password recovery
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: {
+              general: data.message || "Użytkownik z tym adresem e-mail już istnieje",
+              email: "Ten adres e-mail jest już zarejestrowany",
+            },
+          });
+        } else if (response.status === 400) {
+          // Validation errors - map to form fields
+          const fieldErrors: RegisterFormState["errors"] = {};
+
+          if (data.details) {
+            // Map backend validation errors to form fields
+            if (data.details.email) {
+              fieldErrors.email = data.details.email;
+            }
+            if (data.details.password) {
+              fieldErrors.password = data.details.password;
+            }
+          }
+
+          // If there are field-specific errors, show them
+          // Otherwise show general message
+          if (Object.keys(fieldErrors).length > 0) {
+            setFormState({
+              ...formState,
+              isSubmitting: false,
+              errors: fieldErrors,
+            });
+          } else {
+            setFormState({
+              ...formState,
+              isSubmitting: false,
+              errors: { general: data.message || "Błąd walidacji danych" },
+            });
+          }
+        } else {
+          // Other errors (500, etc.)
+          setFormState({
+            ...formState,
+            isSubmitting: false,
+            errors: { general: "Wystąpił błąd podczas rejestracji. Spróbuj ponownie później." },
+          });
+        }
+      }
     } catch (error) {
+      // Network error or other unexpected error
       setFormState({
         ...formState,
         isSubmitting: false,
@@ -136,7 +189,22 @@ export default function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {formState.successMessage && <Alert variant="success">{formState.successMessage}</Alert>}
-      {formState.errors.general && <Alert variant="error">{formState.errors.general}</Alert>}
+      {formState.errors.general && (
+        <Alert variant="error">
+          {formState.errors.general}
+          {formState.errors.general.includes("już istnieje") && (
+            <div className="mt-2 text-sm">
+              <a href="/login" className="font-medium underline hover:no-underline">
+                Przejdź do logowania
+              </a>
+              {" lub "}
+              <a href="/forgot-password" className="font-medium underline hover:no-underline">
+                odzyskaj hasło
+              </a>
+            </div>
+          )}
+        </Alert>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="email" required>

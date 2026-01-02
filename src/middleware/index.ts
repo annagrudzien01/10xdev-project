@@ -6,20 +6,40 @@ const supabaseUrl = import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
 
 /**
+ * Protected paths that require authentication
+ * Users without valid session will be redirected to /login
+ */
+const PROTECTED_PATHS = ["/profiles"];
+
+/**
+ * Public authentication paths that should redirect to /profiles if user is already logged in
+ */
+const PUBLIC_AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+/**
  * Astro middleware for Supabase authentication and security headers
  *
- * Extracts JWT token from Authorization header and creates a Supabase client
- * with the user's session. This allows RLS policies to work correctly.
- *
- * Also adds security headers to all responses for enhanced protection against
- * common web vulnerabilities (XSS, clickjacking, MIME sniffing, etc.)
+ * Features:
+ * - Extracts JWT token from Authorization header OR cookies
+ * - Creates Supabase client with user's session for RLS policies
+ * - Protects routes requiring authentication (auto-redirect to /login)
+ * - Redirects authenticated users away from auth pages (to /profiles)
+ * - Adds security headers to all responses
  *
  * If no token is provided, supabase client is still created but without user context.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
-  // Extract JWT from Authorization header
+  const { url, cookies, redirect } = context;
+
+  // Extract JWT from Authorization header OR cookie
   const authHeader = context.request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  let token = authHeader?.replace("Bearer ", "");
+
+  // If no Authorization header, check cookies
+  if (!token) {
+    const accessTokenCookie = cookies.get("sb-access-token");
+    token = accessTokenCookie?.value;
+  }
 
   // Create Supabase client with token (if present)
   if (token) {
@@ -32,10 +52,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
       },
     });
     context.locals.supabase = supabase;
+
+    // For protected paths, verify the token is still valid
+    if (PROTECTED_PATHS.some((path) => url.pathname.startsWith(path))) {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        // Token is invalid or expired - clear cookies and redirect to login
+        cookies.delete("sb-access-token", { path: "/" });
+        cookies.delete("sb-refresh-token", { path: "/" });
+        return redirect("/login");
+      }
+    }
+
+    // If user is authenticated and trying to access auth pages, redirect to profiles
+    if (PUBLIC_AUTH_PATHS.includes(url.pathname)) {
+      return redirect("/profiles");
+    }
   } else {
     // Create anonymous client (API routes will handle 401 if needed)
     const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
     context.locals.supabase = supabase;
+
+    // If trying to access protected path without token, redirect to login
+    if (PROTECTED_PATHS.some((path) => url.pathname.startsWith(path))) {
+      return redirect("/login");
+    }
   }
 
   // Process the request
