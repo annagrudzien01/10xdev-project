@@ -25,15 +25,15 @@ Widok „Tworzenie Profilu” (`/profiles/new`) umożliwia rodzicowi dodanie now
 
 ## 4. Szczegóły komponentów
 
-### ProfileForm
+### ProfileFormComponent (mode="create")
 
 - **Opis**: Zawiera cały formularz tworzenia profilu, zarządza stanem, walidacją i wywołaniem mutation.
 - **Główne elementy**:
-  - `InputText` (label „Imię dziecka”, autofocus)
-  - `DatePicker` (label „Data urodzenia”, max = dziś, min = 18 lat wstecz)
-  - `Button` type="submit" (tekst „Zapisz”, spinner podczas mutation)
-  - `ButtonLink` to="/profiles" (tekst „Anuluj”, dialog confirm gdy dirty)
-  - `Toaster` (sonner) do komunikatów sukces/błąd
+  - `InputText` (label „Imię dziecka", autofocus)
+  - `DatePicker` (label „Data urodzenia", max = dziś, min = 18 lat wstecz)
+  - `Button` type="submit" (tekst „Zapisz", spinner podczas mutation)
+  - `Button` variant="outline" (tekst „Anuluj", dialog confirm gdy dirty)
+  - `FormError` (inline error display)
 - **Obsługiwane interakcje**:
   1. Wpisywanie imienia → aktualizacja stanu + walidacja regex/min/max.
   2. Wybór daty → walidacja przeszłości i wieku 3-18.
@@ -42,20 +42,26 @@ Widok „Tworzenie Profilu” (`/profiles/new`) umożliwia rodzicowi dodanie now
 - **Walidacja**:
   - `profileName`: min 2, max 50, regex `/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]+$/`.
   - `dateOfBirth`: data < `now` oraz wiek ∈ [3, 18].
-  - Całość opisana w schemacie Zod importowanym z `src/lib/schemas/profile.schema.ts` (nowy plik).
+  - Całość opisana w schemacie Zod importowanym z `src/lib/schemas/profile.schema.ts`.
 - **Typy**:
   - `CreateChildProfileCommand` (back-end)
   - `ChildProfileDTO` (response)
-  - `CreateProfileFormValues` (lokalny alias dla danych formularza, równa się schematowi Zod)
-- **Propsy**: brak (osadza się bezpośrednio w stronie).
+  - `ProfileFormValues` (dane formularza, równa się schematowi Zod)
+- **Propsy**: 
+  - `mode: "create"`
+  - `onSaveSuccess: (data: ProfileFormValues) => void`
+  - `onCancel: () => void`
+  - `isSubmitting?: boolean`
+  - `apiError?: string`
+  - `apiErrorField?: "profileName" | "dateOfBirth"`
 
 ### InputText, DatePicker, FormError
 
-Wykorzystujemy istniejące komponenty z `src/components/ui` lub rozszerzamy je o integrację z react-hook-form. Jeśli brakuje, tworzymy w `src/components/ui`:
+Wykorzystujemy istniejące komponenty z `src/components/ui`:
 
-- `input.tsx` zawiera już podstawy; dodać wrapper `FormInput`.
-- `date-picker.tsx` (React Day Picker + Tailwind) – nowy plik.
-- `form-error.tsx` – prosty komponent z `role="alert" aria-live="assertive"`.
+- `input.tsx` - podstawowy input z integracją react-hook-form
+- `date-picker.tsx` - React Day Picker + Tailwind
+- `form-error.tsx` - komponent z `role="alert" aria-live="assertive"` dla inline errors
 
 ## 5. Typy
 
@@ -82,9 +88,9 @@ export interface CreateProfileFormValues extends CreateChildProfileCommand {}
 
 ## 7. Integracja API
 
-| Zapytanie            | Typ żądania                 | Typ odpowiedzi    | Akcja UI                                                                         |
-| -------------------- | --------------------------- | ----------------- | -------------------------------------------------------------------------------- |
-| `POST /api/profiles` | `CreateChildProfileCommand` | `ChildProfileDTO` | Po sukcesie: toast + redirect, po błędzie: mapowanie kodu status → toast/inline. |
+| Zapytanie            | Typ żądania                 | Typ odpowiedzi    | Akcja UI                                                                      |
+| -------------------- | --------------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| `POST /api/profiles` | `CreateChildProfileCommand` | `ChildProfileDTO` | Po sukcesie: redirect, po błędzie: mapowanie kodu status → inline FormError. |
 
 ## 8. Interakcje użytkownika
 
@@ -100,28 +106,30 @@ export interface CreateProfileFormValues extends CreateChildProfileCommand {}
 
 - Disabled submit gdy `!isValid || isSubmitting`.
 - DatePicker ogranicza zakres `from={subYears(today, 18)}` do `to={subYears(today, 3)}`.
-- Error toast mapowanie:
-  - `400` → „Nieprawidłowe dane”
-  - `409` duplicate → „Profil o tej nazwie już istnieje”
-  - `409` limit → „Osiągnięto limit 10 profilów”
-  - `422` → iteracja po `details` → sonner.toast(errors.join("\n"))
+- Error inline mapowanie:
+  - `400` → „Nieprawidłowe dane" (inline, general)
+  - `409` duplicate → „Profil o tej nazwie już istnieje" (inline, field-specific: profileName)
+  - `409` limit → „Osiągnięto limit 10 profilów" (inline, general)
+  - `422` → iteracja po `details` → inline errors per field or general
 
 ## 10. Obsługa błędów
 
 1. Inline pod polami (z react-hook-form) – walidacja klienta.
-2. Toast błędu przy statusach serwera.
-3. Fallback (exceptions) → toast „Wystąpił nieoczekiwany błąd”.
+2. Inline FormError przy statusach serwera - wyświetlany jako:
+   - Field-specific error (pod polem z czerwonym obramowaniem)
+   - General error (na górze formularza w destructive box)
+3. Fallback (exceptions) → inline error „Wystąpił nieoczekiwany błąd".
 4. Mutation `onError` sprawdza `response.status` i parsuje JSON.
 
 ## 11. Kroki implementacji
 
-1. **Routing**: utworzyć `src/pages/profiles/new.astro` z layoutem i importem `<ProfileForm client:react />`.
+1. **Routing**: utworzyć `src/pages/profiles/new.astro` z layoutem i importem `<AddProfileForm client:react />`.
 2. **Schemat Zod**: dodać `src/lib/schemas/profile.schema.ts` (export `createProfileSchema`).
-3. **UI components**: jeśli brak – utworzyć `date-picker.tsx`, `form-error.tsx` w `src/components/ui`.
-4. **ProfileForm**: utworzyć `src/components/profiles/ProfileForm.tsx`.
-5. **Hook TanStack**: w `src/lib/hooks/useCreateProfileMutation.ts` z `axios`/`fetch`.
-6. **Toast provider**: upewnić się, że root Layout zawiera `<Toaster/>` (już jest w `src/components/ui/sonner.tsx`).
+3. **UI components**: utworzyć `date-picker.tsx`, `form-error.tsx` w `src/components/ui`.
+4. **ProfileFormComponent**: utworzyć `src/components/profiles/ProfileFormComponent.tsx` (reusable component).
+5. **AddProfileForm**: utworzyć `src/components/profiles/AddProfileForm.tsx` (wrapper with logic).
+6. **Hook TanStack**: w `src/lib/hooks/useCreateProfileMutation.ts` z `fetch`.
 7. **Test manualny**: scenariusze sukces, błędy 400/409/422, limit profili.
 8. **Accessibility**: dodać `aria-describedby` i `aria-invalid` do pól.
-9. **Refaktor**: przenieść wspólne UI (InputText, DatePicker) jeśli potrzebne.
+9. **Refaktor**: upewnić się, że komponenty są zgodne ze standardami projektu.
 10. **Dokumentacja**: dodać wpis do CHANGELOG i README (Developer Notes).

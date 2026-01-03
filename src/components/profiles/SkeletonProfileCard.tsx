@@ -1,3 +1,9 @@
+/**
+ * SkeletonProfileCard - Loading placeholder for ProfileCard
+ *
+ * Displays an animated skeleton screen while profile data is being loaded.
+ * Maintains the same layout structure as ProfileCard for smooth transitions.
+ */
 export default function SkeletonProfileCard() {
   return (
     <div className="animate-pulse bg-muted/50 rounded-lg p-4" role="status" aria-busy="true">

@@ -56,9 +56,9 @@ interface ProfileFormComponentProps {
  * - "edit": For editing existing profiles (validation allows partial updates)
  *
  * The component handles form validation, state management, and user interactions.
- * Business logic (API calls, toasts) is handled by the parent component.
+ * Business logic (API calls) is handled by the parent component with inline error display.
  */
-export function ProfileFormComponent({
+export default function ProfileFormComponent({
   mode,
   defaultValues,
   onSaveSuccess,
@@ -91,6 +91,8 @@ export function ProfileFormComponent({
 
   // Handle form submission
   const onSubmit = (data: ProfileFormValues) => {
+    // Clear field-specific errors when submitting
+    // (general errors are cleared by parent component)
     onSaveSuccess(data);
   };
 

@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import ProfileForm from "@/components/profiles/ProfileForm";
+import AddProfileForm from "@/components/profiles/AddProfileForm";
 
 export const prerender = false;
 
@@ -20,5 +20,5 @@ if (!user) {
 ---
 
 <Layout title="Nowy profil - Muzyczna Podróż">
-  <ProfileForm client:load />
+  <AddProfileForm client:load />
 </Layout>
