@@ -1,0 +1,18 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import EditProfilePage from "@/components/profiles/EditProfilePage";
+import { Toaster } from "@/components/ui/sonner";
+
+// Get profile ID from URL parameter
+const { id } = Astro.params;
+
+// Validate that ID exists
+if (!id) {
+  return Astro.redirect("/profiles");
+}
+---
+
+<Layout title="Edytuj profil">
+  <EditProfilePage client:only="react" profileId={id} />
+  <Toaster client:only="react" />
+</Layout>
