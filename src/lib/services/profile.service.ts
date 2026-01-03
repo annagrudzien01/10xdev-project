@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateChildProfileCommand, ChildProfileDTO, PaginatedResponse, PaginationParams } from "../../types";
+import type { CreateChildProfileCommand, UpdateChildProfileCommand, ChildProfileDTO, PaginatedResponse, PaginationParams } from "../../types";
 import { toChildProfileDTO } from "../../types";
-import { ConflictError } from "../errors/api-errors";
+import { ConflictError, NotFoundError } from "../errors/api-errors";
 
 /**
  * ProfileService
@@ -110,5 +110,148 @@ export class ProfileService {
 
     // Step 3: Transform database entity to DTO
     return toChildProfileDTO(data);
+  }
+
+  /**
+   * Gets a single child profile by ID
+   *
+   * @param profileId - The profile UUID
+   * @param parentId - The authenticated parent's user ID
+   * @returns Profile as ChildProfileDTO
+   * @throws NotFoundError if profile doesn't exist or doesn't belong to parent
+   * @throws Error for other database errors
+   */
+  async getChildProfile(profileId: string, parentId: string): Promise<ChildProfileDTO> {
+    const { data, error } = await this.supabase
+      .from("child_profiles")
+      .select("*")
+      .eq("id", profileId)
+      .eq("parent_id", parentId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        throw new NotFoundError("Profile not found or access denied");
+      }
+      throw new Error(`Failed to fetch profile: ${error.message}`);
+    }
+
+    return toChildProfileDTO(data);
+  }
+
+  /**
+   * Updates a child profile
+   *
+   * Business rules:
+   * - Can only update profileName and/or dateOfBirth
+   * - Profile name must be unique per parent if changed
+   * - Must verify parent ownership
+   *
+   * @param profileId - The profile UUID
+   * @param parentId - The authenticated parent's user ID
+   * @param command - Update data (profileName and/or dateOfBirth)
+   * @returns Updated profile as ChildProfileDTO
+   * @throws NotFoundError if profile doesn't exist or doesn't belong to parent
+   * @throws ConflictError if new name duplicates another profile name
+   * @throws Error for other database errors
+   */
+  async updateChildProfile(
+    profileId: string,
+    parentId: string,
+    command: UpdateChildProfileCommand
+  ): Promise<ChildProfileDTO> {
+    // Step 1: Verify profile exists and belongs to parent
+    const { data: existingProfile, error: fetchError } = await this.supabase
+      .from("child_profiles")
+      .select("id")
+      .eq("id", profileId)
+      .eq("parent_id", parentId)
+      .single();
+
+    if (fetchError || !existingProfile) {
+      throw new NotFoundError("Profile not found or access denied");
+    }
+
+    // Step 2: Build update object with only provided fields
+    const updateData: Record<string, string> = {};
+    if (command.profileName !== undefined) {
+      updateData.profile_name = command.profileName;
+    }
+    if (command.dateOfBirth !== undefined) {
+      updateData.date_of_birth = command.dateOfBirth;
+    }
+
+    // Step 3: Update profile
+    const { data, error } = await this.supabase
+      .from("child_profiles")
+      .update(updateData)
+      .eq("id", profileId)
+      .eq("parent_id", parentId)
+      .select()
+      .single();
+
+    if (error) {
+      // Handle unique constraint violation (duplicate profile name for this parent)
+      if (error.code === "23505") {
+        throw new ConflictError("A profile with this name already exists for this parent");
+      }
+      throw new Error(`Failed to update profile: ${error.message}`);
+    }
+
+    return toChildProfileDTO(data);
+  }
+
+  /**
+   * Deletes a child profile
+   *
+   * Business rules:
+   * - Cannot delete if profile has an active session
+   * - Must verify parent ownership
+   *
+   * @param profileId - The profile UUID
+   * @param parentId - The authenticated parent's user ID
+   * @throws NotFoundError if profile doesn't exist or doesn't belong to parent
+   * @throws ConflictError if profile has an active session
+   * @throws Error for other database errors
+   */
+  async deleteChildProfile(profileId: string, parentId: string): Promise<void> {
+    // Step 1: Verify profile exists and belongs to parent
+    const { data: existingProfile, error: fetchError } = await this.supabase
+      .from("child_profiles")
+      .select("id")
+      .eq("id", profileId)
+      .eq("parent_id", parentId)
+      .single();
+
+    if (fetchError || !existingProfile) {
+      throw new NotFoundError("Profile not found or access denied");
+    }
+
+    // Step 2: Check for active sessions
+    const { data: activeSessions, error: sessionError } = await this.supabase
+      .from("sessions")
+      .select("id")
+      .eq("child_id", profileId)
+      .eq("is_active", true)
+      .limit(1);
+
+    if (sessionError) {
+      throw new Error(`Failed to check active sessions: ${sessionError.message}`);
+    }
+
+    if (activeSessions && activeSessions.length > 0) {
+      throw new ConflictError("Cannot delete profile with an active session");
+    }
+
+    // Step 3: Delete profile
+    const { error } = await this.supabase
+      .from("child_profiles")
+      .delete()
+      .eq("id", profileId)
+      .eq("parent_id", parentId);
+
+    if (error) {
+      throw new Error(`Failed to delete profile: ${error.message}`);
+    }
   }
 }

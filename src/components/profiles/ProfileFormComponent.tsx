@@ -1,0 +1,156 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FormError } from "@/components/ui/form-error";
+import {
+  createChildProfileSchema,
+  updateChildProfileSchema,
+  type ProfileFormValues,
+} from "@/lib/schemas/profile.schema";
+
+/**
+ * Helper function to calculate date boundaries for age restrictions
+ */
+function getDateBoundaries() {
+  const today = new Date();
+
+  // Max date: 3 years ago (minimum age)
+  const maxDate = new Date(today);
+  maxDate.setFullYear(today.getFullYear() - 3);
+
+  // Min date: 18 years ago (maximum age)
+  const minDate = new Date(today);
+  minDate.setFullYear(today.getFullYear() - 18);
+
+  return {
+    min: minDate.toISOString().split("T")[0],
+    max: maxDate.toISOString().split("T")[0],
+  };
+}
+
+interface ProfileFormComponentProps {
+  /** Form mode - create or edit */
+  mode: "create" | "edit";
+  /** Default values for form fields (used in edit mode) */
+  defaultValues?: ProfileFormValues;
+  /** Callback when form is successfully submitted */
+  onSaveSuccess: (data: ProfileFormValues) => void;
+  /** Callback when cancel button is clicked */
+  onCancel: () => void;
+  /** Whether the form is currently submitting */
+  isSubmitting?: boolean;
+}
+
+/**
+ * ProfileFormComponent - Reusable form component for creating/editing profiles
+ *
+ * Can be used in two modes:
+ * - "create": For creating new profiles (validation requires all fields)
+ * - "edit": For editing existing profiles (validation allows partial updates)
+ *
+ * The component handles form validation, state management, and user interactions.
+ * Business logic (API calls, toasts) is handled by the parent component.
+ */
+export function ProfileFormComponent({
+  mode,
+  defaultValues,
+  onSaveSuccess,
+  onCancel,
+  isSubmitting = false,
+}: ProfileFormComponentProps) {
+  const { min, max } = getDateBoundaries();
+
+  // Select schema based on mode
+  const schema = mode === "create" ? createChildProfileSchema : updateChildProfileSchema;
+
+  // Setup form with react-hook-form and Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty, isValid },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: defaultValues || {
+      profileName: "",
+      dateOfBirth: "",
+    },
+  });
+
+  // Handle form submission
+  const onSubmit = (data: ProfileFormValues) => {
+    onSaveSuccess(data);
+  };
+
+  // Handle cancel with dirty check
+  const handleCancel = () => {
+    if (isDirty) {
+      const confirmed = window.confirm("Masz niezapisane zmiany. Czy na pewno chcesz anulować?");
+      if (!confirmed) return;
+    }
+    onCancel();
+  };
+
+  const isFormDisabled = isSubmitting;
+  const isSaveDisabled = mode === "create" ? !isValid || isSubmitting : !isDirty || isSubmitting;
+
+  return (
+    <div className="bg-card border rounded-lg p-6 shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Profile Name Field */}
+        <div className="space-y-2">
+          <Label htmlFor="profileName" required>
+            Imię dziecka
+          </Label>
+          <Input
+            id="profileName"
+            type="text"
+            placeholder="np. Anna"
+            autoFocus
+            error={!!errors.profileName}
+            aria-invalid={!!errors.profileName}
+            aria-describedby={errors.profileName ? "profileName-error" : undefined}
+            disabled={isFormDisabled}
+            {...register("profileName")}
+          />
+          {errors.profileName && <FormError id="profileName-error">{errors.profileName.message}</FormError>}
+          <p className="text-xs text-muted-foreground">
+            Imię może zawierać tylko litery, spacje i myślniki (2-50 znaków)
+          </p>
+        </div>
+
+        {/* Date of Birth Field */}
+        <div className="space-y-2">
+          <Label htmlFor="dateOfBirth" required>
+            Data urodzenia
+          </Label>
+          <DatePicker
+            id="dateOfBirth"
+            min={min}
+            max={max}
+            error={!!errors.dateOfBirth}
+            aria-invalid={!!errors.dateOfBirth}
+            aria-describedby={errors.dateOfBirth ? "dateOfBirth-error" : undefined}
+            disabled={isFormDisabled}
+            {...register("dateOfBirth")}
+          />
+          {errors.dateOfBirth && <FormError id="dateOfBirth-error">{errors.dateOfBirth.message}</FormError>}
+          <p className="text-xs text-muted-foreground">Dziecko musi mieć od 3 do 18 lat</p>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isFormDisabled} className="flex-1">
+            Anuluj
+          </Button>
+          <Button type="submit" disabled={isSaveDisabled} className="flex-1">
+            {isSubmitting ? "Zapisywanie..." : mode === "create" ? "Zapisz profil" : "Zapisz zmiany"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
