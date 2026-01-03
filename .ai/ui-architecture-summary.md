@@ -553,7 +553,7 @@ src/components/
 
   profile/               # Profile management
     ProfileCard.tsx
-    ProfileForm.tsx
+    AddProfileForm.tsx
     ProfileList.tsx
 
   dashboard/             # Parent dashboard
@@ -645,12 +645,12 @@ src/pages/
 
 ### I. Error Handling & User Feedback
 
-**Toast Notifications (Shadcn/ui Toast):**
+**Toast Notifications (Inline Errors):**
 
-- Sukces: zielony, auto-dismiss 3s
-- Error: czerwony, auto-dismiss 5s
-- Info: niebieski, auto-dismiss 3s
-- Warning: żółty, manual dismiss
+- Success: Redirect immediately without toast
+- Error: Inline display in FormError component (red, persistent until corrected)
+- Field-specific errors: Displayed directly under the relevant form field
+- General errors: Displayed at the top of the form in a destructive background box
 
 **Modal Dialogs:**
 

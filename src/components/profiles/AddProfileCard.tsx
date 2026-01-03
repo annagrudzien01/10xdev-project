@@ -5,6 +5,12 @@ export interface AddProfileCardProps {
   disabled: boolean;
 }
 
+/**
+ * AddProfileCard - Interactive card for creating a new profile
+ *
+ * Displays a dashed border card with a plus icon that navigates to the
+ * profile creation form. Becomes disabled when the profile limit (10) is reached.
+ */
 export default function AddProfileCard({ disabled }: AddProfileCardProps) {
   const handleClick = useCallback(() => {
     if (!disabled) {

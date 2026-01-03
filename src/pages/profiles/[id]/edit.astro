@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import EditProfilePage from "@/components/profiles/EditProfilePage";
+import EditProfileForm from "@/components/profiles/EditProfileForm";
 import { Toaster } from "@/components/ui/sonner";
 
 // Get profile ID from URL parameter
@@ -13,6 +13,6 @@ if (!id) {
 ---
 
 <Layout title="Edytuj profil">
-  <EditProfilePage client:only="react" profileId={id} />
+  <EditProfileForm client:only="react" profileId={id} />
   <Toaster client:only="react" />
 </Layout>

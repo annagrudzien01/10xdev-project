@@ -6,7 +6,7 @@ import type { PaginatedResponse, ChildProfileDTO } from "@/types";
  */
 export interface ProfileVM {
   id: string;
-  displayName: string;
+  profileName: string;
   age: number;
   level: number;
 }
@@ -44,7 +44,7 @@ function calculateAge(dateOfBirth: string): number {
 function mapToProfileVM(dto: ChildProfileDTO): ProfileVM {
   return {
     id: dto.id,
-    displayName: dto.profileName,
+    profileName: dto.profileName,
     age: calculateAge(dto.dateOfBirth),
     level: dto.currentLevelId,
   };

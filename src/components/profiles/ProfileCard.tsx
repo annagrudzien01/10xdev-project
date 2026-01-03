@@ -18,22 +18,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FormError } from "@/components/ui/form-error";
 import { MoreVertical, Pencil, Trash2, Play } from "lucide-react";
-import { toast } from "sonner";
 
 export interface ProfileCardProps {
   profile: {
     id: string;
-    displayName: string;
+    profileName: string;
     age: number;
     level: number;
   };
   onDelete?: () => void;
 }
 
+/**
+ * ProfileCard - Card component for displaying a child profile
+ *
+ * Displays profile information with:
+ * - Avatar with first letter of name
+ * - Name, age, and level information
+ * - "Play" button to start a game session
+ * - Dropdown menu with edit and delete options
+ * - Delete confirmation dialog with inline error handling
+ */
+
 export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>("");
 
   const handlePlay = useCallback(() => {
     window.location.href = `/game/start?profileId=${profile.id}`;
@@ -48,11 +60,14 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
   }, []);
 
   const handleDeleteClick = useCallback(() => {
+    setDeleteError(""); // Clear any previous errors
     setIsDeleteDialogOpen(true);
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
     setIsDeleting(true);
+    setDeleteError("");
+
     try {
       const response = await fetch(`/api/profiles/${profile.id}`, {
         method: "DELETE",
@@ -64,19 +79,13 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
         throw errorData;
       }
 
-      toast.success("Profil usunięty", {
-        description: `Profil ${profile.displayName} został trwale usunięty.`,
-      });
-
       setIsDeleteDialogOpen(false);
 
       // Call onDelete callback or refresh the page
       if (onDelete) {
         onDelete();
       } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        window.location.reload();
       }
     } catch (error) {
       setIsDeleting(false);
@@ -86,25 +95,17 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
         const err = error as { status: number; message: string };
 
         if (err.status === 409) {
-          toast.error("Nie można usunąć profilu", {
-            description: "Profil z aktywną sesją gry nie może być usunięty. Zakończ grę i spróbuj ponownie.",
-          });
+          setDeleteError("Profil z aktywną sesją gry nie może być usunięty. Zakończ grę i spróbuj ponownie.");
         } else if (err.status === 404) {
-          toast.error("Profil nie znaleziony", {
-            description: "Ten profil nie istnieje lub został już usunięty.",
-          });
+          setDeleteError("Ten profil nie istnieje lub został już usunięty.");
         } else {
-          toast.error("Wystąpił błąd", {
-            description: "Nie udało się usunąć profilu. Spróbuj ponownie później.",
-          });
+          setDeleteError("Nie udało się usunąć profilu. Spróbuj ponownie później.");
         }
       } else {
-        toast.error("Wystąpił nieoczekiwany błąd", {
-          description: "Spróbuj ponownie później.",
-        });
+        setDeleteError("Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.");
       }
     }
-  }, [profile.id, profile.displayName, onDelete]);
+  }, [profile.id, onDelete]);
 
   return (
     <>
@@ -121,7 +122,7 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8 absolute top-2 right-2"
-              aria-label={`Opcje profilu ${profile.displayName}`}
+              aria-label={`Opcje profilu ${profile.profileName}`}
               onClick={handleMenuClick}
             >
               <MoreVertical className="h-4 w-4" />
@@ -142,11 +143,11 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
 
         {/* Avatar */}
         <div className="w-24 h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-4xl font-bold mb-4">
-          {profile.displayName.charAt(0).toUpperCase()}
+          {profile.profileName.charAt(0).toUpperCase()}
         </div>
 
         {/* Name */}
-        <h3 className="font-semibold text-xl mb-1">{profile.displayName}</h3>
+        <h3 className="font-semibold text-xl mb-1">{profile.profileName}</h3>
 
         {/* Age + Level */}
         <p className="text-sm text-muted-foreground mb-6">
@@ -154,7 +155,7 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
         </p>
 
         {/* Play Button */}
-        <Button onClick={handlePlay} className="w-full" size="lg" aria-label={`Graj jako ${profile.displayName}`}>
+        <Button onClick={handlePlay} className="w-full" size="lg" aria-label={`Graj jako ${profile.profileName}`}>
           <Play className="mr-2 h-5 w-5" />
           Graj
         </Button>
@@ -167,10 +168,18 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
             <AlertDialogTitle className="text-xl">Usunąć profil?</AlertDialogTitle>
             <AlertDialogDescription className="text-base leading-relaxed pt-2 text-foreground">
               Ta akcja jest <strong>nieodwracalna</strong>. Profil{" "}
-              <strong className="text-foreground">{profile.displayName}</strong> oraz wszystkie powiązane dane (sesje,
+              <strong className="text-foreground">{profile.profileName}</strong> oraz wszystkie powiązane dane (sesje,
               wyniki zadań) zostaną trwale usunięte.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {/* Delete Error Message */}
+          {deleteError && (
+            <div className="rounded-lg bg-destructive/10 p-4">
+              <FormError>{deleteError}</FormError>
+            </div>
+          )}
+
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-3 sm:gap-3">
             <AlertDialogCancel disabled={isDeleting} className="flex-1 sm:flex-1 mt-0">
               Anuluj

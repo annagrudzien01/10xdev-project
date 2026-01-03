@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { toast } from "sonner";
 import HeaderAuthenticated from "@/components/auth/HeaderAuthenticated";
-import { ProfileFormComponent } from "./ProfileFormComponent";
+import ProfileFormComponent from "./ProfileFormComponent";
 import { useCreateProfileMutation } from "@/lib/hooks/useCreateProfileMutation";
 import type { ProfileFormValues } from "@/lib/schemas/profile.schema";
 
@@ -10,30 +9,17 @@ import type { ProfileFormValues } from "@/lib/schemas/profile.schema";
 const queryClient = new QueryClient();
 
 /**
- * Helper function to calculate date boundaries for age restrictions
+ * AddProfileFormContent - Internal component with query hooks
+ *
+ * Handles profile creation logic including:
+ * - Fetching user email for header
+ * - Form submission with inline error handling
+ * - Redirect on success
  */
-function getDateBoundaries() {
-  const today = new Date();
-
-  // Max date: 3 years ago (minimum age)
-  const maxDate = new Date(today);
-  maxDate.setFullYear(today.getFullYear() - 3);
-
-  // Min date: 18 years ago (maximum age)
-  const minDate = new Date(today);
-  minDate.setFullYear(today.getFullYear() - 18);
-
-  return {
-    min: minDate.toISOString().split("T")[0],
-    max: maxDate.toISOString().split("T")[0],
-  };
-}
-
-/**
- * ProfileForm Content Component - Internal component using the mutation hook
- */
-function ProfileFormContent() {
+function AddProfileFormContent() {
   const [userEmail, setUserEmail] = useState<string>("");
+  const [apiError, setApiError] = useState<string>("");
+  const [apiErrorField, setApiErrorField] = useState<"profileName" | "dateOfBirth" | undefined>(undefined);
 
   // Fetch user email for header
   useEffect(() => {
@@ -58,57 +44,52 @@ function ProfileFormContent() {
   const mutation = useCreateProfileMutation();
 
   // Handle form submission
-  const onSubmit = async (data: ProfileFormValues) => {
+  const handleSaveSuccess = async (data: ProfileFormValues) => {
+    // Clear any previous errors
+    setApiError("");
+    setApiErrorField(undefined);
+
     try {
       await mutation.mutateAsync({
         profileName: data.profileName,
         dateOfBirth: data.dateOfBirth,
       });
 
-      // Success toast
-      toast.success("Profil został utworzony", {
-        description: `Profil ${data.profileName} został pomyślnie dodany.`,
-      });
-
-      // Redirect to profiles list
-      setTimeout(() => {
-        window.location.href = "/profiles";
-      }, 1000);
+      // Redirect to profiles list on success
+      window.location.href = "/profiles";
     } catch (error) {
-      // Error handling based on status code
+      // Error handling
       if (error && typeof error === "object" && "status" in error) {
         const err = error as { status: number; message: string; details?: Record<string, unknown> };
 
         if (err.status === 400) {
-          toast.error("Nieprawidłowe dane", {
-            description: err.message || "Sprawdź poprawność wprowadzonych danych.",
-          });
+          setApiError(err.message || "Sprawdź poprawność wprowadzonych danych.");
         } else if (err.status === 409) {
           // Check if it's duplicate name or limit exceeded
           if (err.message.toLowerCase().includes("limit")) {
-            toast.error("Osiągnięto limit profili", {
-              description: "Możesz mieć maksymalnie 10 profili.",
-            });
+            setApiError("Możesz mieć maksymalnie 10 profili.");
           } else {
-            toast.error("Profil już istnieje", {
-              description: "Profil o tej nazwie już istnieje. Wybierz inną nazwę.",
-            });
+            setApiError("Profil o tej nazwie już istnieje. Wybierz inną nazwę.");
+            setApiErrorField("profileName");
           }
         } else if (err.status === 422 && err.details) {
-          // Validation errors from server
-          const errorMessages = Object.values(err.details).join("\n");
-          toast.error("Błąd walidacji", {
-            description: errorMessages,
-          });
+          // Try to map validation errors to specific fields
+          const details = err.details;
+          if (details.profileName) {
+            setApiError(String(details.profileName));
+            setApiErrorField("profileName");
+          } else if (details.dateOfBirth) {
+            setApiError(String(details.dateOfBirth));
+            setApiErrorField("dateOfBirth");
+          } else {
+            const errorMessages = Object.values(details).join(", ");
+            setApiError(errorMessages);
+          }
         } else {
-          toast.error("Wystąpił błąd", {
-            description: "Nie udało się utworzyć profilu. Spróbuj ponownie później.",
-          });
+          setApiError("Nie udało się utworzyć profilu. Spróbuj ponownie później.");
         }
       } else {
-        toast.error("Wystąpił nieoczekiwany błąd", {
-          description: "Spróbuj ponownie później.",
-        });
+        setApiError("Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.");
       }
     }
   };
@@ -132,9 +113,11 @@ function ProfileFormContent() {
           {/* Form Card */}
           <ProfileFormComponent
             mode="create"
-            onSaveSuccess={onSubmit}
+            onSaveSuccess={handleSaveSuccess}
             onCancel={handleCancel}
             isSubmitting={mutation.isPending}
+            apiError={apiError}
+            apiErrorField={apiErrorField}
           />
         </div>
       </main>
@@ -143,19 +126,19 @@ function ProfileFormContent() {
 }
 
 /**
- * ProfileForm - Main component with QueryClientProvider
+ * AddProfileForm - Main component with QueryClientProvider
  *
  * Form for creating a new child profile with:
  * - Profile name validation (2-50 chars, letters/spaces/hyphens only)
  * - Date of birth with age restrictions (3-18 years)
  * - Client and server-side validation
- * - Toast notifications for success/error states
+ * - Inline error messages using FormError component
  * - Dirty state checking before cancel
  */
-export default function ProfileForm() {
+export default function AddProfileForm() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ProfileFormContent />
+      <AddProfileFormContent />
     </QueryClientProvider>
   );
 }

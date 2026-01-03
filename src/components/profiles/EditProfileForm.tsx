@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import HeaderAuthenticated from "@/components/auth/HeaderAuthenticated";
-import { ProfileFormComponent } from "./ProfileFormComponent";
+import ProfileFormComponent from "./ProfileFormComponent";
 import { useProfileQuery } from "@/lib/hooks/useProfileQuery";
 import { useUpdateProfileMutation } from "@/lib/hooks/useUpdateProfileMutation";
 import type { ProfileFormValues } from "@/lib/schemas/profile.schema";
@@ -9,15 +9,22 @@ import type { ProfileFormValues } from "@/lib/schemas/profile.schema";
 // Create query client
 const queryClient = new QueryClient();
 
-interface EditProfilePageContentProps {
+export interface EditProfileFormContentProps {
   /** Profile ID from URL parameter */
   profileId: string;
 }
 
 /**
- * EditProfilePageContent - Internal component with query hooks
+ * EditProfileFormContent - Internal component with query hooks
+ *
+ * Handles profile editing logic including:
+ * - Fetching existing profile data
+ * - Fetching user email for header
+ * - Form submission with inline error handling
+ * - Loading and error states
+ * - Redirect on success
  */
-function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
+function EditProfileFormContent({ profileId }: EditProfileFormContentProps) {
   const [userEmail, setUserEmail] = useState<string>("");
   const [apiError, setApiError] = useState<string>("");
   const [apiErrorField, setApiErrorField] = useState<"profileName" | "dateOfBirth" | undefined>(undefined);
@@ -213,25 +220,24 @@ function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
   );
 }
 
-interface EditProfilePageProps {
+export interface EditProfileFormProps {
   /** Profile ID from URL parameter */
   profileId: string;
 }
 
 /**
- * EditProfilePage - Main component with QueryClientProvider
+ * EditProfileForm - Main component with QueryClientProvider
  *
  * Page for editing an existing child profile with:
  * - Profile name and date of birth editing
- * - Profile deletion with confirmation dialog
- * - Loading and error states
+ * - Loading and error states (404, general errors)
  * - Inline error messages using FormError component
- * - Protection against deleting profiles with active sessions
+ * - Redirect on successful update
  */
-export default function EditProfilePage({ profileId }: EditProfilePageProps) {
+export default function EditProfileForm({ profileId }: EditProfileFormProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <EditProfilePageContent profileId={profileId} />
+      <EditProfileFormContent profileId={profileId} />
     </QueryClientProvider>
   );
 }

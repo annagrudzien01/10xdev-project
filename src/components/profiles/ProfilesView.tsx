@@ -12,7 +12,13 @@ import { useProfilesQuery } from "@/lib/hooks/useProfilesQuery";
 const queryClient = new QueryClient();
 
 /**
- * Internal component that uses the query hook
+ * ProfilesViewContent - Internal component with query hooks
+ *
+ * Handles data fetching and renders different states:
+ * - Loading: Skeleton cards
+ * - Error: Error message
+ * - Empty: Empty state with CTA
+ * - Success: Grid of profile cards with optional add card
  */
 function ProfilesViewContent() {
   const { profiles, count, isLoading, isError } = useProfilesQuery();
@@ -118,7 +124,10 @@ function ProfilesViewContent() {
 }
 
 /**
- * Main ProfilesView component with QueryClientProvider
+ * ProfilesView - Main component with QueryClientProvider
+ *
+ * Entry point for the profiles list view. Wraps ProfilesViewContent
+ * with TanStack Query provider for data fetching and caching.
  */
 export default function ProfilesView() {
   return (
