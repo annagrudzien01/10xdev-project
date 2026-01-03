@@ -14,7 +14,7 @@ import {
 /**
  * Helper function to calculate date boundaries for age restrictions
  */
-function getDateBoundaries() {
+function getDateBoundaries(): { min: string; max: string } {
   const today = new Date();
 
   // Max date: 3 years ago (minimum age)
@@ -42,6 +42,10 @@ interface ProfileFormComponentProps {
   onCancel: () => void;
   /** Whether the form is currently submitting */
   isSubmitting?: boolean;
+  /** External API error message to display */
+  apiError?: string;
+  /** Which field the API error relates to (if specific), or general if omitted */
+  apiErrorField?: "profileName" | "dateOfBirth";
 }
 
 /**
@@ -60,8 +64,12 @@ export function ProfileFormComponent({
   onSaveSuccess,
   onCancel,
   isSubmitting = false,
+  apiError,
+  apiErrorField,
 }: ProfileFormComponentProps) {
-  const { min, max } = getDateBoundaries();
+  const boundaries = getDateBoundaries();
+  const minDate: string = boundaries.min;
+  const maxDate: string = boundaries.max;
 
   // Select schema based on mode
   const schema = mode === "create" ? createChildProfileSchema : updateChildProfileSchema;
@@ -72,7 +80,8 @@ export function ProfileFormComponent({
     handleSubmit,
     formState: { errors, isDirty, isValid },
   } = useForm<ProfileFormValues>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
     mode: "onChange",
     defaultValues: defaultValues || {
       profileName: "",
@@ -100,6 +109,13 @@ export function ProfileFormComponent({
   return (
     <div className="bg-card border rounded-lg p-6 shadow-sm">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* General API Error (not field-specific) */}
+        {apiError && !apiErrorField && (
+          <div className="rounded-lg bg-destructive/10 p-4">
+            <FormError>{apiError}</FormError>
+          </div>
+        )}
+
         {/* Profile Name Field */}
         <div className="space-y-2">
           <Label htmlFor="profileName" required>
@@ -109,14 +125,16 @@ export function ProfileFormComponent({
             id="profileName"
             type="text"
             placeholder="np. Anna"
-            autoFocus
-            error={!!errors.profileName}
-            aria-invalid={!!errors.profileName}
-            aria-describedby={errors.profileName ? "profileName-error" : undefined}
+            error={!!errors.profileName || apiErrorField === "profileName"}
+            aria-invalid={!!errors.profileName || apiErrorField === "profileName"}
+            aria-describedby={errors.profileName || apiErrorField === "profileName" ? "profileName-error" : undefined}
             disabled={isFormDisabled}
             {...register("profileName")}
           />
           {errors.profileName && <FormError id="profileName-error">{errors.profileName.message}</FormError>}
+          {!errors.profileName && apiErrorField === "profileName" && apiError && (
+            <FormError id="profileName-error">{apiError}</FormError>
+          )}
           <p className="text-xs text-muted-foreground">
             Imię może zawierać tylko litery, spacje i myślniki (2-50 znaków)
           </p>
@@ -129,15 +147,18 @@ export function ProfileFormComponent({
           </Label>
           <DatePicker
             id="dateOfBirth"
-            min={min}
-            max={max}
-            error={!!errors.dateOfBirth}
-            aria-invalid={!!errors.dateOfBirth}
-            aria-describedby={errors.dateOfBirth ? "dateOfBirth-error" : undefined}
+            error={!!errors.dateOfBirth || apiErrorField === "dateOfBirth"}
+            aria-invalid={!!errors.dateOfBirth || apiErrorField === "dateOfBirth"}
+            aria-describedby={errors.dateOfBirth || apiErrorField === "dateOfBirth" ? "dateOfBirth-error" : undefined}
             disabled={isFormDisabled}
             {...register("dateOfBirth")}
+            min={minDate}
+            max={maxDate}
           />
           {errors.dateOfBirth && <FormError id="dateOfBirth-error">{errors.dateOfBirth.message}</FormError>}
+          {!errors.dateOfBirth && apiErrorField === "dateOfBirth" && apiError && (
+            <FormError id="dateOfBirth-error">{apiError}</FormError>
+          )}
           <p className="text-xs text-muted-foreground">Dziecko musi mieć od 3 do 18 lat</p>
         </div>
 

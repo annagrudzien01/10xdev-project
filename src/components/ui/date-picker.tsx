@@ -1,10 +1,15 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface DatePickerProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface DatePickerProps {
   error?: boolean;
   min?: string;
   max?: string;
+  id?: string;
+  disabled?: boolean;
+  className?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
 }
 
 /**

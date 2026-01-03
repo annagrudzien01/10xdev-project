@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { toast } from "sonner";
 import HeaderAuthenticated from "@/components/auth/HeaderAuthenticated";
 import { ProfileFormComponent } from "./ProfileFormComponent";
 import { useProfileQuery } from "@/lib/hooks/useProfileQuery";
@@ -20,6 +19,8 @@ interface EditProfilePageContentProps {
  */
 function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
   const [userEmail, setUserEmail] = useState<string>("");
+  const [apiError, setApiError] = useState<string>("");
+  const [apiErrorField, setApiErrorField] = useState<"profileName" | "dateOfBirth" | undefined>(undefined);
 
   // Fetch user email for header
   useEffect(() => {
@@ -48,6 +49,10 @@ function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
 
   // Handle form save
   const handleSaveSuccess = async (data: ProfileFormValues) => {
+    // Clear any previous errors
+    setApiError("");
+    setApiErrorField(undefined);
+
     try {
       await updateMutation.mutateAsync({
         profileId,
@@ -57,45 +62,38 @@ function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
         },
       });
 
-      toast.success("Profil zaktualizowany", {
-        description: `Zmiany w profilu ${data.profileName} zostały zapisane.`,
-      });
-
-      // Redirect to profiles list after short delay
-      setTimeout(() => {
-        window.location.href = "/profiles";
-      }, 1000);
+      // Redirect to profiles list on success
+      window.location.href = "/profiles";
     } catch (error) {
       // Error handling
       if (error && typeof error === "object" && "status" in error) {
         const err = error as { status: number; message: string; details?: Record<string, unknown> };
 
         if (err.status === 400) {
-          toast.error("Nieprawidłowe dane", {
-            description: err.message || "Sprawdź poprawność wprowadzonych danych.",
-          });
+          setApiError(err.message || "Sprawdź poprawność wprowadzonych danych.");
         } else if (err.status === 409) {
-          toast.error("Profil już istnieje", {
-            description: "Profil o tej nazwie już istnieje. Wybierz inną nazwę.",
-          });
+          setApiError("Profil o tej nazwie już istnieje. Wybierz inną nazwę.");
+          setApiErrorField("profileName");
         } else if (err.status === 404) {
-          toast.error("Profil nie znaleziony", {
-            description: "Ten profil nie istnieje lub został usunięty.",
-          });
+          setApiError("Ten profil nie istnieje lub został usunięty.");
         } else if (err.status === 422 && err.details) {
-          const errorMessages = Object.values(err.details).join("\n");
-          toast.error("Błąd walidacji", {
-            description: errorMessages,
-          });
+          // Try to map validation errors to specific fields
+          const details = err.details;
+          if (details.profileName) {
+            setApiError(String(details.profileName));
+            setApiErrorField("profileName");
+          } else if (details.dateOfBirth) {
+            setApiError(String(details.dateOfBirth));
+            setApiErrorField("dateOfBirth");
+          } else {
+            const errorMessages = Object.values(details).join(", ");
+            setApiError(errorMessages);
+          }
         } else {
-          toast.error("Wystąpił błąd", {
-            description: "Nie udało się zaktualizować profilu. Spróbuj ponownie później.",
-          });
+          setApiError("Nie udało się zaktualizować profilu. Spróbuj ponownie później.");
         }
       } else {
-        toast.error("Wystąpił nieoczekiwany błąd", {
-          description: "Spróbuj ponownie później.",
-        });
+        setApiError("Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.");
       }
     }
   };
@@ -206,6 +204,8 @@ function EditProfilePageContent({ profileId }: EditProfilePageContentProps) {
             onSaveSuccess={handleSaveSuccess}
             onCancel={handleCancel}
             isSubmitting={updateMutation.isPending}
+            apiError={apiError}
+            apiErrorField={apiErrorField}
           />
         </div>
       </main>
@@ -225,7 +225,7 @@ interface EditProfilePageProps {
  * - Profile name and date of birth editing
  * - Profile deletion with confirmation dialog
  * - Loading and error states
- * - Toast notifications for success/error states
+ * - Inline error messages using FormError component
  * - Protection against deleting profiles with active sessions
  */
 export default function EditProfilePage({ profileId }: EditProfilePageProps) {
