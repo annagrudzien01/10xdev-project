@@ -114,4 +114,3 @@ Wszystkie błędy logujemy przez `console.error` (lub przyszły logger) z timest
 8. **Code review & lint**
 9. **Deploy na środowisko testowe**
 10. **Monitoring** – dodać logi do APM (poza zakresem kodowym).
-
