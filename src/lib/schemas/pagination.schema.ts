@@ -31,4 +31,3 @@ export const paginationParamsSchema = z.object({
  * Inferred TypeScript type from the Zod schema.
  */
 export type PaginationParamsInput = z.infer<typeof paginationParamsSchema>;
-
