@@ -20,7 +20,7 @@ Dzieci mają trudności z przetwarzaniem wzorów rytmicznych; tradycyjne ćwicze
 3. Wybór profilu dziecka po zalogowaniu rodzica.
 4. Sekwencjie dźwięków są zapisane w bazie i każda ma 20 poziomów.
 5. Odtworzenie zagadki audio + podświetlenie klawiszy.
-6. Wirtualne pianinko (1 oktawa, monofoniczne, obsługa mysz/dotyk, kolory + litery).
+6. Wirtualne pianinko (1 oktawa,obsługa mysz/dotyk, kolory + litery).
 7. Panel slotów pokazujący długość brakującej sekwencji.
 8. Przycisk „Sprawdź” (aktywny po uzupełnieniu slotów) i „Wyczyść”.
 9. Walidacja kolejności dźwięków, 3 próby na zadanie, punktacja 10/5/2/0.

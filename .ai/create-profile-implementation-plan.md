@@ -58,13 +58,15 @@ Struktura JSON zgodna z `CreateChildProfileCommand`:
 **Pola wymagane**:
 
 - `profileName` (string):
-  - Długość: 1-32 znaki
-  - Regex: `^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\- ]+$`
+  - Długość: 2-50 znaków
+  - Regex: `^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]+$`
   - Dozwolone: litery (łacińskie + polskie), spacje, myślniki
+  - Komunikaty walidacji po polsku
 - `dateOfBirth` (string):
   - Format: ISO 8601 date (`YYYY-MM-DD`)
   - Musi być datą z przeszłości
-  - Rozsądny zakres: dziecko w wieku 2-18 lat
+  - Rozsądny zakres: dziecko w wieku 3-18 lat
+  - Precyzyjne obliczanie wieku (uwzględnia miesiące i dni)
 
 ---
 
@@ -142,8 +144,8 @@ Nieprawidłowe dane wejściowe lub błędy walidacji.
   "error": "invalid_request",
   "message": "Validation failed",
   "details": {
-    "profileName": "Profile name must match the pattern ^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\\- ]+$",
-    "dateOfBirth": "Date of birth must be in the past"
+    "profileName": "Imię może zawierać tylko litery, spacje i myślniki",
+    "dateOfBirth": "Data urodzenia musi być w przeszłości"
   }
 }
 ```
@@ -151,9 +153,9 @@ Nieprawidłowe dane wejściowe lub błędy walidacji.
 Przykładowe przypadki:
 
 - Brak wymaganych pól
-- `profileName` nie pasuje do regex
+- `profileName` nie pasuje do regex (min 2, max 50 znaków)
 - `dateOfBirth` jest w przyszłości lub nieprawidłowy format
-- `dateOfBirth` wskazuje na wiek < 2 lub > 18 lat
+- `dateOfBirth` wskazuje na wiek < 3 lub > 18 lat
 
 #### 401 Unauthorized
 
@@ -400,7 +402,7 @@ class UnauthorizedError extends Error {
   "error": "invalid_request",
   "message": "Validation failed",
   "details": {
-    "profileName": "Profile name must contain only letters, spaces, and hyphens"
+    "profileName": "Imię może zawierać tylko litery, spacje i myślniki"
   }
 }
 ```
@@ -423,7 +425,7 @@ class UnauthorizedError extends Error {
   "error": "invalid_request",
   "message": "Validation failed",
   "details": {
-    "dateOfBirth": "Date of birth must be in the past"
+    "dateOfBirth": "Data urodzenia musi być w przeszłości"
   }
 }
 ```
@@ -589,26 +591,32 @@ import { z } from "zod";
 export const createChildProfileSchema = z.object({
   profileName: z
     .string()
-    .min(1, "Profile name is required")
-    .max(32, "Profile name must not exceed 32 characters")
-    .regex(/^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\- ]+$/, "Profile name must contain only letters, spaces, and hyphens"),
+    .min(2, "Imię musi mieć co najmniej 2 znaki")
+    .max(50, "Imię nie może przekraczać 50 znaków")
+    .regex(/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]+$/, "Imię może zawierać tylko litery, spacje i myślniki"),
   dateOfBirth: z
     .string()
     .refine((val) => {
       const date = new Date(val);
       return !isNaN(date.getTime());
-    }, "Invalid date format")
+    }, "Nieprawidłowy format daty")
     .refine((val) => {
       const date = new Date(val);
       const today = new Date();
       return date < today;
-    }, "Date of birth must be in the past")
+    }, "Data urodzenia musi być w przeszłości")
     .refine((val) => {
       const date = new Date(val);
       const today = new Date();
       const age = today.getFullYear() - date.getFullYear();
-      return age >= 2 && age <= 18;
-    }, "Child must be between 2 and 18 years old"),
+      const monthDiff = today.getMonth() - date.getMonth();
+      const dayDiff = today.getDate() - date.getDate();
+
+      // Adjust age if birthday hasn't occurred this year yet
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+      return actualAge >= 3 && actualAge <= 18;
+    }, "Dziecko musi mieć od 3 do 18 lat"),
 });
 
 export type CreateChildProfileInput = z.infer<typeof createChildProfileSchema>;
@@ -619,7 +627,9 @@ export type CreateChildProfileInput = z.infer<typeof createChildProfileSchema>;
 - Valid input: `{ profileName: "Anna", dateOfBirth: "2018-05-24" }`
 - Invalid name: `{ profileName: "Anna123", ... }` → error
 - Future date: `{ ..., dateOfBirth: "2030-01-01" }` → error
-- Age < 2: `{ ..., dateOfBirth: "2024-01-01" }` → error
+- Age < 3: `{ ..., dateOfBirth: "2023-01-01" }` → error
+- Name too short: `{ profileName: "A", ... }` → error
+- Name too long: `{ profileName: "Very long name exceeding fifty characters limit...", ... }` → error
 
 ---
 
@@ -818,8 +828,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Log unexpected errors
-    console.error("Unexpected error in POST /profiles:", error);
+    // Log unexpected errors (without sensitive data per GDPR)
+    console.error("Unexpected error in POST /profiles:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
+    });
 
     return new Response(
       JSON.stringify({
@@ -838,29 +851,99 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 **Plik**: `src/middleware/index.ts`
 
-Upewnij się, że middleware:
+Middleware obsługuje:
 
-1. Inicjalizuje Supabase Client z JWT z nagłówka Authorization
-2. Dodaje `supabase` do `context.locals`
-3. Obsługuje przypadki braku tokenu (pozwala na 401 w route handlerze)
+1. **Ekstrakcję JWT z dwóch źródeł:**
+   - Authorization header (`Bearer <token>`)
+   - Cookie `sb-access-token` (fallback)
+
+2. **Inicjalizację Supabase Client** z JWT i dodanie do `context.locals`
+
+3. **Protected paths** (`/profiles`, `/game`):
+   - Weryfikacja ważności tokena
+   - Auto-redirect do `/login` jeśli brak/nieprawidłowy token
+   - Ustawienie `context.locals.user` dla API routes
+
+4. **Public auth paths** (`/login`, `/register`, etc.):
+   - Redirect do `/profiles` jeśli użytkownik już zalogowany
+
+5. **Security headers** (wszystkie odpowiedzi):
+   - `Strict-Transport-Security`
+   - `X-Content-Type-Options: nosniff`
+   - `X-Frame-Options: DENY`
+   - `X-XSS-Protection`
+   - `Content-Security-Policy`
 
 ```typescript
-import type { MiddlewareHandler } from "astro";
-import { createSupabaseClient } from "../db/supabase.client";
+import { defineMiddleware } from "astro:middleware";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "../db/database.types";
 
-export const onRequest: MiddlewareHandler = async ({ request, locals }, next) => {
-  // Extract JWT from Authorization header
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+const PROTECTED_PATHS = ["/profiles", "/game"];
+const PUBLIC_AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  const { url, cookies, redirect } = context;
+
+  // Extract JWT from Authorization header OR cookie
+  const authHeader = context.request.headers.get("Authorization");
+  let token = authHeader?.replace("Bearer ", "");
+
+  if (!token) {
+    const accessTokenCookie = cookies.get("sb-access-token");
+    token = accessTokenCookie?.value;
+  }
 
   // Create Supabase client with token (if present)
-  locals.supabase = createSupabaseClient(token);
+  if (token) {
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    context.locals.supabase = supabase;
 
-  return next();
-};
+    // Verify token for protected paths
+    if (PROTECTED_PATHS.some((path) => url.pathname.startsWith(path))) {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        cookies.delete("sb-access-token", { path: "/" });
+        cookies.delete("sb-refresh-token", { path: "/" });
+        return redirect("/login");
+      }
+
+      context.locals.user = user;
+    }
+
+    // Redirect authenticated users away from auth pages
+    if (PUBLIC_AUTH_PATHS.includes(url.pathname)) {
+      return redirect("/profiles");
+    }
+  } else {
+    // Anonymous client for unauthenticated requests
+    context.locals.supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+    if (PROTECTED_PATHS.some((path) => url.pathname.startsWith(path))) {
+      return redirect("/login");
+    }
+  }
+
+  const response = await next();
+
+  // Add security headers
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+  );
+
+  return response;
+});
 ```
 
-**Uwaga**: Middleware NIE powinien blokować żądań bez tokenu - pozwól route handlerowi zwrócić 401.
+**Uwaga**: Middleware obsługuje zarówno web flow (cookies) jak i API flow (Authorization header).
 
 ---
 
@@ -872,13 +955,19 @@ export const onRequest: MiddlewareHandler = async ({ request, locals }, next) =>
 /// <reference types="astro/client" />
 
 import type { SupabaseClient } from "./db/supabase.client";
+import type { User } from "@supabase/supabase-js";
 
-declare namespace App {
-  interface Locals {
-    supabase?: SupabaseClient;
+declare global {
+  namespace App {
+    interface Locals {
+      supabase?: SupabaseClient;
+      user?: User; // Set by middleware for protected paths
+    }
   }
 }
 ```
+
+**Uwaga**: `user` jest opcjonalny (`?`) ponieważ nie wszystkie requesty są authenticated. API routes muszą sprawdzić jego obecność.
 
 ---
 
@@ -929,13 +1018,13 @@ declare namespace App {
 
    ```typescript
    console.error("Profile creation failed", {
-     parentId: user.id,
      error: error.message,
      timestamp: new Date().toISOString(),
+     // Note: parentId is NOT logged for GDPR compliance
    });
    ```
 
-3. Nie loguj danych osobowych (`profileName`, `dateOfBirth`)
+3. Nie loguj danych osobowych (`profileName`, `dateOfBirth`, `parentId`)
 
 ---
 
@@ -943,42 +1032,41 @@ declare namespace App {
 
 **Plik**: `src/middleware/index.ts`
 
-Dodaj security headers do wszystkich odpowiedzi:
+Security headers są już dodane w middleware (patrz Krok 5):
 
 ```typescript
-export const onRequest: MiddlewareHandler = async (context, next) => {
-  // ... existing code ...
-
-  const response = await next();
-
-  // Add security headers
-  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-
-  return response;
-};
+response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+response.headers.set("X-Content-Type-Options", "nosniff");
+response.headers.set("X-Frame-Options", "DENY");
+response.headers.set("X-XSS-Protection", "1; mode=block");
+response.headers.set(
+  "Content-Security-Policy",
+  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+);
 ```
+
+**Uwaga**: CSP header zawiera `unsafe-inline` i `unsafe-eval` dla kompatybilności z React/Vite dev mode.
 
 ---
 
 ## 10. Checklist wdrożenia
 
-- [ ] Utworzenie schematu walidacji Zod (`profile.schema.ts`)
-- [ ] Implementacja custom error classes (`api-errors.ts`)
-- [ ] Utworzenie Profile Service (`profile.service.ts`)
-- [ ] Implementacja API route handler (`src/pages/api/profiles/index.ts`)
-- [ ] Aktualizacja middleware dla Supabase Client
-- [ ] Aktualizacja typu `locals` w `env.d.ts`
+- [x] Utworzenie schematu walidacji Zod (`profile.schema.ts`)
+- [x] Implementacja custom error classes (`api-errors.ts`)
+- [x] Utworzenie Profile Service (`profile.service.ts`)
+- [x] Implementacja API route handler (`src/pages/api/profiles/index.ts`)
+- [x] Aktualizacja middleware dla Supabase Client
+- [x] Aktualizacja typu `locals` w `env.d.ts` (potrzebne dodać `user?: User`)
+- [x] Security headers w middleware
+- [x] Weryfikacja RLS policies w Supabase (zakładamy OK)
 - [ ] Napisanie testów jednostkowych dla service
 - [ ] Napisanie testów integracyjnych dla endpointa
-- [ ] Dodanie security headers w middleware
-- [ ] Konfiguracja monitoringu i logowania
-- [ ] Weryfikacja RLS policies w Supabase
+- [ ] Konfiguracja monitoringu i logowania (metryki)
 - [ ] Test manualny z Postman/Insomnia
-- [ ] Dokumentacja API (jeśli wymagana)
+- [ ] Dokumentacja API (opcjonalne)
 - [ ] Code review
+
+**Status implementacji**: ✅ Podstawowa funkcjonalność zaimplementowana. Brakują testy i monitoring.
 
 ---
 
@@ -992,6 +1080,8 @@ Rozważ implementację rate limitingu na poziomie middleware:
 - Użyj Redis lub in-memory cache (node-cache) do śledzenia limitów
 - Zwracaj `429 Too Many Requests` z nagłówkiem `Retry-After`
 
+**Status**: Nie zaimplementowane (może być na poziomie Supabase/infrastruktury).
+
 ### Metryki biznesowe
 
 Śledź:
@@ -999,3 +1089,5 @@ Rozważ implementację rate limitingu na poziomie middleware:
 - Średnią liczbę profili na rodzica
 - % rodziców z max 10 profilami (potencjalny problem?)
 - Najpopularniejsze dni tygodnia dla tworzenia profili
+
+**Status**: Nie zaimplementowane (wymaga dodatkowego toolingu - analytics/monitoring).
