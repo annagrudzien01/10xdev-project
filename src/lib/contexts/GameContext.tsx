@@ -82,12 +82,11 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     (note: string) => {
       if (!currentTask) return;
 
-      // Remove octave number if present (C4 -> C)
-      const noteWithoutOctave = note.replace(/\d+$/, "");
+      // Note już zawiera oktawę (np. "C4") - używamy bez zmian
 
       // Only add if we haven't filled all slots
       if (selectedNotes.length < currentTask.expectedSlots) {
-        setSelectedNotes((prev) => [...prev, noteWithoutOctave]);
+        setSelectedNotes((prev) => [...prev, note]);
       }
     },
     [currentTask, selectedNotes.length]
@@ -126,10 +125,10 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
       }
 
       const data: GeneratePuzzleDTO = await response.json();
-
-      // Parse sequence beginning (format: "C-E-G" -> ["C", "E", "G"])
+      
+      // Parse sequence beginning - już zawiera oktawy (format: "C4-E4-G4")
       const sequenceArray = data.sequenceBeginning.split("-");
-
+      
       setCurrentTask({
         sequenceId: data.sequenceId,
         levelId: data.levelId,
@@ -156,8 +155,8 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
 
     try {
       setIsSubmitting(true);
-
-      // Convert notes array to string format (["A", "B", "C"] -> "A-B-C")
+      
+      // Convert notes array to string format (["A4", "B4", "C5"] -> "A4-B4-C5")
       const answerString = selectedNotes.join("-");
 
       const response = await fetch(`/api/profiles/${profileId}/tasks/${currentTask.sequenceId}/submit`, {

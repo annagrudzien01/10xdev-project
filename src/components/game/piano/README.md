@@ -100,6 +100,7 @@ Komponenty pianina używają formatu nut Tone.js:
 - Wykorzystuje hook `usePianoSampler` z Tone.js
 - Monofoniczne odtwarzanie (jedna nuta na raz)
 - Automatyczne odtwarzanie sekwencji z synchronizacją wizualną
+- Sample-based playback (pliki MP3 z prawdziwego pianina)
 
 ### 📱 Responsywność
 
@@ -140,8 +141,25 @@ Pianino jest automatycznie wyłączane gdy:
 
 ### Podświetlenie
 
-- Białe klawisze: `bg-yellow-200`, `border-yellow-400`
-- Czarne klawisze: `bg-yellow-600`, `border-yellow-700`
+Każda nuta ma unikalny kolor podświetlenia zdefiniowany w `NOTE_HIGHLIGHT_COLORS`:
+
+- **C**: niebieski (`bg-blue-400`)
+- **C#**: ciemnoniebieski (`bg-blue-600`)
+- **D**: zielony (`bg-green-400`)
+- **D#**: ciemnozielony (`bg-green-600`)
+- **E**: żółty (`bg-yellow-400`)
+- **F**: czerwony (`bg-red-400`)
+- **F#**: ciemnoczerwony (`bg-red-600`)
+- **G**: fioletowy (`bg-purple-400`)
+- **G#**: ciemnofioletowy (`bg-purple-600`)
+- **A**: pomarańczowy (`bg-orange-400`)
+- **A#**: ciemnopomarańczowy (`bg-orange-600`)
+- **B/H**: różowy (`bg-pink-400`)
+
+Efekty podświetlenia:
+- Skalowanie: `scale-105`
+- Cień: `shadow-2xl` z kolorowym odcieniem
+- Czas trwania: 300ms przy kliknięciu, synchronizowany z dźwiękiem podczas playback
 
 ## Obsługa błędów
 

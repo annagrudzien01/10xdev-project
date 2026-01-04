@@ -25,20 +25,20 @@ begin;
 insert into public.sequence (sequence_beginning, sequence_end, level_id)
 values
     -- 15 items for level 1
-    ('C-E-G-C-E-G', 'C-E', 1),
-    ('A-C-E-A-C-E', 'A-C', 1),
-    ('G-H-D-G-H-D', 'G-H', 1),
-    ('G-D-G-D-G-D', 'G-D', 1),
-    ('E-E-G-E-E-G', 'E-E', 1),
-    ('C-C-E-C-C-E', 'C-C', 1),
-    ('G-G-H-G-G-H', 'G-G', 1),
-    ('A-A-B-A-A-B', 'A-A', 1),
-    ('E-E-F-E-E-F', 'E-E', 1),
-    ('C-C-D-C-C-D', 'C-C', 1),
-    ('G-G-A-G-G-A', 'G-G', 1),
-    ('B-B-C-B-B-C', 'B-B', 1),
-    ('F-F-G-F-F-G', 'F-F', 1),
-    ('D-D-E-D-D-E', 'D-D', 1),
-    ('A-A-B-A-A-B', 'A-A', 1);
+    ('C4-E4-G4-C4-E4-G4', 'C4-E4', 1),
+    ('A4-C4-E4-A4-C4-E4', 'A4-C4', 1),
+    ('G4-B4-D4-G4-B4-D4', 'G4-B4', 1),
+    ('G4-D4-G4-D4-G4-D4', 'G4-D4', 1),
+    ('E4-E4-G4-E4-E4-G4', 'E4-E4', 1),
+    ('C4-C4-E4-C4-C4-E4', 'C4-C4', 1),
+    ('G4-G4-B4-G4-G4-B4', 'G4-G4', 1),
+    ('A4-A4-B4-A4-A4-B4', 'A4-A4', 1),
+    ('E4-E4-F4-E4-E4-F4', 'E4-E4', 1),
+    ('C4-C4-D4-C4-C4-D4', 'C4-C4', 1),
+    ('G4-G4-A4-G4-G4-A4', 'G4-G4', 1),
+    ('B4-B4-C4-B4-B4-C4', 'B4-B4', 1),
+    ('F4-F4-G4-F4-F4-G4', 'F4-F4', 1),
+    ('D4-D4-E4-D4-D4-E4', 'D4-D4', 1),
+    ('A4-A4-B4-A4-A4-B4', 'A4-A4', 1);
 
 commit;

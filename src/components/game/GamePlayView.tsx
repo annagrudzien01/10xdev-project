@@ -38,6 +38,7 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
 
   const [isLoadingTask, setIsLoadingTask] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [replayTrigger, setReplayTrigger] = useState(0);
 
   /**
    * Load initial task on mount
@@ -63,9 +64,8 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
    */
   const handleKeyPress = useCallback(
     (note: string) => {
-      // Remove octave number from note (C4 -> C)
-      const noteWithoutOctave = note.replace(/\d+$/, "");
-      addNote(noteWithoutOctave);
+      // Note już ma oktawę (np. "C4") - przekazujemy bez zmian
+      addNote(note);
     },
     [addNote]
   );
@@ -75,6 +75,7 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
    */
   const handlePlaySequence = useCallback(() => {
     setIsPlayingSequence(true);
+    setReplayTrigger(prev => prev + 1); // Trigger re-render of Piano
   }, [setIsPlayingSequence]);
 
   /**
@@ -135,8 +136,8 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
     }
   }, [submitAnswer, currentLevel, loadNextTask]);
 
-  // Prepare sequence for piano (add octave numbers)
-  const sequenceToPlay = currentTask ? currentTask.sequenceBeginning.map((note) => note + "4") : [];
+  // Prepare sequence for piano (nuty już zawierają oktawy z bazy)
+  const sequenceToPlay = currentTask ? currentTask.sequenceBeginning : [];
 
   // Calculate control button states
   const canPlaySequence = !isPlayingSequence && !isLoadingTask && currentTask !== null;
@@ -209,6 +210,7 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
           {/* Piano */}
           <div className="flex justify-center">
             <Piano
+              key={replayTrigger} // Force re-mount on replay
               onKeyPress={handleKeyPress}
               disabled={isPlayingSequence || isSubmitting || isLoadingTask}
               sequenceToPlay={sequenceToPlay}

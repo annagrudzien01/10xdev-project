@@ -1,7 +1,7 @@
 /**
  * WhiteKeysRow Component
  *
- * Kontener dla białych klawiszy pianina (C, D, E, F, G, A, B),
+ * Kontener dla białych klawiszy pianina (C, D, E, F, G, A, H),
  * rozmieszczonych równomiernie w jednym rzędzie.
  */
 

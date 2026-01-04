@@ -11,11 +11,11 @@ import type { BlackKeysRowProps, PianoKeyData } from "./piano.types";
 
 export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: BlackKeysRowProps) {
   return (
-    <div className="absolute top-0 left-0 right-0 flex flex-row justify-center pointer-events-none z-20">
-      <div className="flex flex-row">
+    <div className="absolute top-0 left-0 right-0 flex flex-row justify-center z-30">
+      <div className="flex flex-row pointer-events-none">
         {/* C# - nachodzi na C i D */}
         <div className="relative w-12 md:w-16 lg:w-20">
-          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto z-20">
+          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto">
             <PianoKey
               note={keys[0].note}
               label={keys[0].label}
@@ -29,7 +29,7 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
 
         {/* D# - nachodzi na D i E */}
         <div className="relative w-12 md:w-16 lg:w-20">
-          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto z-20">
+          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto">
             <PianoKey
               note={keys[1].note}
               label={keys[1].label}
@@ -46,7 +46,7 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
 
         {/* F# - nachodzi na F i G */}
         <div className="relative w-12 md:w-16 lg:w-20">
-          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto z-20">
+          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto">
             <PianoKey
               note={keys[2].note}
               label={keys[2].label}
@@ -60,7 +60,7 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
 
         {/* G# - nachodzi na G i A */}
         <div className="relative w-12 md:w-16 lg:w-20">
-          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto z-20">
+          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto">
             <PianoKey
               note={keys[3].note}
               label={keys[3].label}
@@ -74,7 +74,7 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
 
         {/* A# - nachodzi na A i B */}
         <div className="relative w-12 md:w-16 lg:w-20">
-          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto z-20">
+          <div className="absolute right-0 top-0 translate-x-1/2 pointer-events-auto">
             <PianoKey
               note={keys[4].note}
               label={keys[4].label}
@@ -87,6 +87,9 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
         </div>
 
         {/* B - brak czarnego klawisza po B */}
+        <div className="relative w-12 md:w-16 lg:w-20" />
+        
+        {/* C5 - brak czarnego klawisza */}
         <div className="relative w-12 md:w-16 lg:w-20" />
       </div>
     </div>

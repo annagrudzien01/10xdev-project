@@ -66,7 +66,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         cookies.delete("sb-refresh-token", { path: "/" });
         return redirect("/login");
       }
-      
+
       // Set user in locals for API routes
       context.locals.user = user;
     }
