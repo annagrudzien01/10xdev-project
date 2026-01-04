@@ -80,7 +80,7 @@ function PianoKeyComponent({ note, label, color, isHighlighted, isDisabled, onCl
   const stateClasses = `
     ${isHighlighted ? `${highlightColorClasses} !opacity-100 scale-[0.98]` : ""}
     ${isPressed ? "scale-[0.98] brightness-90" : ""}
-    ${isDisabled && !isHighlighted ? "opacity-50 cursor-not-allowed" : ""}
+    ${isDisabled && !isHighlighted ? "brightness-90 cursor-not-allowed" : ""}
     ${!isDisabled ? "cursor-pointer hover:brightness-110 active:scale-[0.98] active:brightness-90" : "cursor-default"}
   `;
 
