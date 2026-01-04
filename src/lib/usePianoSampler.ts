@@ -6,46 +6,65 @@ interface UsePianoSamplerOptions {
 }
 
 export function usePianoSampler(options?: UsePianoSamplerOptions) {
-  const synthRef = useRef<Tone.PolySynth | null>(null);
+  const samplerRef = useRef<Tone.Sampler | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Użyj PolySynth z oscylatorem dla lepszego brzmienia pianina
-    synthRef.current = new Tone.PolySynth(Tone.Synth, {
-      oscillator: options?.oscillator || {
-        type: "triangle",
+    // Inicjalizacja audio context
+    const initAudio = async () => {
+      await Tone.start();
+      console.log("Audio context started");
+    };
+
+    // Użyj Sampler z lokalnymi plikami MP3
+    samplerRef.current = new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        A4: "A4.mp3",
       },
-      envelope: {
-        attack: 0.005,
-        decay: 0.3,
-        sustain: 0.4,
-        release: 1.2,
+      release: 1,
+      baseUrl: "/audio/piano/", // Lokalne pliki w public/audio/piano
+      onload: () => {
+        console.log("Piano samples loaded");
+        setIsLoaded(true);
       },
     }).toDestination();
 
-    setIsLoaded(true);
+    initAudio();
 
     return () => {
-      synthRef.current?.dispose();
-      synthRef.current = null;
+      samplerRef.current?.dispose();
+      samplerRef.current = null;
     };
   }, []);
 
-  const playNote = (note: string, duration = "8n") => {
-    if (!synthRef.current || !isLoaded) {
+  const playNote = (note: string, duration = "4n") => {
+    if (!samplerRef.current || !isLoaded) {
       return;
     }
-    synthRef.current.triggerAttackRelease(note, duration);
+
+    try {
+      // Sampler automatycznie zarządza głosami - bez problemów z polyphony!
+      samplerRef.current.triggerAttackRelease(note, "0.5", Tone.now());
+    } catch (error) {
+      console.error("Error playing note:", error);
+    }
   };
 
-  const playSequence = (notes: string[], duration = "8n", interval = 0.5) => {
-    if (!synthRef.current || !isLoaded) {
+  const playSequence = (notes: string[], duration = "4n", interval = 0.5) => {
+    if (!samplerRef.current || !isLoaded) {
       return;
     }
 
-    const now = Tone.now();
     notes.forEach((note, index) => {
-      synthRef.current?.triggerAttackRelease(note, duration, now + index * interval);
+      setTimeout(
+        () => {
+          playNote(note);
+        },
+        index * interval * 1000
+      );
     });
   };
 

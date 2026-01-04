@@ -14,10 +14,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   // Check if user is authenticated
   const supabase = locals.supabase;
-  
+
   // Get user from supabase
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
   if (authError || !user) {
     const errorResponse: APIErrorResponse = {
       error: "unauthorized",

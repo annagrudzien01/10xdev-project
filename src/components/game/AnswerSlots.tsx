@@ -17,7 +17,25 @@ interface AnswerSlotsProps {
 }
 
 /**
- * Maps note names to colors (matching piano key colors)
+ * Maps note names (from Tone.js) to display labels (Polish notation)
+ */
+const NOTE_TO_LABEL: Record<string, string> = {
+  C: "C",
+  "C#": "C#",
+  D: "D",
+  "D#": "D#",
+  E: "E",
+  F: "F",
+  "F#": "F#",
+  G: "G",
+  "G#": "G#",
+  A: "A",
+  "A#": "A#",
+  B: "H", // B w Tone.js = H w notacji polskiej
+};
+
+/**
+ * Maps display labels to colors (matching piano key colors)
  */
 const NOTE_COLORS: Record<string, string> = {
   C: "bg-blue-200 border-blue-400 text-blue-900",
@@ -31,7 +49,7 @@ const NOTE_COLORS: Record<string, string> = {
   "G#": "bg-gray-700 border-gray-900 text-white",
   A: "bg-orange-200 border-orange-400 text-orange-900",
   "A#": "bg-gray-700 border-gray-900 text-white",
-  B: "bg-pink-200 border-pink-400 text-pink-900",
+  H: "bg-pink-200 border-pink-400 text-pink-900", // H = B w notacji europejskiej
 };
 
 function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: AnswerSlotsProps) {
@@ -46,13 +64,17 @@ function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: A
     <div className="flex flex-row gap-2 md:gap-3 justify-center items-center" role="list" aria-label="Sloty odpowiedzi">
       {slots.map((note, index) => {
         const isEmpty = note === null;
-        const colorClasses = note ? NOTE_COLORS[note] || "bg-gray-200 border-gray-400" : "bg-white border-gray-300";
+        // Usuń oktawę (C4 -> C, B4 -> B)
+        const noteWithoutOctave = note ? note.replace(/\d+$/, "") : null;
+        // Konwertuj na label (B -> H)
+        const displayLabel = noteWithoutOctave ? NOTE_TO_LABEL[noteWithoutOctave] || noteWithoutOctave : null;
+        const colorClasses = displayLabel ? NOTE_COLORS[displayLabel] || "bg-gray-200 border-gray-400" : "bg-white border-gray-300";
 
         return (
           <div
             key={index}
             role="listitem"
-            aria-label={isEmpty ? `Slot ${index + 1}: pusty` : `Slot ${index + 1}: nuta ${note}`}
+            aria-label={isEmpty ? `Slot ${index + 1}: pusty` : `Slot ${index + 1}: nuta ${displayLabel}`}
             className={`
               w-12 h-12 md:w-16 md:h-16
               rounded-lg border-2
@@ -64,7 +86,7 @@ function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: A
               ${disabled ? "opacity-50" : ""}
             `}
           >
-            {note || <span className="text-gray-400 text-lg md:text-xl">•</span>}
+            {displayLabel || <span className="text-gray-400 text-lg md:text-xl">•</span>}
           </div>
         );
       })}

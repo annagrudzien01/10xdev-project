@@ -12,7 +12,7 @@ import { usePianoSampler } from "../../../lib/usePianoSampler";
 import { PianoKeysContainer } from "./PianoKeysContainer";
 import { BlackKeysRow } from "./BlackKeysRow";
 import { WhiteKeysRow } from "./WhiteKeysRow";
-import { WHITE_KEYS, BLACK_KEYS, SEQUENCE_INTERVAL, NOTE_DURATION } from "./piano.constants";
+import { WHITE_KEYS, BLACK_KEYS, SEQUENCE_INTERVAL, NOTE_DURATION, HIGHLIGHT_DURATION } from "./piano.constants";
 import type { PianoProps } from "./piano.types";
 
 export function Piano({
@@ -54,14 +54,17 @@ export function Piano({
           // Odtwórz dźwięk
           playNote(note, NOTE_DURATION);
 
-          // Czekaj na następną nutę
+          // Zgaś podświetlenie po HIGHLIGHT_DURATION
+          setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+
+          // Czekaj na następną nutę (dłużej niż trwa podświetlenie)
           if (i < sequence.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, SEQUENCE_INTERVAL * 1000));
           }
         }
 
-        // Usuń podświetlenie po ostatniej nucie
-        await new Promise((resolve) => setTimeout(resolve, SEQUENCE_INTERVAL * 1000 * 0.8));
+        // Czekaj chwilę po ostatniej nucie
+        await new Promise((resolve) => setTimeout(resolve, SEQUENCE_INTERVAL * 1000 * 0.5));
         setLocalHighlightedKeys([]);
         setIsPlaying(false);
 
@@ -88,6 +91,10 @@ export function Piano({
         // Odtwórz dźwięk
         playNote(note, NOTE_DURATION);
 
+        // Podświetl klawisz na chwilę
+        setLocalHighlightedKeys([note]);
+        setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+
         // Wywołaj callback rodzica
         onKeyPress(note);
       } catch (err) {
@@ -111,7 +118,7 @@ export function Piano({
   const isPianoDisabled = disabled || !isLoaded || isPlaying;
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full" role="region" aria-label="Pianino" aria-busy={isPlaying}>
+    <div className="flex flex-col items-center gap-4 w-full p-2" role="region" aria-label="Pianino" aria-busy={isPlaying}>
       {/* Komunikat ładowania */}
       {!isLoaded && <div className="text-sm text-gray-600 animate-pulse">Ładowanie dźwięków...</div>}
 

@@ -949,6 +949,7 @@ const handleKeyInteraction = (note: string) => {
    };
    ```
 4. Zaimplementuj funkcję `handlePlaySequence`:
+
    ```typescript
    const handlePlaySequence = async (sequence: string[]) => {
      setIsPlaying(true);
@@ -966,6 +967,7 @@ const handleKeyInteraction = (note: string) => {
      onSequenceComplete?.();
    };
    ```
+
 5. Dodaj `useEffect` dla auto-play:
    ```typescript
    useEffect(() => {
