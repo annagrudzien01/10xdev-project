@@ -48,6 +48,39 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 | PATCH  | `/profiles/{profileId}` | Update name / DOB                      |
 | DELETE | `/profiles/{profileId}` | Delete profile (if no active session)  |
 
+**Query Parameters for GET /profiles:**
+
+| Parameter  | Type    | Default | Max | Description                    |
+| ---------- | ------- | ------- | --- | ------------------------------ |
+| `page`     | number  | 1       | -   | Page number                    |
+| `pageSize` | number  | 20      | 100 | Number of items per page       |
+| `sort`     | string  | -       | -   | Sort field (e.g., "createdAt") |
+
+**List Response – 200 OK**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "profileName": "Anna",
+      "dateOfBirth": "2018-05-24",
+      "currentLevelId": 1,
+      "totalScore": 0,
+      "lastPlayedAt": null,
+      "createdAt": "2025-01-01T10:00:00Z",
+      "updatedAt": "2025-01-01T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
 **Create / Update Request**
 
 ```json
@@ -57,10 +90,29 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 }
 ```
 
+**Single Profile Response – 200 OK (GET /profiles/{profileId})**
+
+```json
+{
+  "id": "uuid",
+  "profileName": "Anna",
+  "dateOfBirth": "2018-05-24",
+  "currentLevelId": 1,
+  "totalScore": 0,
+  "lastPlayedAt": null,
+  "createdAt": "2025-01-01T10:00:00Z",
+  "updatedAt": "2025-01-01T10:00:00Z"
+}
+```
+
 **Success Codes**
 
-- 201 Created – returns full profile
-- 400 Bad Request – validation (name regex, DOB future)
+- 200 OK – success (GET, PATCH, DELETE)
+- 201 Created – returns full profile (POST)
+- 400 Bad Request – validation (name regex, DOB future, missing fields)
+- 401 Unauthorized – not authenticated
+- 403 Forbidden – profile doesn't belong to user
+- 404 Not Found – profile not found
 - 409 Conflict – >10 profiles or duplicate name
 
 ---
@@ -99,33 +151,42 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 {
   "sequenceId": "uuid",
   "levelId": 3,
-  "sequenceBeginning": "C-E-G-G#",
+  "sequenceBeginning": "C4-E4-G4-G#4",
   "expectedSlots": 2
 }
 ```
+
+**Note:** `sequenceBeginning` is returned as a `string` with notes separated by hyphens, including octave numbers (e.g., `"C4-E4-G4"`). Frontend must parse it using `split("-")` to get an array.
 
 **Submit Answer Request**
 
 ```json
 {
-  "answer": "C-E-G-G#"
+  "answer": "C4-E4-G4-G#4"
 }
 ```
+
+**Note:** Answer format must include octave numbers (e.g., `"C4-E4"` instead of `"C-E"`).
 
 **Submit Answer Response – 200 OK**
 
 ```json
 {
-  "score": 0,
+  "score": 10,
   "attemptsUsed": 1,
   "levelCompleted": false,
   "nextLevel": 3
 }
 ```
 
+**Note:** `score` is `10` for correct answer, `0` for incorrect.
+
 Error Codes
 
-- 400 Bad Request – wrong answer format
+- 400 Bad Request – wrong answer format, missing required fields
+- 401 Unauthorized – not authenticated
+- 403 Forbidden – profile doesn't belong to user
+- 404 Not Found – profile or sequence not found
 - 409 Conflict – exceeds 3 attempts (response includes correct sequence)
 
 ---
@@ -185,11 +246,13 @@ Common error codes
 
 ### Performance & Security Notes
 
-- All list endpoints require **pagination** (`pageSize` default 20, max 100) and support **sorting** (whitelist columns).
+- All list endpoints support **pagination** (`pageSize` default 20, max 100) and **sorting** (whitelist columns).
+  - Example: `GET /api/profiles?page=1&pageSize=20&sort=createdAt`
 - DB indexes (`idx_child_parent`, `ux_child_level`, `idx_task_completed_at`) support frequent queries (dashboard, history).
 - HTTPS + HSTS + security headers via middleware.
 - Audit trigger `set_updated_at()` maintains `updated_at` consistency.
+- Row Level Security (RLS) enforces `parent_id = auth.uid()` on all resources.
 
 ---
 
-_Assumptions_: Parent/child IDs come from Supabase Auth; puzzle generation runs inside the `next` task endpoint; scoreboard aggregation via trigger on `task_results`.
+_Assumptions_: Parent/child IDs come from Supabase Auth; puzzle generation runs inside the `next` task endpoint; scoreboard aggregation via trigger on `task_results`. **Note:** Sequence format includes octave numbers (e.g., `"C4-E4-G4"` instead of `"C-E-G"`). Frontend must parse sequences using `split("-")`.
