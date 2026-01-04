@@ -48,7 +48,7 @@ export default function ProfileCard({ profile, onDelete }: ProfileCardProps) {
   const [deleteError, setDeleteError] = useState<string>("");
 
   const handlePlay = useCallback(() => {
-    window.location.href = `/game/start?profileId=${profile.id}`;
+    window.location.href = `/game/play?profileId=${profile.id}`;
   }, [profile.id]);
 
   const handleEdit = useCallback(() => {

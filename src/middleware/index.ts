@@ -9,7 +9,7 @@ const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
  * Protected paths that require authentication
  * Users without valid session will be redirected to /login
  */
-const PROTECTED_PATHS = ["/profiles"];
+const PROTECTED_PATHS = ["/profiles", "/game"];
 
 /**
  * Public authentication paths that should redirect to /profiles if user is already logged in
@@ -66,6 +66,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
         cookies.delete("sb-refresh-token", { path: "/" });
         return redirect("/login");
       }
+      
+      // Set user in locals for API routes
+      context.locals.user = user;
     }
 
     // If user is authenticated and trying to access auth pages, redirect to profiles

@@ -523,7 +523,7 @@ Rytmik to webowa gra edukacyjna dla dzieci rozwijająca umiejętność rozpoznaw
 - `Piano` container:
   - 12 `PianoKey` components
   - Layout: 2 rzędy (white keys bottom, black keys top offset)
-  - White keys: C, D, E, F, G, A, B (7)
+  - White keys: C, D, E, F, G, A(7)
   - Black keys: C#, D#, F#, G#, A# (5)
 
 **PianoKey properties**:

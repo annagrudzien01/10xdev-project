@@ -1,0 +1,62 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GameApp from "@/components/game/GameApp";
+import type { ChildProfileDTO } from "@/types";
+
+// Server-side auth guard (middleware also enforces this)
+const token = Astro.cookies.get("sb-access-token");
+if (!token?.value) {
+  return Astro.redirect("/login");
+}
+
+// Get profileId from query params
+const profileId = Astro.url.searchParams.get("profileId");
+if (!profileId) {
+  return Astro.redirect("/profiles");
+}
+
+// Fetch profile data server-side
+let profile: ChildProfileDTO | null = null;
+let errorMessage: string | null = null;
+
+try {
+  const response = await fetch(`${Astro.url.origin}/api/profiles/${profileId}`, {
+    method: "GET",
+    headers: {
+      Cookie: `sb-access-token=${token.value}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      errorMessage = "Profil nie znaleziony";
+    } else if (response.status === 403) {
+      errorMessage = "Nie masz dostępu do tego profilu";
+    } else {
+      errorMessage = "Nie udało się załadować profilu";
+    }
+  } else {
+    profile = await response.json();
+  }
+} catch (error) {
+  console.error("Error fetching profile:", error);
+  errorMessage = "Wystąpił błąd podczas ładowania profilu";
+}
+
+// If error or no profile, redirect back to profiles
+if (errorMessage || !profile) {
+  return Astro.redirect("/profiles");
+}
+
+export const prerender = false;
+---
+
+<Layout title={`Gra - ${profile.profileName} - Rytmik`}>
+  <GameApp
+    client:only="react"
+    profileId={profile.id}
+    profileName={profile.profileName}
+    initialLevel={profile.currentLevelId}
+    initialScore={profile.totalScore}
+  />
+</Layout>

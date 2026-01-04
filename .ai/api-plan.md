@@ -99,7 +99,7 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 {
   "sequenceId": "uuid",
   "levelId": 3,
-  "sequenceBeginning": "C E G G#",
+  "sequenceBeginning": "C-E-G-G#",
   "expectedSlots": 2
 }
 ```
@@ -108,7 +108,7 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 
 ```json
 {
-  "answer": "C E G G#"
+  "answer": "C-E-G-G#"
 }
 ```
 

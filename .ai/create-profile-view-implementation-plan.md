@@ -47,7 +47,7 @@ Widok „Tworzenie Profilu” (`/profiles/new`) umożliwia rodzicowi dodanie now
   - `CreateChildProfileCommand` (back-end)
   - `ChildProfileDTO` (response)
   - `ProfileFormValues` (dane formularza, równa się schematowi Zod)
-- **Propsy**: 
+- **Propsy**:
   - `mode: "create"`
   - `onSaveSuccess: (data: ProfileFormValues) => void`
   - `onCancel: () => void`
@@ -88,8 +88,8 @@ export interface CreateProfileFormValues extends CreateChildProfileCommand {}
 
 ## 7. Integracja API
 
-| Zapytanie            | Typ żądania                 | Typ odpowiedzi    | Akcja UI                                                                      |
-| -------------------- | --------------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| Zapytanie            | Typ żądania                 | Typ odpowiedzi    | Akcja UI                                                                     |
+| -------------------- | --------------------------- | ----------------- | ---------------------------------------------------------------------------- |
 | `POST /api/profiles` | `CreateChildProfileCommand` | `ChildProfileDTO` | Po sukcesie: redirect, po błędzie: mapowanie kodu status → inline FormError. |
 
 ## 8. Interakcje użytkownika
