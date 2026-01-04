@@ -2,13 +2,15 @@
 
 ## 1. Przegląd
 
-Widok wirtualnego pianina jest kluczowym komponentem interfejsu gry Rytmik. Stanowi główny element interakcji użytkownika z aplikacją, umożliwiając dziecku odtwarzanie melodii i wprowadzanie odpowiedzi na zagadki muzyczne. Pianino jest monofoniczne (jedna nuta na raz), obejmuje jedną oktawę (12 klawiszy: 7 białych + 5 czarnych), obsługuje interakcję myszą i dotykiem, oraz wyświetla litery nut i kolory odpowiadające prawdziwemu pianinu.
+Widok wirtualnego pianina jest kluczowym komponentem interfejsu gry Rytmik. Stanowi główny element interakcji użytkownika z aplikacją, umożliwiając dziecku odtwarzanie melodii i wprowadzanie odpowiedzi na zagadki muzyczne. Pianino jest monofoniczne (jedna nuta na raz), obejmuje 8 białych klawiszy (C4-B4 + C5) + 5 czarnych klawiszy (C#4-A#4), obsługuje interakcję myszą i dotykiem, oraz wyświetla litery nut w notacji europejskiej (H zamiast B).
+
+Pianino wykorzystuje realistyczne dźwięki próbek MP3 z prawdziwego pianina oraz kolorowe podświetlenia - każda nuta ma unikalny kolor podczas odtwarzania sekwencji.
 
 Pianino jest integralną częścią ekranu gry (`/game/play`), gdzie użytkownik:
 
-- Słucha odtwarzanej sekwencji początkowej z podświetlonymi klawiszami
+- Słucha odtwarzanej sekwencji początkowej z kolorowymi podświetlonymi klawiszami
 - Wprowadza swoją odpowiedź klikając odpowiednie klawisze
-- Otrzymuje natychmiastowy feedback wizualny i dźwiękowy
+- Otrzymuje natychmiastowy feedback wizualny (kolorowe animacje) i dźwiękowy
 - Może swobodnie eksperymentować z dźwiękami między zagadkami
 
 ## 2. Routing widoku
@@ -27,19 +29,21 @@ Komponent pianina będzie renderowany w centralnej sekcji ekranu gry, pomiędzy 
 Piano (główny kontener)
 ├── PianoKeysContainer (kontener klawiszy)
 │   ├── BlackKeysRow (rząd czarnych klawiszy)
-│   │   ├── PianoKey (C#, color: black)
-│   │   ├── PianoKey (D#, color: black)
+│   │   ├── PianoKey (C#4, color: black)
+│   │   ├── PianoKey (D#4, color: black)
 │   │   ├── Spacer (puste miejsce)
-│   │   ├── PianoKey (F#, color: black)
-│   │   ├── PianoKey (G#, color: black)
-│   │   └── PianoKey (A#, color: black)
+│   │   ├── PianoKey (F#4, color: black)
+│   │   ├── PianoKey (G#4, color: black)
+│   │   └── PianoKey (A#4, color: black)
 │   └── WhiteKeysRow (rząd białych klawiszy)
-│       ├── PianoKey (C, color: white)
-│       ├── PianoKey (D, color: white)
-│       ├── PianoKey (E, color: white)
-│       ├── PianoKey (F, color: white)
-│       ├── PianoKey (G, color: white)
-│       ├── PianoKey (A, color: white)
+│       ├── PianoKey (C4, color: white, label: C)
+│       ├── PianoKey (D4, color: white, label: D)
+│       ├── PianoKey (E4, color: white, label: E)
+│       ├── PianoKey (F4, color: white, label: F)
+│       ├── PianoKey (G4, color: white, label: G)
+│       ├── PianoKey (A4, color: white, label: A)
+│       ├── PianoKey (B4, color: white, label: H)  // Notacja europejska
+│       └── PianoKey (C5, color: white, label: C)  // Wyższe C
 ```
 
 ## 4. Szczegóły komponentów
@@ -166,12 +170,12 @@ interface BlackKeysRowProps {
 ### 4.4 WhiteKeysRow
 
 **Opis komponentu:**
-Kontener dla białych klawiszy pianina (C, D, E, F, G, A, B), rozmieszczonych równomiernie w jednym rzędzie.
+Kontener dla białych klawiszy pianina (C, D, E, F, G, A, H, C - 8 klawiszy), rozmieszczonych równomiernie w jednym rzędzie. Ostatni klawisz to wyższe C (C5).
 
 **Główne elementy HTML i komponenty dzieci:**
 
 - `<div>` z klasami flex
-- 7 komponentów `<PianoKey>` dla białych klawiszy
+- 8 komponentów `<PianoKey>` dla białych klawiszy (C4-B4, C5)
 
 **Obsługiwane zdarzenia:**
 
@@ -199,20 +203,38 @@ interface WhiteKeysRowProps {
 ### 4.5 PianoKey
 
 **Opis komponentu:**
-Pojedynczy klawisz pianina. Reprezentuje jedną nutę, wyświetla jej literę, obsługuje kliknięcia, podświetlenia i animacje. Stylizowany zgodnie z kolorem (biały/czarny) i stanem (normalny, podświetlony, wciśnięty, wyłączony).
+Pojedynczy klawisz pianina. Reprezentuje jedną nutę, wyświetla jej literę (w notacji europejskiej - B wyświetlane jako H), obsługuje kliknięcia, podświetlenia i animacje. Podczas podświetlania każda nuta ma unikalny kolor (np. C - niebieski, D - zielony, E - żółty, itd.). Stylizowany zgodnie z kolorem (biały/czarny) i stanem (normalny, podświetlony, wciśnięty, wyłączony).
 
 **Główne elementy HTML i komponenty dzieci:**
 
 - `<button>` z odpowiednimi klasami Tailwind
-- `<span>` dla wyświetlenia litery nuty
+- `<span>` dla wyświetlenia litery nuty (label)
 - Wykorzystuje `aria-label` dla dostępności
 - Wykorzystuje `aria-pressed` dla stanu podświetlenia
+- Czarne klawisze mają `border-t-0` (brak górnej krawędzi)
+
+**Kolory podświetlenia:**
+Każda nuta ma unikalny kolor zdefiniowany w `NOTE_HIGHLIGHT_COLORS`:
+- C: niebieski (`bg-blue-400`)
+- D: zielony (`bg-green-400`)
+- E: żółty (`bg-yellow-400`)
+- F: czerwony (`bg-red-400`)
+- G: fioletowy (`bg-purple-400`)
+- A: pomarańczowy (`bg-orange-400`)
+- H/B: różowy (`bg-pink-400`)
+- Półtony (sharps): ciemniejsze wersje kolorów bazowych
 
 **Obsługiwane zdarzenia:**
 
 - `onClick` - odtworzenie dźwięku i wywołanie callback z rodzica
-- `onMouseDown` / `onMouseUp` - animacja wciśnięcia
-- `onTouchStart` / `onTouchEnd` - obsługa dotyku (mobile/tablet)
+- `onMouseDown` / `onMouseUp` / `onMouseLeave` - animacja wciśnięcia
+- `onTouchStart` / `onTouchEnd` - obsługa dotyku (mobile/tablet) z `preventDefault`
+
+**Animacje:**
+- Wciśnięcie: `scale-[0.98]` (zmniejszenie do 98%) + `brightness-90`
+- Podświetlenie: kolorowe tło + cień + `!opacity-100` (nawet gdy disabled)
+- Czas trwania CSS transition: `100ms`
+- Czas trwania podświetlenia: `250ms` (HIGHLIGHT_DURATION)
 
 **Warunki walidacji:**
 
@@ -297,26 +319,23 @@ interface PianoOctaveConfig {
 
 ```typescript
 /**
- * Opcje dla hooka usePianoSampler
- */
-interface UsePianoSamplerOptions {
-  oscillator?: Tone.OmniOscillatorOptions;
-}
-
-/**
  * Zwracany typ z hooka usePianoSampler
  */
 interface UsePianoSamplerReturn {
   /** Funkcja do odtworzenia pojedynczej nuty */
-  playNote: (note: string, duration?: string) => void;
+  playNote: (note: string, duration?: string | number) => void;
 
-  /** Funkcja do odtworzenia sekwencji nut */
-  playSequence: (notes: string[], duration?: string, interval?: number) => void;
-
-  /** Czy audio jest załadowane i gotowe */
+  /** Czy audio (sampler) jest załadowane i gotowe */
   isLoaded: boolean;
 }
 ```
+
+**Implementacja:**
+- Używa `Tone.Sampler` zamiast `PolySynth`
+- Ładuje próbki MP3 z katalogu `/public/audio/piano/`
+- Próbki: C4.mp3, Ds4.mp3, Fs4.mp3, A4.mp3
+- Maxpolyphony: 128
+- Wykorzystuje `triggerAttack` i `triggerRelease` z timeoutem 300ms
 
 ### 5.3 Typy z kontekstu gry (GameContext)
 
@@ -361,7 +380,7 @@ interface CurrentTask {
 interface GeneratePuzzleDTO {
   sequenceId: string;
   levelId: number;
-  sequenceBeginning: string;
+  sequenceBeginning: string; // format: "C4-E4-G4" (nuty Z OKTAWAMI oddzielone myślnikiem)
   expectedSlots: number;
 }
 
@@ -474,7 +493,8 @@ interface GeneratePuzzleDTO {
 **Wykorzystanie w komponencie:**
 
 - `GameContext` wywołuje mutation po zamontowaniu `/game/play`
-- Parsuje `sequenceBeginning` na tablicę nut: `"C-E-G".split("-")` → `["C", "E", "G"]`
+- `sequenceBeginning` już zawiera nuty z oktawami: `"C4-E4-G4"` (format z bazy)
+- Parsuje na tablicę: `"C4-E4-G4".split("-")` → `["C4", "E4", "G4"]`
 - Przekazuje do komponentu `Piano` jako `sequenceToPlay`
 - Komponent automatycznie odtwarza sekwencję (`autoPlay={true}`)
 
@@ -486,7 +506,7 @@ interface GeneratePuzzleDTO {
 
 ```typescript
 interface SubmitAnswerCommand {
-  answer: string; // format: "A-B-C" (nuty oddzielone myślnikiem)
+  answer: string; // format: "A4-B4-C5" (nuty Z OKTAWAMI oddzielone myślnikiem)
 }
 ```
 
@@ -504,9 +524,9 @@ interface SubmitAnswerResponseDTO {
 **Wykorzystanie w komponencie:**
 
 - Użytkownik wypełnia sloty klikając klawisze pianina
-- `GameContext.selectedNotes` zawiera tablicę: `["A", "B", "C"]`
+- `GameContext.selectedNotes` zawiera tablicę z oktawami: `["A4", "B4", "C5"]`
 - Użytkownik klika "Sprawdź"
-- `GameContext.submitAnswer()` konwertuje tablicę na string: `selectedNotes.join("-")` → `"A-B-C"`
+- `GameContext.submitAnswer()` konwertuje tablicę na string: `selectedNotes.join("-")` → `"A4-B4-C5"`
 - Wysyła request z `SubmitAnswerCommand`
 - Otrzymuje `SubmitAnswerResponseDTO`
 - Aktualizuje stan gry i wyświetla feedback
@@ -521,12 +541,13 @@ interface SubmitAnswerResponseDTO {
 
 1. Użytkownik klika klawisz "C"
 2. `PianoKey` wywołuje `onClick("C4")`
-3. Animacja wciśnięcia klawisza (scale down, zmiana koloru)
-4. `Piano` wywołuje `playNote("C4")` - odtworzenie dźwięku
-5. `Piano` wywołuje `onKeyPress("C4")` - callback do rodzica
-6. Rodzic (`GamePlayView`) wywołuje `GameContext.addNote("C")`
-7. Nuta dodana do `selectedNotes`
-8. Komponent `AnswerSlots` aktualizuje się, wypełniając kolejny slot literą "C" i kolorem
+3. Animacja wciśnięcia klawisza (`scale-[0.98]`, `brightness-90`)
+4. `Piano` wywołuje `playNote("C4")` - odtworzenie dźwięku z Sampler
+5. Krótkie kolorowe podświetlenie klawisza (250ms, niebieski dla C)
+6. `Piano` wywołuje `onKeyPress("C4")` - callback do rodzica
+7. Rodzic (`GamePlayView`) wywołuje `GameContext.addNote("C4")`
+8. Nuta dodana do `selectedNotes` (z oktawą)
+9. Komponent `AnswerSlots` aktualizuje się, wypełniając kolejny slot literą "C" (bez oktawy) i kolorem
 
 **Warunki:**
 
@@ -549,13 +570,13 @@ interface SubmitAnswerResponseDTO {
 
 1. Użytkownik klika "Odtwórz ponownie" lub zadanie się ładuje
 2. `GameContext` ustawia `isPlayingSequence = true`
-3. Pianino otrzymuje `sequenceToPlay = ["C", "E", "G"]`
-4. Komponent `Piano` wywołuje `playSequence(["C4", "E4", "G4"], "8n", 0.5)`
-5. Dla każdej nuty w sekwencji (z opóźnieniem 0.5s):
-   - Podświetlenie odpowiedniego klawisza (`isHighlighted = true`)
-   - Odtworzenie dźwięku
-   - Usunięcie podświetlenia po zakończeniu nuty
-6. Po zakończeniu sekwencji:
+3. Pianino otrzymuje `sequenceToPlay = ["C4", "E4", "G4"]` (już z oktawami)
+4. Komponent `Piano` dla każdej nuty w sekwencji:
+   - Podświetlenie odpowiedniego klawisza unikalnym kolorem (`isHighlighted = true`)
+   - Odtworzenie dźwięku z Sampler
+   - Podświetlenie trwa 250ms (HIGHLIGHT_DURATION)
+   - Interwał między nutami: 500ms (SEQUENCE_INTERVAL)
+5. Po zakończeniu sekwencji:
    - Wywołanie `onSequenceComplete()`
    - `GameContext` ustawia `isPlayingSequence = false`
    - Pianino staje się aktywne, użytkownik może wprowadzać odpowiedź
@@ -567,9 +588,9 @@ interface SubmitAnswerResponseDTO {
 
 **Feedback:**
 
-- Wizualny: Podświetlenie klawiszy synchronicznie z dźwiękiem
-- Dźwiękowy: Odtworzenie sekwencji melodii
-- Stan UI: Pianino wyłączone, przyciski "Odtwórz ponownie" i "Sprawdź" wyłączone
+- Wizualny: Kolorowe podświetlenie klawiszy synchronicznie z dźwiękiem (każda nuta ma unikalny kolor)
+- Dźwiękowy: Odtworzenie sekwencji melodii z próbek MP3
+- Stan UI: Pianino wyłączone (ale podświetlone klawisze w pełni widoczne), przyciski wyłączone
 
 ### 8.3 Free play (swobodne granie)
 
@@ -667,13 +688,13 @@ isHighlighted = highlightedKeys.includes(note);
 
 **Warunek: Prawidłowy format nuty**
 
-- Nuty z API w formacie: `"C"`, `"C#"`, `"D"`, etc. (bez oktawy)
-- Konwersja do formatu Tone.js: `note + "4"` → `"C4"`, `"C#4"`
-- Walidacja: Nuta musi być w zakresie C-B (z opcjonalnymi #)
+- Nuty z API już w formacie z oktawami: `"C4"`, `"C#4"`, `"D4"`, `"B4"` (B w bazie, H w UI), etc.
+- Format Tone.js: identyczny jak w bazie
+- Walidacja: Nuta musi być w zakresie C4-B4 + C5 (z opcjonalnymi #)
 
 ```typescript
 const isValidNote = (note: string): boolean => {
-  const validNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#"];
+  const validNotes = ["C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4", "C5"];
   return validNotes.includes(note);
 };
 ```
@@ -862,14 +883,32 @@ const handleKeyInteraction = (note: string) => {
    export const WHITE_KEYS: PianoKeyData[] = [
      { note: "C4", label: "C", color: "white" },
      { note: "D4", label: "D", color: "white" },
-     // ... pozostałe
+     { note: "E4", label: "E", color: "white" },
+     { note: "F4", label: "F", color: "white" },
+     { note: "G4", label: "G", color: "white" },
+     { note: "A4", label: "A", color: "white" },
+     { note: "B4", label: "H", color: "white" }, // B w Tone.js = H w notacji europejskiej
+     { note: "C5", label: "C", color: "white" }, // Wyższe C
    ];
 
    export const BLACK_KEYS: PianoKeyData[] = [
      { note: "C#4", label: "C#", color: "black" },
      { note: "D#4", label: "D#", color: "black" },
-     // ... pozostałe
+     { note: "F#4", label: "F#", color: "black" },
+     { note: "G#4", label: "G#", color: "black" },
+     { note: "A#4", label: "A#", color: "black" },
    ];
+
+   export const SEQUENCE_INTERVAL = 0.5; // sekundy
+   export const NOTE_DURATION = "6n";
+   export const HIGHLIGHT_DURATION = 250; // milisekundy
+
+   export const NOTE_HIGHLIGHT_COLORS: Record<string, string> = {
+     C: "!bg-blue-400 !border-blue-600 shadow-lg shadow-blue-400 !text-white",
+     D: "!bg-green-400 !border-green-600 shadow-lg shadow-green-400 !text-white",
+     E: "!bg-yellow-400 !border-yellow-600 shadow-lg shadow-yellow-400 !text-gray-900",
+     // ... pozostałe kolory
+   };
    ```
 
 ### Krok 3: Implementacja komponentu PianoKey
@@ -877,47 +916,37 @@ const handleKeyInteraction = (note: string) => {
 1. Utwórz podstawową strukturę komponentu z `<button>`
 2. Zaimplementuj propsy i typy
 3. Dodaj style Tailwind dla białych i czarnych klawiszy:
-   - Białe: `bg-white border-gray-800 h-32 w-16`
-   - Czarne: `bg-gray-900 text-white h-20 w-12`
-4. Dodaj stany wizualne:
+   - Białe: `bg-white border-gray-800 h-24 w-12 md:h-32 md:w-16 lg:h-40 lg:w-20`
+   - Czarne: `bg-gray-900 text-white h-16 w-8 md:h-20 md:w-12 lg:h-24 lg:w-14 border-t-0`
+4. Dodaj stany wizualne z kolorami:
    - Default: normalne kolory
-   - Highlighted: `bg-yellow-200` (białe), `bg-yellow-600` (czarne)
-   - Pressed: `scale-95 bg-gray-200` (animacja)
-   - Disabled: `opacity-50 cursor-not-allowed`
+   - Highlighted: unikalny kolor dla każdej nuty (z `NOTE_HIGHLIGHT_COLORS`)
+   - Pressed: `scale-[0.98] brightness-90` (animacja)
+   - Disabled: `opacity-50` (ale `!opacity-100` gdy highlighted)
 5. Zaimplementuj obsługę zdarzeń:
    - `onClick` → wywołaj `onClick(note)`
-   - `onMouseDown` → ustaw stan pressed
-   - `onMouseUp` → usuń stan pressed
-   - `onTouchStart` / `onTouchEnd` → obsługa dotyku
+   - `onMouseDown` / `onMouseUp` / `onMouseLeave` → ustaw stan pressed
+   - `onTouchStart` (z `preventDefault`) / `onTouchEnd` → obsługa dotyku
 6. Dodaj atrybuty dostępności:
    - `aria-label={`Klawisz ${label}`}`
    - `aria-pressed={isHighlighted}`
    - `disabled={isDisabled}`
 7. Dodaj animacje CSS (Tailwind):
-   - `transition-all duration-150 ease-in-out`
-   - `active:scale-95`
+   - `transition-all duration-100 ease-in-out` (skrócony czas)
+   - `active:scale-[0.98]`
 
 ### Krok 4: Implementacja komponentów rzędów klawiszy
 
 1. **WhiteKeysRow:**
-   - Kontener flex: `flex flex-row gap-1 justify-center`
-   - Mapuj `WHITE_KEYS` na komponenty `<PianoKey>`
+   - Kontener flex: `flex flex-row gap-0 justify-center`
+   - Mapuj `WHITE_KEYS` (8 klawiszy) na komponenty `<PianoKey>`
    - Przekaż propsy: `onKeyClick`, `highlightedKeys`, `disabled`
 
 2. **BlackKeysRow:**
-   - Kontener flex z pozycjonowaniem absolutnym: `absolute top-0 left-0 right-0 flex flex-row justify-around`
-   - Mapuj `BLACK_KEYS` z spacerami:
-     ```typescript
-     const layout = [
-       BLACK_KEYS[0], // C#
-       BLACK_KEYS[1], // D#
-       null, // spacer (brak klawisza między E-F)
-       BLACK_KEYS[2], // F#
-       BLACK_KEYS[3], // G#
-       BLACK_KEYS[4], // A#
-     ];
-     ```
-   - Renderuj `<PianoKey>` lub `<div className="w-12" />` dla spacera
+   - Kontener z pozycjonowaniem absolutnym: `absolute top-0 left-0 right-0 flex flex-row justify-center z-30`
+   - Dla każdego czarnego klawisza: wrapper `relative` z kluczem pozycjonowanym `absolute right-0 translate-x-1/2`
+   - Spacery dla E-F i B-C (brak czarnych klawiszy)
+   - Dodatkowe 2 spacery dla C5
 
 ### Krok 5: Implementacja kontenera PianoKeysContainer
 
@@ -933,66 +962,98 @@ const handleKeyInteraction = (note: string) => {
 
 1. Zaimportuj hook `usePianoSampler`:
    ```typescript
-   const { playNote, playSequence, isLoaded } = usePianoSampler();
+   const { playNote, isLoaded } = usePianoSampler();
    ```
 2. Zdefiniuj stan lokalny:
    ```typescript
-   const [highlightedKeys, setHighlightedKeys] = useState<string[]>([]);
+   const [localHighlightedKeys, setLocalHighlightedKeys] = useState<string[]>([]);
    const [isPlaying, setIsPlaying] = useState(false);
+   const [error, setError] = useState<string | null>(null);
    ```
 3. Zaimplementuj funkcję `handleKeyPress`:
    ```typescript
-   const handleKeyPress = (note: string) => {
-     if (disabled || isPlaying) return;
-     playNote(note);
+   const handleKeyPress = useCallback((note: string) => {
+     if (disabled || isPlaying || !isLoaded) return;
+     
+     playNote(note, NOTE_DURATION);
+     
+     // Podświetl klawisz na HIGHLIGHT_DURATION
+     setLocalHighlightedKeys([note]);
+     setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+     
      onKeyPress(note);
-   };
+   }, [disabled, isPlaying, isLoaded, playNote, onKeyPress]);
    ```
 4. Zaimplementuj funkcję `handlePlaySequence`:
 
    ```typescript
-   const handlePlaySequence = async (sequence: string[]) => {
-     setIsPlaying(true);
-     const interval = 0.5; // 500ms między nutami
-
-     for (let i = 0; i < sequence.length; i++) {
-       const note = sequence[i];
-       setHighlightedKeys([note]);
-       playNote(note);
-       await new Promise((resolve) => setTimeout(resolve, interval * 1000));
+   const handlePlaySequence = useCallback(async (sequence: string[]) => {
+     if (!isLoaded) {
+       setError("Dźwięki nie są jeszcze załadowane");
+       return;
      }
 
-     setHighlightedKeys([]);
-     setIsPlaying(false);
-     onSequenceComplete?.();
-   };
+     try {
+       setIsPlaying(true);
+       
+       for (let i = 0; i < sequence.length; i++) {
+         const note = sequence[i];
+         
+         // Podświetl klawisz
+         setLocalHighlightedKeys([note]);
+         
+         // Odtwórz dźwięk
+         playNote(note, NOTE_DURATION);
+         
+         // Zgaś podświetlenie po HIGHLIGHT_DURATION
+         setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+         
+         // Czekaj na następną nutę
+         if (i < sequence.length - 1) {
+           await new Promise(resolve => setTimeout(resolve, SEQUENCE_INTERVAL * 1000));
+         }
+       }
+       
+       setIsPlaying(false);
+       onSequenceComplete?.();
+     } catch (err) {
+       console.error("Error playing sequence:", err);
+       setError("Wystąpił błąd podczas odtwarzania sekwencji");
+       setIsPlaying(false);
+     }
+   }, [isLoaded, playNote, onSequenceComplete]);
    ```
 
-5. Dodaj `useEffect` dla auto-play:
+5. Dodaj `useEffect` dla auto-play (z force remount przez key):
    ```typescript
    useEffect(() => {
-     if (autoPlay && sequenceToPlay && sequenceToPlay.length > 0) {
+     if (autoPlay && sequenceToPlay && sequenceToPlay.length > 0 && isLoaded && !isPlaying) {
        handlePlaySequence(sequenceToPlay);
      }
-   }, [autoPlay, sequenceToPlay]);
+   }, [autoPlay, sequenceToPlay.join(","), isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
    ```
-6. Renderuj strukturę:
+6. Renderuj strukturę z połączonymi podświetleniami:
    ```typescript
+   const allHighlightedKeys = [...highlightedKeys, ...localHighlightedKeys];
+   const isPianoDisabled = disabled || !isLoaded || isPlaying;
+   
    return (
-     <div className="flex flex-col items-center gap-4">
-       {!isLoaded && <div>Ładowanie dźwięków...</div>}
+     <div className="flex flex-col items-center gap-4 w-full p-2" role="region" aria-label="Pianino" aria-busy={isPlaying}>
+       {!isLoaded && <div className="text-sm text-gray-600 animate-pulse">Ładowanie dźwięków...</div>}
+       {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2" role="alert">{error}</div>}
+       
        <PianoKeysContainer>
          <BlackKeysRow
            keys={BLACK_KEYS}
            onKeyClick={handleKeyPress}
-           highlightedKeys={highlightedKeys}
-           disabled={disabled || !isLoaded || isPlaying}
+           highlightedKeys={allHighlightedKeys}
+           disabled={isPianoDisabled}
          />
          <WhiteKeysRow
            keys={WHITE_KEYS}
            onKeyClick={handleKeyPress}
-           highlightedKeys={highlightedKeys}
-           disabled={disabled || !isLoaded || isPlaying}
+           highlightedKeys={allHighlightedKeys}
+           disabled={isPianoDisabled}
          />
        </PianoKeysContainer>
      </div>
@@ -1005,19 +1066,26 @@ const handleKeyInteraction = (note: string) => {
 
    ```typescript
    const { addNote, isPlayingSequence, currentTask } = useGame();
+   const [replayTrigger, setReplayTrigger] = useState(0);
 
    const handleKeyPress = (note: string) => {
-     // Usuń oktawę z nuty (C4 → C)
-     const noteWithoutOctave = note.replace(/\d+$/, "");
-     addNote(noteWithoutOctave);
+     // note już zawiera oktawę (np. "C4")
+     addNote(note);
    };
 
-   const sequenceToPlay = currentTask?.sequenceBeginning.split("-").map((n) => n + "4");
+   const handleReplay = () => {
+     // Force remount Piano by changing key
+     setReplayTrigger(prev => prev + 1);
+   };
+
+   // sequenceBeginning już zawiera nuty z oktawami z bazy
+   const sequenceToPlay = currentTask?.sequenceBeginning || [];
    ```
 
-2. Renderuj komponent `Piano`:
+2. Renderuj komponent `Piano` z key dla force remount:
    ```typescript
    <Piano
+     key={replayTrigger}
      onKeyPress={handleKeyPress}
      disabled={isPlayingSequence}
      sequenceToPlay={sequenceToPlay}
@@ -1032,17 +1100,18 @@ const handleKeyInteraction = (note: string) => {
 
 1. Dodaj responsywne klasy Tailwind:
    - Klawisze białe: `h-24 w-12 md:h-32 md:w-16 lg:h-40 lg:w-20`
-   - Klawisze czarne: `h-16 w-8 md:h-20 md:w-12 lg:h-24 lg:w-14`
+   - Klawisze czarne: `h-16 w-8 md:h-20 md:w-12 lg:h-24 lg:w-14 border-t-0`
 2. Dodaj animacje:
    - Hover: `hover:brightness-110`
-   - Active: `active:scale-95 active:brightness-90`
-   - Highlight: `animate-pulse` (opcjonalnie)
+   - Active: `active:scale-[0.98] active:brightness-90`
+   - Highlight: kolorowe tło + cień + `!opacity-100`
+   - Transition: `transition-all duration-100 ease-in-out`
 3. Dodaj cienie dla głębi:
    - Białe: `shadow-md hover:shadow-lg`
    - Czarne: `shadow-lg`
 4. Zaokrąglenie rogów:
    - Białe: `rounded-b-lg`
-   - Czarne: `rounded-b-md`
+   - Czarne: `rounded-b-md` (bez górnej krawędzi)
 
 ### Krok 9: Dodanie obsługi błędów
 

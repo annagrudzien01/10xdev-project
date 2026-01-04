@@ -2,7 +2,7 @@
 
 ## Przegląd
 
-Komponent `Piano` to w pełni funkcjonalne wirtualne pianino monofoniczne (jedna oktawa: C4-B4) z obsługą myszy i dotyku, zaprojektowane do użytku w grze muzycznej Rytmik.
+Komponent `Piano` to w pełni funkcjonalne wirtualne pianino monofoniczne (jedna oktawa + wyższe C: C4-B4 + C5) z obsługą myszy i dotyku, zaprojektowane do użytku w grze muzycznej Rytmik. Używa próbek MP3 z prawdziwego pianina oraz kolorowych podświetleń dla każdej nuty. Wyświetla litery nut w notacji europejskiej (H zamiast B).
 
 ## Struktura komponentów
 
@@ -12,7 +12,7 @@ Piano (główny kontener)
 │   ├── BlackKeysRow (rząd czarnych klawiszy)
 │   │   └── PianoKey × 5 (C#, D#, F#, G#, A#)
 │   └── WhiteKeysRow (rząd białych klawiszy)
-│       └── PianoKey × 7 (C, D, E, F, G, A, B)
+│       └── PianoKey × 8 (C, D, E, F, G, A, H, C) - notacja europejska
 ```
 
 ## Użycie
@@ -42,14 +42,13 @@ function GameView() {
   const [sequence, setSequence] = useState<string[]>([]);
 
   const handleKeyPress = (note: string) => {
-    // Usuń oktawę jeśli potrzeba (C4 → C)
-    const noteWithoutOctave = note.replace(/\d+$/, "");
-    setSequence((prev) => [...prev, noteWithoutOctave]);
+    // note już zawiera oktawę (np. "C4")
+    setSequence((prev) => [...prev, note]);
   };
 
   const playSequence = () => {
     // Sekwencja do odtworzenia (musi zawierać oktawę)
-    const toPlay = ["C4", "E4", "G4"];
+    const toPlay = ["C4", "E4", "G4", "C5"];
     setSequence(toPlay);
   };
 
@@ -83,24 +82,30 @@ function GameView() {
 
 Komponenty pianina używają formatu nut Tone.js:
 
-- Białe klawisze: `"C4"`, `"D4"`, `"E4"`, `"F4"`, `"G4"`, `"A4"`, `"B4"`
+- Białe klawisze: `"C4"`, `"D4"`, `"E4"`, `"F4"`, `"G4"`, `"A4"`, `"B4"` (wyświetlane jako H w UI), `"C5"`
 - Czarne klawisze: `"C#4"`, `"D#4"`, `"F#4"`, `"G#4"`, `"A#4"`
+
+**Notacja:** Klawisz B4 jest wyświetlany jako "H" (notacja europejska), ale wewnętrznie używa "B4" dla kompatybilności z Tone.js.
 
 ## Funkcje
 
 ### 🎹 Interaktywność
 
 - Obsługa kliknięć myszą i dotyku
-- Animacje wciśnięcia klawiszy
-- Podświetlanie klawiszy podczas playback
+- Animacje wciśnięcia klawiszy (`scale-[0.98]` + `brightness-90`)
+- Kolorowe podświetlanie klawiszy podczas playback (każda nuta ma unikalny kolor)
+- Podświetlenie przy kliknięciu użytkownika (250ms)
 - Feedback dźwiękowy przy każdym kliknięciu
+- Podświetlone klawisze są w pełni widoczne nawet gdy pianino jest wyłączone (brak opacity)
 
 ### 🎵 Odtwarzanie audio
 
-- Wykorzystuje hook `usePianoSampler` z Tone.js
-- Monofoniczne odtwarzanie (jedna nuta na raz)
-- Automatyczne odtwarzanie sekwencji z synchronizacją wizualną
+- Wykorzystuje hook `usePianoSampler` z Tone.js Sampler
 - Sample-based playback (pliki MP3 z prawdziwego pianina)
+- Próbki lokalne: `/public/audio/piano/` (C4.mp3, Ds4.mp3, Fs4.mp3, A4.mp3)
+- Maxpolyphony: 128
+- Automatyczne odtwarzanie sekwencji z synchronizacją wizualną
+- Timing: interwał 500ms, podświetlenie 250ms
 
 ### 📱 Responsywność
 
@@ -136,8 +141,10 @@ Pianino jest automatycznie wyłączane gdy:
 
 - Wysokość: `64px` (tablet), `80px` (md), `96px` (lg)
 - Szerokość: `32px` (tablet), `48px` (md), `56px` (lg)
-- Kolor: ciemnoszary z czarną ramką
-- Pozycja: absolutna, na górze białych klawiszy
+- Kolor: ciemnoszary (`bg-gray-900`) z czarną ramką
+- Pozycja: absolutna (`top-0`), na górze białych klawiszy
+- Brak górnej ramki: `border-t-0`
+- z-index: `z-30` (zawsze na wierzchu)
 
 ### Podświetlenie
 
@@ -157,9 +164,12 @@ Każda nuta ma unikalny kolor podświetlenia zdefiniowany w `NOTE_HIGHLIGHT_COLO
 - **B/H**: różowy (`bg-pink-400`)
 
 Efekty podświetlenia:
-- Skalowanie: `scale-105`
-- Cień: `shadow-2xl` z kolorowym odcieniem
-- Czas trwania: 300ms przy kliknięciu, synchronizowany z dźwiękiem podczas playback
+- Animacja: `scale-[0.98]` (zmniejszenie do 98%)
+- Cień: `shadow-lg` bez przezroczystości
+- Opacity: `!opacity-100` (pełna widoczność nawet gdy wyłączone)
+- Czas CSS transition: `100ms`
+- Czas trwania podświetlenia: `250ms` (HIGHLIGHT_DURATION)
+- Interwał między nutami: `500ms` (SEQUENCE_INTERVAL)
 
 ## Obsługa błędów
 
@@ -178,11 +188,12 @@ function GamePlayView() {
   const { addNote, isPlayingSequence, currentTask, selectedNotes } = useGame();
 
   const handleKeyPress = (note: string) => {
-    const noteWithoutOctave = note.replace(/\d+$/, "");
-    addNote(noteWithoutOctave);
+    // Nuty już zawierają oktawy (np. "C4")
+    addNote(note);
   };
 
-  const sequenceToPlay = currentTask?.sequenceBeginning.split("-").map((n) => n + "4"); // Dodaj oktawę
+  // sequenceBeginning już zawiera oktawy z bazy (np. ["C4", "E4", "G4"])
+  const sequenceToPlay = currentTask?.sequenceBeginning || [];
 
   return (
     <Piano
@@ -206,7 +217,13 @@ function GamePlayView() {
 - `BlackKeysRow.tsx` - Rząd czarnych klawiszy
 - `WhiteKeysRow.tsx` - Rząd białych klawiszy
 - `piano.types.ts` - Definicje typów TypeScript
-- `piano.constants.ts` - Stałe i konfiguracja
+- `piano.constants.ts` - Stałe i konfiguracja:
+  - `WHITE_KEYS` - konfiguracja białych klawiszy (8 elementów)
+  - `BLACK_KEYS` - konfiguracja czarnych klawiszy (5 elementów)
+  - `SEQUENCE_INTERVAL` - interwał między nutami (500ms)
+  - `NOTE_DURATION` - długość nuty ("6n")
+  - `HIGHLIGHT_DURATION` - czas podświetlenia (250ms)
+  - `NOTE_HIGHLIGHT_COLORS` - mapowanie nut na kolory
 - `index.ts` - Eksporty publiczne
 
 ## Zależności
@@ -217,11 +234,9 @@ function GamePlayView() {
 
 ## Testowanie
 
-Przykłady testowania komponentu znajdują się w `PianoExample.tsx`.
-
 Aby przetestować manualnie:
 
-1. Otwórz stronę z komponentem Piano
+1. Otwórz stronę z komponentem Piano (np. `/game/play`)
 2. Kliknij różne klawisze i sprawdź dźwięk
 3. Przetestuj odtwarzanie sekwencji
 4. Sprawdź responsywność na różnych ekranach
@@ -229,10 +244,11 @@ Aby przetestować manualnie:
 
 ## Znane ograniczenia
 
-1. Obsługuje tylko jedną oktawę (C4-B4)
-2. Monofoniczne (jedna nuta na raz podczas interakcji użytkownika)
+1. Obsługuje 8 białych klawiszy (C4-B4 + C5) i 5 czarnych
+2. Monofoniczne podczas interakcji użytkownika (ale polyphony 128 dla playback)
 3. Wymaga obsługi audio w przeglądarce
 4. Optymalizowane dla orientacji poziomej na urządzeniach mobilnych
+5. Wymaga lokalnych próbek MP3 w `/public/audio/piano/`
 
 ## Przyszłe ulepszenia
 
