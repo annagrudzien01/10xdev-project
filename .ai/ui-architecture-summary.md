@@ -184,7 +184,7 @@
 
 - **Sekcja 2: Pianino (1 oktawa)**
   - 12 klawiszy (7 białych + 5 czarnych)
-  - Każdy klawisz: kolor + litera (C, C#, D, D#, E, F, F#, G, G#, A, A#, B)
+  - Każdy klawisz: kolor + litera (C, C#, D, D#, E, F, F#, G, G#, A, A#)
   - Podświetlenie podczas odtwarzania zagadki
   - Kliknięcie klawisza → odtworzenie dźwięku (monofoniczne)
   - Free play: aktywne poza odtwarzaniem zagadki
@@ -929,7 +929,7 @@ src/pages/
 {
   "sequenceId": "uuid",
   "levelId": 3,
-  "sequenceBeginning": ["C", "E", "G", "G#"],
+  "sequenceBeginning": "C-E-G-G#",
   "expectedSlots": 2
 }
 ```

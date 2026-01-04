@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateChildProfileCommand, UpdateChildProfileCommand, ChildProfileDTO, PaginatedResponse, PaginationParams } from "../../types";
+import type {
+  CreateChildProfileCommand,
+  UpdateChildProfileCommand,
+  ChildProfileDTO,
+  PaginatedResponse,
+  PaginationParams,
+} from "../../types";
 import { toChildProfileDTO } from "../../types";
 import { ConflictError, NotFoundError } from "../errors/api-errors";
 
@@ -244,11 +250,7 @@ export class ProfileService {
     }
 
     // Step 3: Delete profile
-    const { error } = await this.supabase
-      .from("child_profiles")
-      .delete()
-      .eq("id", profileId)
-      .eq("parent_id", parentId);
+    const { error } = await this.supabase.from("child_profiles").delete().eq("id", profileId).eq("parent_id", parentId);
 
     if (error) {
       throw new Error(`Failed to delete profile: ${error.message}`);

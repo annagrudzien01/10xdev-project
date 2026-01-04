@@ -238,7 +238,7 @@ export function toGeneratePuzzleDTO(entity: SequenceEntity, expectedSlots: numbe
  * Command model for submitting a puzzle answer.
  */
 export interface SubmitAnswerCommand {
-  /** The user's answer as a string of notes (e.g., "C E G G#") */
+  /** The user's answer as a string of notes (e.g., "C-E-G-G#") */
   answer: string;
 }
 

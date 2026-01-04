@@ -1,12 +1,7 @@
 import type { APIRoute } from "astro";
 import { updateChildProfileSchema } from "../../../lib/schemas/profile.schema";
 import { ProfileService } from "../../../lib/services/profile.service";
-import {
-  ConflictError,
-  NotFoundError,
-  UnauthorizedError,
-  ValidationError,
-} from "../../../lib/errors/api-errors";
+import { ConflictError, NotFoundError, UnauthorizedError, ValidationError } from "../../../lib/errors/api-errors";
 import type { APIErrorResponse } from "../../../types";
 
 export const prerender = false;
@@ -134,11 +129,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     const profileService = new ProfileService(supabase);
-    const profile = await profileService.updateChildProfile(
-      profileId,
-      user.id,
-      validationResult.data
-    );
+    const profile = await profileService.updateChildProfile(profileId, user.id, validationResult.data);
 
     return new Response(JSON.stringify(profile), {
       status: 200,
@@ -226,13 +217,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     const profileService = new ProfileService(supabase);
     await profileService.deleteChildProfile(profileId, user.id);
 
-    return new Response(
-      JSON.stringify({ message: "Profile deleted successfully" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ message: "Profile deleted successfully" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     if (error instanceof ValidationError) {
       return new Response(
@@ -286,4 +274,3 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     );
   }
 };
-

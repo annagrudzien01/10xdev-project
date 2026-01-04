@@ -55,8 +55,6 @@ EditProfileForm (React/Island)
   - `apiError?: string` – błąd z API.
   - `apiErrorField?: "profileName" | "dateOfBirth"` – pole błędu.
 
-
-
 ## 5. Typy
 
 | Typ                         | Źródło         | Pola                                                                                                   |
@@ -78,10 +76,10 @@ EditProfileForm (React/Island)
 
 ## 7. Integracja API
 
-| Akcja             | Endpoint                   | Typ zapytania               | Typ odpowiedzi    | Obsługa sukcesu                         | Obsługa błędu                                       |
-| ----------------- | -------------------------- | --------------------------- | ----------------- | --------------------------------------- | --------------------------------------------------- |
-| Pobierz profil    | `GET /api/profiles/{id}`   | –                           | `ChildProfileDTO` | Wypełnienie defaultValues formularza    | 404 → Skeleton + komunikat „Profil nie znaleziony" |
-| Aktualizuj profil | `PATCH /api/profiles/{id}` | `UpdateChildProfileCommand` | `ChildProfileDTO` | Inline success (optional), redirect     | 400/409 → inline FormError                          |
+| Akcja             | Endpoint                   | Typ zapytania               | Typ odpowiedzi    | Obsługa sukcesu                      | Obsługa błędu                                      |
+| ----------------- | -------------------------- | --------------------------- | ----------------- | ------------------------------------ | -------------------------------------------------- |
+| Pobierz profil    | `GET /api/profiles/{id}`   | –                           | `ChildProfileDTO` | Wypełnienie defaultValues formularza | 404 → Skeleton + komunikat „Profil nie znaleziony" |
+| Aktualizuj profil | `PATCH /api/profiles/{id}` | `UpdateChildProfileCommand` | `ChildProfileDTO` | Inline success (optional), redirect  | 400/409 → inline FormError                         |
 
 ## 8. Interakcje użytkownika
 
@@ -101,7 +99,6 @@ EditProfileForm (React/Island)
 4. Przycisk „Zapisz” disabled gdy:
    - Formularz niezmieniony (`!isDirty`)
    - Trwa mutacja (`isSubmitting`)
-
 
 ## 10. Obsługa błędów
 
