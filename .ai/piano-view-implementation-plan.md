@@ -974,6 +974,7 @@ const handleKeyInteraction = (note: string) => {
    const [error, setError] = useState<string | null>(null);
    ```
 3. Zaimplementuj funkcję `handleKeyPress`:
+
    ```typescript
    const handleKeyPress = useCallback(
      (note: string) => {
@@ -990,6 +991,7 @@ const handleKeyInteraction = (note: string) => {
      [disabled, isPlaying, isLoaded, playNote, onKeyPress]
    );
    ```
+
 4. Zaimplementuj funkcję `handlePlaySequence`:
 
    ```typescript

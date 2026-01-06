@@ -17,7 +17,7 @@ export class TaskService {
    * This is used to resume game state after page refresh.
    *
    * @param profileId - The child profile UUID
-   * @returns CurrentPuzzleDTO with active puzzle data
+   * @returns CurrentPuzzleDTO with active puzzle data including attempts used
    * @throws NotFoundError if no active puzzle exists
    * @throws Error for other database errors
    */
@@ -29,6 +29,7 @@ export class TaskService {
         `
         sequence_id,
         level_id,
+        attempts_used,
         sequence:sequence!inner(
           sequence_beginning,
           sequence_end
@@ -59,6 +60,7 @@ export class TaskService {
       levelId: data.level_id,
       sequenceBeginning: sequenceData.sequence_beginning,
       expectedSlots: calculateExpectedSlots(sequenceData.sequence_end),
+      attemptsUsed: data.attempts_used ?? 0,
     };
   }
 }

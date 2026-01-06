@@ -3,9 +3,11 @@
  *
  * Displays the slots for the user's answer with visual feedback.
  * Shows selected notes and remaining empty slots.
+ * Includes a clear button to reset the answer.
  */
 
 import { useMemo, memo } from "react";
+import { Button } from "@/components/ui/button";
 
 interface AnswerSlotsProps {
   /** Number of slots to display */
@@ -14,6 +16,8 @@ interface AnswerSlotsProps {
   selectedNotes: string[];
   /** Whether the slots are disabled */
   disabled?: boolean;
+  /** Handler for clearing selected notes */
+  onClear?: () => void;
 }
 
 /**
@@ -52,7 +56,7 @@ const NOTE_COLORS: Record<string, string> = {
   H: "bg-pink-200 border-pink-400 text-pink-900", // H = B w notacji europejskiej
 };
 
-function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: AnswerSlotsProps) {
+function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false, onClear }: AnswerSlotsProps) {
   // Create array of slots with notes or empty
   const slots = useMemo(() => {
     return Array.from({ length: totalSlots }, (_, index) => {
@@ -60,38 +64,61 @@ function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: A
     });
   }, [totalSlots, selectedNotes]);
 
-  return (
-    <div className="flex flex-row gap-2 md:gap-3 justify-center items-center" role="list" aria-label="Sloty odpowiedzi">
-      {slots.map((note, index) => {
-        const isEmpty = note === null;
-        // Usuń oktawę (C4 -> C, B4 -> B)
-        const noteWithoutOctave = note ? note.replace(/\d+$/, "") : null;
-        // Konwertuj na label (B -> H)
-        const displayLabel = noteWithoutOctave ? NOTE_TO_LABEL[noteWithoutOctave] || noteWithoutOctave : null;
-        const colorClasses = displayLabel
-          ? NOTE_COLORS[displayLabel] || "bg-gray-200 border-gray-400"
-          : "bg-white border-gray-300";
+  const hasSelectedNotes = selectedNotes.length > 0;
+  const canClear = hasSelectedNotes && !disabled && onClear;
 
-        return (
-          <div
-            key={index}
-            role="listitem"
-            aria-label={isEmpty ? `Slot ${index + 1}: pusty` : `Slot ${index + 1}: nuta ${displayLabel}`}
-            className={`
-              w-12 h-12 md:w-16 md:h-16
-              rounded-lg border-2
-              flex items-center justify-center
-              font-bold text-sm md:text-base
-              transition-all duration-200
-              ${colorClasses}
-              ${isEmpty ? "border-dashed" : "border-solid shadow-md"}
-              ${disabled ? "opacity-50" : ""}
-            `}
-          >
-            {displayLabel || <span className="text-gray-400 text-lg md:text-xl">•</span>}
-          </div>
-        );
-      })}
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+      <div
+        className="flex flex-row gap-2 md:gap-3 justify-center items-center"
+        role="list"
+        aria-label="Sloty odpowiedzi"
+      >
+        {slots.map((note, index) => {
+          const isEmpty = note === null;
+          // Usuń oktawę (C4 -> C, B4 -> B)
+          const noteWithoutOctave = note ? note.replace(/\d+$/, "") : null;
+          // Konwertuj na label (B -> H)
+          const displayLabel = noteWithoutOctave ? NOTE_TO_LABEL[noteWithoutOctave] || noteWithoutOctave : null;
+          const colorClasses = displayLabel
+            ? NOTE_COLORS[displayLabel] || "bg-gray-200 border-gray-400"
+            : "bg-white border-gray-300";
+
+          return (
+            <div
+              key={index}
+              role="listitem"
+              aria-label={isEmpty ? `Slot ${index + 1}: pusty` : `Slot ${index + 1}: nuta ${displayLabel}`}
+              className={`
+                w-12 h-12 md:w-16 md:h-16
+                rounded-lg border-2
+                flex items-center justify-center
+                font-bold text-sm md:text-base
+                transition-all duration-200
+                ${colorClasses}
+                ${isEmpty ? "border-dashed" : "border-solid shadow-md"}
+                ${disabled ? "opacity-50" : ""}
+              `}
+            >
+              {displayLabel || <span className="text-gray-400 text-lg md:text-xl">•</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Clear button next to slots */}
+      {onClear && (
+        <Button
+          onClick={onClear}
+          disabled={!canClear}
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          aria-label="Wyczyść odpowiedź"
+        >
+          🗑️ Wyczyść
+        </Button>
+      )}
     </div>
   );
 }

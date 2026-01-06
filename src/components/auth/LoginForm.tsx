@@ -15,7 +15,11 @@ interface LoginFormState {
   };
 }
 
-export default function LoginForm() {
+interface LoginFormProps {
+  returnUrl?: string;
+}
+
+export default function LoginForm({ returnUrl = "/profiles" }: LoginFormProps) {
   const [formState, setFormState] = useState<LoginFormState>({
     email: "",
     password: "",
@@ -93,8 +97,8 @@ export default function LoginForm() {
 
       if (response.ok) {
         // Login successful - cookies are set by the server
-        // Redirect to profiles page
-        window.location.href = "/profiles";
+        // Redirect to return URL or profiles page
+        window.location.href = returnUrl;
       } else {
         // Handle error responses
         const data = await response.json();

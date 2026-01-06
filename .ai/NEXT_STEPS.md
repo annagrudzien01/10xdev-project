@@ -91,6 +91,19 @@ curl http://localhost:4321/api/profiles/YOUR_PROFILE_ID/tasks/current \
 
 ## Integration Requirements
 
+### ✅ COMPLETED: GameContext Integration
+
+The `GameContext.tsx` has been updated to automatically use the new endpoint:
+
+- **✅ Auto-load on mount:** GameProvider calls `loadCurrentOrNextTask()` automatically
+- **✅ Smart loading:** Tries GET /tasks/current first, falls back to POST /tasks/next
+- **✅ Type-safe:** Full TypeScript support with proper return types
+- **✅ Error handling:** Graceful handling of network errors and 401s
+
+**Documentation:** See `.ai/game-state-persistence.md` for complete details.
+
+---
+
 ### Update POST /tasks/next Endpoint
 
 The existing `POST /api/profiles/{profileId}/tasks/next` endpoint needs to be updated to:
@@ -147,33 +160,47 @@ The submit endpoint needs to:
 
 ## Frontend Integration
 
-### Example: Check for existing puzzle on page load
+### ✅ COMPLETED: Automatic Integration via GameContext
+
+The GameContext now handles all game state loading automatically. No manual integration needed!
+
+**How it works:**
 
 ```typescript
-// In your game component
-async function loadGameState(profileId: string) {
-  try {
-    const response = await fetch(`/api/profiles/${profileId}/tasks/current`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+// Simply wrap your game UI with GameProvider
+<GameProvider profileId={profileId} initialLevel={1} initialScore={0}>
+  <GameApp />
+</GameProvider>
 
-    if (response.ok) {
-      // Puzzle exists, restore game state
-      const puzzle = await response.json();
-      setCurrentPuzzle(puzzle);
-      setGameState("playing");
-    } else if (response.status === 404) {
-      // No active puzzle, show "start new game" button
-      setGameState("idle");
-    } else {
-      // Handle other errors
-      console.error("Failed to load game state");
-    }
-  } catch (error) {
-    console.error("Error loading game state:", error);
-  }
+// GameContext automatically:
+// 1. Calls loadCurrentOrNextTask() on mount
+// 2. Tries GET /tasks/current (restore existing puzzle)
+// 3. Falls back to POST /tasks/next (create new puzzle)
+// 4. Handles all errors gracefully
+```
+
+**For custom implementations:**
+
+```typescript
+import { useGame } from "@/lib/contexts/GameContext";
+
+function MyGameComponent() {
+  const { currentTask, loadCurrentOrNextTask } = useGame();
+
+  // Manual refresh if needed
+  const handleRefresh = async () => {
+    await loadCurrentOrNextTask();
+  };
+
+  return (
+    <div>
+      {currentTask ? (
+        <PuzzleDisplay puzzle={currentTask} />
+      ) : (
+        <button onClick={handleRefresh}>Load Game</button>
+      )}
+    </div>
+  );
 }
 ```
 
@@ -186,6 +213,8 @@ async function loadGameState(profileId: string) {
 | `.ai/get-current-task-implementation-plan.md`                            | Original implementation specification |
 | `.ai/get-current-task-implementation-summary.md`                         | Complete implementation summary       |
 | `.ai/get-current-task-testing-guide.md`                                  | Testing instructions and examples     |
+| `.ai/game-state-persistence.md`                                          | Game state persistence documentation  |
+| `.ai/401-redirect-implementation.md`                                     | Automatic 401 redirect documentation  |
 | `.ai/api-plan.md`                                                        | Full API documentation                |
 | `supabase/migrations/20260106000000_alter_task_results_completed_at.sql` | Database migration file               |
 

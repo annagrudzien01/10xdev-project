@@ -2,175 +2,191 @@
  * POST /api/profiles/{profileId}/tasks/{sequenceId}/submit
  *
  * Submits the player's answer for validation and scoring.
- * This is a placeholder implementation - the actual logic should be implemented
- * according to the API plan.
+ *
+ * Logic:
+ * 1. If answer is correct → update task_result with score and completed_at
+ *    - attempts_used is NOT incremented for correct answers
+ *    - Score based on previous failed attempts: 0 fails = 10pts, 1 fail = 7pts, 2 fails = 5pts
+ * 2. If answer is incorrect → increment attempts_used
+ * 3. If attempts_used reaches 3 → mark task as completed with score 0
+ * 4. Update child profile total_score and recalculate level
+ *
+ * Level Calculation:
+ * - Level = floor(total_score / 30) + 1
+ * - 0-29 points → Level 1
+ * - 30-59 points → Level 2
+ * - 60-89 points → Level 3
+ * - Max level: 20
  */
 
 import type { APIRoute } from "astro";
 import type { SubmitAnswerCommand, SubmitAnswerResponseDTO, APIErrorResponse } from "@/types";
+import { ProfileService } from "@/lib/services/profile.service";
+import { UnauthorizedError, ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors/api-errors";
+import { profileIdParamSchema } from "@/lib/schemas/task.schema";
+
+export const prerender = false;
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
-  const { profileId, sequenceId } = params;
-
-  // Check if user is authenticated
-  const supabase = locals.supabase;
-
-  // Get user from supabase
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    const errorResponse: APIErrorResponse = {
-      error: "unauthorized",
-      message: "Musisz być zalogowany aby wykonać tę akcję",
-    };
-    return new Response(JSON.stringify(errorResponse), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  if (!profileId || !sequenceId) {
-    const errorResponse: APIErrorResponse = {
-      error: "invalid_request",
-      message: "Brak wymaganych parametrów",
-    };
-    return new Response(JSON.stringify(errorResponse), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  let user: { id: string } | null = null;
 
   try {
-    // Parse request body
-    let body: SubmitAnswerCommand;
-    try {
-      body = await request.json();
-    } catch {
-      const errorResponse: APIErrorResponse = {
-        error: "invalid_request",
-        message: "Nieprawidłowy format żądania",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Step 1: Validate authentication
+    const supabase = locals.supabase;
+    if (!supabase) {
+      throw new UnauthorizedError();
     }
+
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !authUser) {
+      throw new UnauthorizedError();
+    }
+
+    user = authUser;
+
+    // Step 2: Validate parameters
+    const validationResult = profileIdParamSchema.safeParse(params);
+    if (!validationResult.success) {
+      const details: Record<string, string> = {};
+      validationResult.error.errors.forEach((err) => {
+        const field = err.path.join(".");
+        details[field] = err.message;
+      });
+      throw new ValidationError(details);
+    }
+
+    const { profileId } = validationResult.data;
+    const { sequenceId } = params;
+
+    if (!sequenceId) {
+      throw new ValidationError({ sequenceId: "Sequence ID is required" });
+    }
+
+    // Step 3: Parse and validate request body
+    const body: SubmitAnswerCommand = await request.json();
 
     if (!body.answer || typeof body.answer !== "string") {
-      const errorResponse: APIErrorResponse = {
-        error: "invalid_request",
-        message: "Brak odpowiedzi",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      throw new ValidationError({ answer: "Answer is required" });
     }
 
-    // Verify profile belongs to user
-    const { data: profile, error: profileError } = await supabase
-      .from("child_profiles")
-      .select("id, current_level_id, parent_id, total_score")
-      .eq("id", profileId)
+    // Step 4: Verify profile ownership
+    const profileService = new ProfileService(supabase);
+    await profileService.validateOwnership(profileId, user.id);
+
+    // Step 5: Get the task_result record (created by POST /tasks/next)
+    const { data: taskResult, error: taskError } = await supabase
+      .from("task_results")
+      .select("*")
+      .eq("child_id", profileId)
+      .eq("sequence_id", sequenceId)
+      .is("completed_at", null)
       .single();
 
-    if (profileError || !profile) {
-      const errorResponse: APIErrorResponse = {
-        error: "not_found",
-        message: "Profil nie znaleziony",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (taskError || !taskResult) {
+      throw new NotFoundError("Task not found or already completed");
     }
 
-    if (profile.parent_id !== user.id) {
-      const errorResponse: APIErrorResponse = {
-        error: "forbidden",
-        message: "Nie masz dostępu do tego profilu",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get the sequence
+    // Step 6: Get the correct answer from sequence
     const { data: sequence, error: sequenceError } = await supabase
       .from("sequence")
-      .select("id, level_id, sequence_beginning, sequence_end")
+      .select("sequence_end, level_id")
       .eq("id", sequenceId)
       .single();
 
     if (sequenceError || !sequence) {
-      const errorResponse: APIErrorResponse = {
-        error: "not_found",
-        message: "Sekwencja nie znaleziona",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      throw new NotFoundError("Sequence not found");
     }
 
-    // Validate answer (compare with sequence_end)
-    const correctAnswer = sequence.sequence_end;
-    const userAnswer = body.answer;
-    const isCorrect = correctAnswer === userAnswer;
+    // Step 7: Check if answer is correct
+    const isCorrect = sequence.sequence_end === body.answer;
+    const currentAttempts = taskResult.attempts_used || 0;
 
-    // Calculate score (simplified - should use attempts from session)
-    // For now: correct = 10 points, incorrect = 0 points
-    const score = isCorrect ? 10 : 0;
-    const attemptsUsed = 1; // TODO: Track attempts in session/state
+    let score = taskResult.score || 0;
+    let completedAt: string | null = null;
+    let newAttempts = currentAttempts;
 
-    // Count completed tasks in current level
-    const { count: completedCount } = await supabase
-      .from("task_results")
-      .select("*", { count: "exact", head: true })
-      .eq("child_id", profileId)
-      .eq("level_id", profile.current_level_id);
-
-    const tasksCompletedInLevel = (completedCount || 0) + (isCorrect ? 1 : 0);
-    const levelCompleted = tasksCompletedInLevel >= 5;
-    const nextLevel = levelCompleted ? Math.min(profile.current_level_id + 1, 20) : profile.current_level_id;
-
-    // Save task result if correct
     if (isCorrect) {
-      await supabase.from("task_results").insert({
-        child_id: profileId,
-        level_id: profile.current_level_id,
-        sequence_id: sequenceId,
-        attempts_used: attemptsUsed,
-        score,
-        completed_at: new Date().toISOString(),
-      });
+      // Correct answer: calculate score based on previous failed attempts
+      // Don't increment attempts_used for correct answer
+      if (currentAttempts === 0) score = 10;
+      else if (currentAttempts === 1) score = 7;
+      else score = 5;
 
-      // Update profile score and level
+      completedAt = new Date().toISOString();
+    } else {
+      // Incorrect answer: increment attempts
+      newAttempts = currentAttempts + 1;
+
+      if (newAttempts >= 3) {
+        // Failed after 3 attempts: complete with 0 score
+        score = 0;
+        completedAt = new Date().toISOString();
+      }
+    }
+
+    // Step 8: Update task_result
+    const updateData: {
+      attempts_used: number;
+      score: number;
+      completed_at?: string;
+    } = {
+      attempts_used: newAttempts,
+      score,
+    };
+
+    if (completedAt) {
+      updateData.completed_at = completedAt;
+    }
+
+    await supabase.from("task_results").update(updateData).eq("id", taskResult.id);
+
+    // Step 9: Calculate new level based on total score (only if task completed)
+    let levelCompleted = false;
+    let nextLevel = sequence.level_id;
+    let previousLevel = sequence.level_id;
+
+    if (completedAt) {
+      // Step 10: Update profile score and calculate new level
+      const { data: profile } = await supabase
+        .from("child_profiles")
+        .select("total_score, current_level_id")
+        .eq("id", profileId)
+        .single();
+
+      const oldTotalScore = profile?.total_score || 0;
+      const newTotalScore = oldTotalScore + score;
+
+      // Calculate level: floor(total_score / 30) + 1
+      // 0-29 points → level 1
+      // 30-59 points → level 2
+      // 60-89 points → level 3, etc.
+      previousLevel = profile?.current_level_id || 1;
+      nextLevel = Math.floor(newTotalScore / 30) + 1;
+
+      // Cap at level 20
+      nextLevel = Math.min(nextLevel, 20);
+
+      // Check if level increased
+      levelCompleted = nextLevel > previousLevel;
+
       await supabase
         .from("child_profiles")
         .update({
-          total_score: profile.total_score + score,
+          total_score: newTotalScore,
           current_level_id: nextLevel,
           last_played_at: new Date().toISOString(),
         })
         .eq("id", profileId);
-    } else {
-      // Still update last_played_at
-      await supabase
-        .from("child_profiles")
-        .update({
-          last_played_at: new Date().toISOString(),
-        })
-        .eq("id", profileId);
     }
 
+    // Step 11: Return response
     const response: SubmitAnswerResponseDTO = {
       score,
-      attemptsUsed,
+      attemptsUsed: newAttempts,
       levelCompleted,
       nextLevel,
     };
@@ -180,16 +196,67 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error submitting answer:", error);
+    // Error handling
+    if (error instanceof ValidationError) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          message: error.message,
+          details: error.details,
+        } as APIErrorResponse),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-    const errorResponse: APIErrorResponse = {
-      error: "internal_error",
-      message: "Wystąpił błąd podczas sprawdzania odpowiedzi",
-    };
+    if (error instanceof UnauthorizedError) {
+      return new Response(
+        JSON.stringify({
+          error: "unauthenticated",
+          message: error.message,
+        } as APIErrorResponse),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-    return new Response(JSON.stringify(errorResponse), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
+    if (error instanceof ForbiddenError) {
+      return new Response(
+        JSON.stringify({
+          error: "forbidden",
+          message: error.message,
+        } as APIErrorResponse),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (error instanceof NotFoundError) {
+      return new Response(
+        JSON.stringify({
+          error: "not_found",
+          message: error.message,
+        } as APIErrorResponse),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // eslint-disable-next-line no-console
+    console.error("Unexpected error in POST /api/profiles/{profileId}/tasks/{sequenceId}/submit:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      userId: user?.id || "unauthenticated",
+      profileId: params.profileId,
+      sequenceId: params.sequenceId,
+      timestamp: new Date().toISOString(),
     });
+
+    return new Response(
+      JSON.stringify({
+        error: "internal_error",
+        message: "An unexpected error occurred",
+        ...(import.meta.env.DEV && {
+          details: error instanceof Error ? error.message : String(error),
+        }),
+      } as APIErrorResponse),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 };
