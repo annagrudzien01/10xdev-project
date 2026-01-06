@@ -44,6 +44,17 @@ export class UnauthorizedError extends Error {
 }
 
 /**
+ * ForbiddenError - Thrown when user doesn't have permission to access resource
+ * Maps to HTTP 403 Forbidden
+ */
+export class ForbiddenError extends Error {
+  constructor(message = "Access forbidden") {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
+/**
  * NotFoundError - Thrown when requested resource doesn't exist
  * Maps to HTTP 404 Not Found
  */

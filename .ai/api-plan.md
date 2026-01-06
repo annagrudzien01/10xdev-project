@@ -50,11 +50,11 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 
 **Query Parameters for GET /profiles:**
 
-| Parameter  | Type    | Default | Max | Description                    |
-| ---------- | ------- | ------- | --- | ------------------------------ |
-| `page`     | number  | 1       | -   | Page number                    |
-| `pageSize` | number  | 20      | 100 | Number of items per page       |
-| `sort`     | string  | -       | -   | Sort field (e.g., "createdAt") |
+| Parameter  | Type   | Default | Max | Description                    |
+| ---------- | ------ | ------- | --- | ------------------------------ |
+| `page`     | number | 1       | -   | Page number                    |
+| `pageSize` | number | 20      | 100 | Number of items per page       |
+| `sort`     | string | -       | -   | Sort field (e.g., "createdAt") |
 
 **List Response – 200 OK**
 
@@ -142,10 +142,11 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 | Method | Path                                              | Description                                     |
 | ------ | ------------------------------------------------- | ----------------------------------------------- |
 | POST   | `/profiles/{profileId}/tasks/next`                | Generate & return next puzzle for current level |
+| GET    | `/profiles/{profileId}/tasks/current`             | Get current puzzle (if exists)                  |
 | POST   | `/profiles/{profileId}/tasks/{sequenceId}/submit` | Submit answer – returns score                   |
 | GET    | `/profiles/{profileId}/tasks/history`             | Paginated list of task results                  |
 
-**Generate Puzzle Response – 200 OK**
+**Generate Puzzle Response – 200 OK (POST /profiles/{profileId}/tasks/next)**
 
 ```json
 {
@@ -157,6 +158,19 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 ```
 
 **Note:** `sequenceBeginning` is returned as a `string` with notes separated by hyphens, including octave numbers (e.g., `"C4-E4-G4"`). Frontend must parse it using `split("-")` to get an array.
+
+**Get Current Puzzle Response – 200 OK (GET /profiles/{profileId}/tasks/current)**
+
+```json
+{
+  "sequenceId": "uuid",
+  "levelId": 3,
+  "sequenceBeginning": "C4-E4-G4-G#4",
+  "expectedSlots": 2
+}
+```
+
+**Note:** Returns the current puzzle if one exists. Returns `404 Not Found` if no current puzzle exists (user needs to call `POST /tasks/next` to generate a new one).
 
 **Submit Answer Request**
 
@@ -181,12 +195,12 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 
 **Note:** `score` is `10` for correct answer, `0` for incorrect.
 
-Error Codes
+**Error Codes**
 
 - 400 Bad Request – wrong answer format, missing required fields
 - 401 Unauthorized – not authenticated
 - 403 Forbidden – profile doesn't belong to user
-- 404 Not Found – profile or sequence not found
+- 404 Not Found – profile, sequence, or current puzzle not found
 - 409 Conflict – exceeds 3 attempts (response includes correct sequence)
 
 ---

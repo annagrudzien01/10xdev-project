@@ -88,7 +88,7 @@ export function BlackKeysRow({ keys, onKeyClick, highlightedKeys, disabled }: Bl
 
         {/* B - brak czarnego klawisza po B */}
         <div className="relative w-12 md:w-16 lg:w-20" />
-        
+
         {/* C5 - brak czarnego klawisza */}
         <div className="relative w-12 md:w-16 lg:w-20" />
       </div>

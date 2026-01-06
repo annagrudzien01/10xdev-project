@@ -75,7 +75,7 @@ export default function GamePlayView({ profileName }: GamePlayViewProps) {
    */
   const handlePlaySequence = useCallback(() => {
     setIsPlayingSequence(true);
-    setReplayTrigger(prev => prev + 1); // Trigger re-render of Piano
+    setReplayTrigger((prev) => prev + 1); // Trigger re-render of Piano
   }, [setIsPlayingSequence]);
 
   /**

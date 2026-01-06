@@ -903,7 +903,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Verify token for protected paths
     if (PROTECTED_PATHS.some((path) => url.pathname.startsWith(path))) {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
       if (error || !user) {
         cookies.delete("sb-access-token", { path: "/" });

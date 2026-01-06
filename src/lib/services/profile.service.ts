@@ -7,7 +7,7 @@ import type {
   PaginationParams,
 } from "../../types";
 import { toChildProfileDTO } from "../../types";
-import { ConflictError, NotFoundError } from "../errors/api-errors";
+import { ConflictError, NotFoundError, ForbiddenError } from "../errors/api-errors";
 
 /**
  * ProfileService
@@ -205,6 +205,34 @@ export class ProfileService {
     }
 
     return toChildProfileDTO(data);
+  }
+
+  /**
+   * Validates that a profile belongs to a parent
+   *
+   * @param profileId - The profile UUID
+   * @param parentId - The authenticated parent's user ID
+   * @throws NotFoundError if profile doesn't exist
+   * @throws ForbiddenError if profile doesn't belong to parent
+   * @throws Error for other database errors
+   */
+  async validateOwnership(profileId: string, parentId: string): Promise<void> {
+    const { data, error } = await this.supabase
+      .from("child_profiles")
+      .select("id, parent_id")
+      .eq("id", profileId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        throw new NotFoundError("Profile not found");
+      }
+      throw new Error(`Failed to validate ownership: ${error.message}`);
+    }
+
+    if (data.parent_id !== parentId) {
+      throw new ForbiddenError("Profile does not belong to this parent");
+    }
   }
 
   /**

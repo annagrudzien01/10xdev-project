@@ -68,7 +68,9 @@ function AnswerSlotsComponent({ totalSlots, selectedNotes, disabled = false }: A
         const noteWithoutOctave = note ? note.replace(/\d+$/, "") : null;
         // Konwertuj na label (B -> H)
         const displayLabel = noteWithoutOctave ? NOTE_TO_LABEL[noteWithoutOctave] || noteWithoutOctave : null;
-        const colorClasses = displayLabel ? NOTE_COLORS[displayLabel] || "bg-gray-200 border-gray-400" : "bg-white border-gray-300";
+        const colorClasses = displayLabel
+          ? NOTE_COLORS[displayLabel] || "bg-gray-200 border-gray-400"
+          : "bg-white border-gray-300";
 
         return (
           <div
