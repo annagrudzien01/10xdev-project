@@ -164,6 +164,7 @@ Każda nuta ma unikalny kolor podświetlenia zdefiniowany w `NOTE_HIGHLIGHT_COLO
 - **B/H**: różowy (`bg-pink-400`)
 
 Efekty podświetlenia:
+
 - Animacja: `scale-[0.98]` (zmniejszenie do 98%)
 - Cień: `shadow-lg` bez przezroczystości
 - Opacity: `!opacity-100` (pełna widoczność nawet gdy wyłączone)

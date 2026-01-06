@@ -118,7 +118,12 @@ export function Piano({
   const isPianoDisabled = disabled || !isLoaded || isPlaying;
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full p-2" role="region" aria-label="Pianino" aria-busy={isPlaying}>
+    <div
+      className="flex flex-col items-center gap-4 w-full p-2"
+      role="region"
+      aria-label="Pianino"
+      aria-busy={isPlaying}
+    >
       {/* Komunikat ładowania */}
       {!isLoaded && <div className="text-sm text-gray-600 animate-pulse">Ładowanie dźwięków...</div>}
 

@@ -215,6 +215,7 @@ Pojedynczy klawisz pianina. Reprezentuje jedną nutę, wyświetla jej literę (w
 
 **Kolory podświetlenia:**
 Każda nuta ma unikalny kolor zdefiniowany w `NOTE_HIGHLIGHT_COLORS`:
+
 - C: niebieski (`bg-blue-400`)
 - D: zielony (`bg-green-400`)
 - E: żółty (`bg-yellow-400`)
@@ -231,6 +232,7 @@ Każda nuta ma unikalny kolor zdefiniowany w `NOTE_HIGHLIGHT_COLORS`:
 - `onTouchStart` / `onTouchEnd` - obsługa dotyku (mobile/tablet) z `preventDefault`
 
 **Animacje:**
+
 - Wciśnięcie: `scale-[0.98]` (zmniejszenie do 98%) + `brightness-90`
 - Podświetlenie: kolorowe tło + cień + `!opacity-100` (nawet gdy disabled)
 - Czas trwania CSS transition: `100ms`
@@ -331,6 +333,7 @@ interface UsePianoSamplerReturn {
 ```
 
 **Implementacja:**
+
 - Używa `Tone.Sampler` zamiast `PolySynth`
 - Ładuje próbki MP3 z katalogu `/public/audio/piano/`
 - Próbki: C4.mp3, Ds4.mp3, Fs4.mp3, A4.mp3
@@ -972,56 +975,62 @@ const handleKeyInteraction = (note: string) => {
    ```
 3. Zaimplementuj funkcję `handleKeyPress`:
    ```typescript
-   const handleKeyPress = useCallback((note: string) => {
-     if (disabled || isPlaying || !isLoaded) return;
-     
-     playNote(note, NOTE_DURATION);
-     
-     // Podświetl klawisz na HIGHLIGHT_DURATION
-     setLocalHighlightedKeys([note]);
-     setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
-     
-     onKeyPress(note);
-   }, [disabled, isPlaying, isLoaded, playNote, onKeyPress]);
+   const handleKeyPress = useCallback(
+     (note: string) => {
+       if (disabled || isPlaying || !isLoaded) return;
+
+       playNote(note, NOTE_DURATION);
+
+       // Podświetl klawisz na HIGHLIGHT_DURATION
+       setLocalHighlightedKeys([note]);
+       setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+
+       onKeyPress(note);
+     },
+     [disabled, isPlaying, isLoaded, playNote, onKeyPress]
+   );
    ```
 4. Zaimplementuj funkcję `handlePlaySequence`:
 
    ```typescript
-   const handlePlaySequence = useCallback(async (sequence: string[]) => {
-     if (!isLoaded) {
-       setError("Dźwięki nie są jeszcze załadowane");
-       return;
-     }
-
-     try {
-       setIsPlaying(true);
-       
-       for (let i = 0; i < sequence.length; i++) {
-         const note = sequence[i];
-         
-         // Podświetl klawisz
-         setLocalHighlightedKeys([note]);
-         
-         // Odtwórz dźwięk
-         playNote(note, NOTE_DURATION);
-         
-         // Zgaś podświetlenie po HIGHLIGHT_DURATION
-         setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
-         
-         // Czekaj na następną nutę
-         if (i < sequence.length - 1) {
-           await new Promise(resolve => setTimeout(resolve, SEQUENCE_INTERVAL * 1000));
-         }
+   const handlePlaySequence = useCallback(
+     async (sequence: string[]) => {
+       if (!isLoaded) {
+         setError("Dźwięki nie są jeszcze załadowane");
+         return;
        }
-       
-       setIsPlaying(false);
-       onSequenceComplete?.();
-     } catch (err) {
-       console.error("Error playing sequence:", err);
-       setError("Wystąpił błąd podczas odtwarzania sekwencji");
-       setIsPlaying(false);
-     }
-   }, [isLoaded, playNote, onSequenceComplete]);
+
+       try {
+         setIsPlaying(true);
+
+         for (let i = 0; i < sequence.length; i++) {
+           const note = sequence[i];
+
+           // Podświetl klawisz
+           setLocalHighlightedKeys([note]);
+
+           // Odtwórz dźwięk
+           playNote(note, NOTE_DURATION);
+
+           // Zgaś podświetlenie po HIGHLIGHT_DURATION
+           setTimeout(() => setLocalHighlightedKeys([]), HIGHLIGHT_DURATION);
+
+           // Czekaj na następną nutę
+           if (i < sequence.length - 1) {
+             await new Promise((resolve) => setTimeout(resolve, SEQUENCE_INTERVAL * 1000));
+           }
+         }
+
+         setIsPlaying(false);
+         onSequenceComplete?.();
+       } catch (err) {
+         console.error("Error playing sequence:", err);
+         setError("Wystąpił błąd podczas odtwarzania sekwencji");
+         setIsPlaying(false);
+       }
+     },
+     [isLoaded, playNote, onSequenceComplete]
+   );
    ```
 
 5. Dodaj `useEffect` dla auto-play (z force remount przez key):
@@ -1033,15 +1042,16 @@ const handleKeyInteraction = (note: string) => {
    }, [autoPlay, sequenceToPlay.join(","), isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
    ```
 6. Renderuj strukturę z połączonymi podświetleniami:
+
    ```typescript
    const allHighlightedKeys = [...highlightedKeys, ...localHighlightedKeys];
    const isPianoDisabled = disabled || !isLoaded || isPlaying;
-   
+
    return (
      <div className="flex flex-col items-center gap-4 w-full p-2" role="region" aria-label="Pianino" aria-busy={isPlaying}>
        {!isLoaded && <div className="text-sm text-gray-600 animate-pulse">Ładowanie dźwięków...</div>}
        {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2" role="alert">{error}</div>}
-       
+
        <PianoKeysContainer>
          <BlackKeysRow
            keys={BLACK_KEYS}
@@ -1075,7 +1085,7 @@ const handleKeyInteraction = (note: string) => {
 
    const handleReplay = () => {
      // Force remount Piano by changing key
-     setReplayTrigger(prev => prev + 1);
+     setReplayTrigger((prev) => prev + 1);
    };
 
    // sequenceBeginning już zawiera nuty z oktawami z bazy

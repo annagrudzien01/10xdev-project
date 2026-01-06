@@ -125,10 +125,10 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
       }
 
       const data: GeneratePuzzleDTO = await response.json();
-      
+
       // Parse sequence beginning - już zawiera oktawy (format: "C4-E4-G4")
       const sequenceArray = data.sequenceBeginning.split("-");
-      
+
       setCurrentTask({
         sequenceId: data.sequenceId,
         levelId: data.levelId,
@@ -155,7 +155,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
 
     try {
       setIsSubmitting(true);
-      
+
       // Convert notes array to string format (["A4", "B4", "C5"] -> "A4-B4-C5")
       const answerString = selectedNotes.join("-");
 

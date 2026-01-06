@@ -221,6 +221,33 @@ export interface GeneratePuzzleDTO {
 }
 
 /**
+ * Current Puzzle DTO - Response for GET /profiles/{profileId}/tasks/current
+ *
+ * Represents the currently active puzzle for a child profile.
+ * Used to resume game state after page refresh.
+ */
+export interface CurrentPuzzleDTO {
+  /** Sequence identifier (UUID) */
+  sequenceId: string;
+  /** Level this puzzle belongs to */
+  levelId: number;
+  /** The beginning part of the melody that is played to the user */
+  sequenceBeginning: string;
+  /** Number of notes the user needs to complete */
+  expectedSlots: number;
+}
+
+/**
+ * Helper to calculate expected slots from sequence_end
+ */
+export function calculateExpectedSlots(sequenceEnd: string): number {
+  if (!sequenceEnd || sequenceEnd.trim() === "") {
+    return 0;
+  }
+  return sequenceEnd.split("-").length;
+}
+
+/**
  * Helper to transform SequenceEntity to GeneratePuzzleDTO
  */
 export function toGeneratePuzzleDTO(entity: SequenceEntity, expectedSlots: number): GeneratePuzzleDTO {
