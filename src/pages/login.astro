@@ -7,8 +7,11 @@ import LoginForm from "@/components/auth/LoginForm";
 // but we keep this check for explicit clarity and to avoid unnecessary rendering
 const token = Astro.cookies.get("sb-access-token");
 
+// Get return URL from query params
+const returnUrl = Astro.url.searchParams.get("returnUrl") || "/profiles";
+
 if (token?.value) {
-  return Astro.redirect("/profiles");
+  return Astro.redirect(returnUrl);
 }
 ---
 
@@ -26,7 +29,7 @@ if (token?.value) {
 
       {/* Login Form */}
       <div class="bg-card border rounded-lg shadow-sm p-6 sm:p-8">
-        <LoginForm client:load />
+        <LoginForm client:load returnUrl={returnUrl} />
       </div>
 
       {/* Demo link */}

@@ -3,7 +3,8 @@
  *
  * Endpoint to retrieve the currently active puzzle for a child profile.
  * This allows the frontend to resume game state after page refresh without
- * generating a new puzzle.
+ * generating a new puzzle. Returns the puzzle data including the number of
+ * attempts already used.
  *
  * Security:
  * - Requires authentication (Supabase JWT)
@@ -11,7 +12,7 @@
  * - Enforces RLS on task_results table
  *
  * Response Codes:
- * - 200: Active puzzle found and returned
+ * - 200: Active puzzle found and returned (includes attemptsUsed field)
  * - 400: Invalid request (bad profileId format)
  * - 401: Unauthenticated
  * - 403: Profile doesn't belong to authenticated parent

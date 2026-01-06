@@ -64,17 +64,21 @@
 
 ### 1.5 `task_results`
 
-| Kolumna       | Typ         | Ograniczenia                                             |
-| ------------- | ----------- | -------------------------------------------------------- |
-| id            | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                   |
-| child_id      | UUID        | NOT NULL REFERENCES child_profiles(id) ON DELETE CASCADE |
-| level_id      | SMALLINT    | NOT NULL REFERENCES levels(id)                           |
-| sequence_id   | UUID        | NOT NULL REFERENCES sequence(id)                         |
-| attempts_used | SMALLINT    | NOT NULL CHECK (attempts_used BETWEEN 1 AND 3)           |
-| score         | SMALLINT    | NOT NULL CHECK (score BETWEEN 0 AND 10)                  |
-| completed_at  | TIMESTAMPTZ | DEFAULT now() NOT NULL                                   |
-| created_at    | TIMESTAMPTZ | DEFAULT now() NOT NULL                                   |
-| updated_at    | TIMESTAMPTZ |                                                          |
+| Kolumna       | Typ         | Ograniczenia                                              |
+| ------------- | ----------- | --------------------------------------------------------- |
+| id            | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                    |
+| child_id      | UUID        | NOT NULL REFERENCES child_profiles(id) ON DELETE CASCADE  |
+| level_id      | SMALLINT    | NOT NULL REFERENCES levels(id)                            |
+| sequence_id   | UUID        | NOT NULL REFERENCES sequence(id)                          |
+| attempts_used | SMALLINT    | NULLABLE CHECK (attempts_used IS NULL OR BETWEEN 0 AND 3) |
+| score         | SMALLINT    | NULLABLE CHECK (score IS NULL OR BETWEEN 0 AND 10)        |
+| completed_at  | TIMESTAMPTZ | NULLABLE (no default)                                     |
+| created_at    | TIMESTAMPTZ | DEFAULT now() NOT NULL                                    |
+| updated_at    | TIMESTAMPTZ |                                                           |
+
+**Note:** `completed_at`, `attempts_used`, and `score` are nullable to support incomplete/in-progress tasks.
+When a task is created (puzzle generated), these fields are set to `NULL` (or 0 for attempts_used/score).
+When a task is completed (answer submitted), these fields are populated with actual values.
 
 ## 2. Relacje między tabelami
 
@@ -86,12 +90,16 @@
 
 ## 3. Indeksy
 
-| Tabela         | Nazwa indeksu               | Definicja / Kolumny              |
-| -------------- | --------------------------- | -------------------------------- |
-| child_profiles | idx_child_parent            | (parent_id)                      |
-| sessions       | ux_active_session_per_child | UNIQUE(child_id) WHERE is_active |
-| task_results   | ux_child_level              | UNIQUE(child_id, level_id)       |
-| task_results   | idx_task_completed_at       | (completed_at)                   |
+| Tabela         | Nazwa indeksu                    | Definicja / Kolumny                                      |
+| -------------- | -------------------------------- | -------------------------------------------------------- |
+| child_profiles | idx_child_parent                 | (parent_id)                                              |
+| sessions       | ux_active_session_per_child      | UNIQUE(child_id) WHERE is_active                         |
+| task_results   | idx_task_completed_at            | (completed_at)                                           |
+| task_results   | idx_task_results_incomplete      | (child_id, created_at DESC) WHERE completed_at IS NULL   |
+| task_results   | ux_incomplete_task_per_child_seq | UNIQUE(child_id, sequence_id) WHERE completed_at IS NULL |
+
+**Note:** The unique constraint `(child_id, level_id)` was removed to allow multiple task attempts per level.
+New constraints focus on preventing duplicate incomplete tasks per sequence.
 
 ## 4. Zasady PostgreSQL (RLS)
 

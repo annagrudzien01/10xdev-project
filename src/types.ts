@@ -235,6 +235,8 @@ export interface CurrentPuzzleDTO {
   sequenceBeginning: string;
   /** Number of notes the user needs to complete */
   expectedSlots: number;
+  /** Number of attempts already used for this puzzle (0-3) */
+  attemptsUsed: number;
 }
 
 /**
@@ -319,8 +321,14 @@ export interface TaskResultDTO {
 
 /**
  * Helper to transform TaskResultEntity to TaskResultDTO
+ * Note: This should only be used for completed tasks where attempts_used, score, and completed_at are not null
  */
 export function toTaskResultDTO(entity: TaskResultEntity): TaskResultDTO {
+  // Guard against incomplete tasks - these fields should never be null for completed tasks
+  if (entity.attempts_used === null || entity.score === null || entity.completed_at === null) {
+    throw new Error("Cannot convert incomplete task result to TaskResultDTO");
+  }
+
   return {
     id: entity.id,
     childId: entity.child_id,

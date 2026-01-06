@@ -21,6 +21,57 @@ const { title = "10x Astro Starter" } = Astro.props;
   <body>
     <Toaster position="top-right" richColors />
     <slot />
+
+    <!-- Global 401 handler script -->
+    <script>
+      // Intercept all fetch requests to handle 401 responses
+      const originalFetch = window.fetch;
+      window.fetch = async function (...args) {
+        try {
+          const response = await originalFetch(...args);
+
+          // If 401 Unauthorized, check if we should redirect
+          if (response.status === 401) {
+            let url = "";
+            if (typeof args[0] === "string") {
+              url = args[0];
+            } else if (args[0] instanceof URL) {
+              url = args[0].href;
+            } else if (args[0] && typeof args[0] === "object" && "url" in args[0]) {
+              url = args[0].url;
+            }
+
+            // Don't redirect on auth endpoints (login, register, etc.)
+            const isAuthEndpoint =
+              url.includes("/api/auth/login") ||
+              url.includes("/api/auth/register") ||
+              url.includes("/api/auth/forgot-password") ||
+              url.includes("/api/auth/reset-password");
+
+            if (!isAuthEndpoint) {
+              handleUnauthorized();
+            }
+          }
+
+          return response;
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      // Handle unauthorized responses
+      function handleUnauthorized() {
+        // Clear authentication cookies
+        document.cookie = "sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+        // Get current path for redirect after login
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+
+        // Redirect to login with return URL
+        window.location.href = `/login?returnUrl=${returnUrl}`;
+      }
+    </script>
   </body>
 </html>
 

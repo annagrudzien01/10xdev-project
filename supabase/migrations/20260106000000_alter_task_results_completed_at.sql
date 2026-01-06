@@ -33,10 +33,11 @@ alter column completed_at drop default;
 
 -- Step 3: Update constraints on attempts_used and score to allow NULL values for incomplete tasks
 -- When a task is created but not yet completed, these fields should be NULL or have default values
+-- attempts_used can be 0 (task created but not attempted yet) or 1-3 (attempts made)
 alter table public.task_results 
 drop constraint if exists task_results_attempts_used_check,
 add constraint task_results_attempts_used_check 
-  check (attempts_used is null or (attempts_used between 1 and 3));
+  check (attempts_used is null or (attempts_used between 0 and 3));
 
 alter table public.task_results 
 drop constraint if exists task_results_score_check,
