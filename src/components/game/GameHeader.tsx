@@ -15,9 +15,11 @@ interface GameHeaderProps {
   attemptsLeft: number;
   /** Profile name */
   profileName?: string;
+  /** Demo mode - hides attempts indicator */
+  demoMode?: boolean;
 }
 
-function GameHeaderComponent({ level, score, attemptsLeft, profileName }: GameHeaderProps) {
+function GameHeaderComponent({ level, score, attemptsLeft, profileName, demoMode = false }: GameHeaderProps) {
   return (
     <div className="w-full bg-white shadow-md rounded-lg p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -46,18 +48,20 @@ function GameHeaderComponent({ level, score, attemptsLeft, profileName }: GameHe
           </div>
 
           {/* Attempts */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs md:text-sm text-gray-500 uppercase">Próby</span>
-            <div className="flex gap-1">
-              {Array.from({ length: 3 }, (_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full ${i < attemptsLeft ? "bg-green-500" : "bg-gray-300"}`}
-                  aria-hidden="true"
-                />
-              ))}
+          {!demoMode && (
+            <div className="flex flex-col items-center">
+              <span className="text-xs md:text-sm text-gray-500 uppercase">Próby</span>
+              <div className="flex gap-1">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${i < attemptsLeft ? "bg-green-500" : "bg-gray-300"}`}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

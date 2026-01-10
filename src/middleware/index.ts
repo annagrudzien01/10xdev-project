@@ -96,7 +96,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; child-src 'self' blob:;"
   );
 
   return response;
