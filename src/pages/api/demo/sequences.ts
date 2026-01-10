@@ -71,12 +71,19 @@ export const GET: APIRoute = async ({ url, locals }) => {
       );
     }
 
-    // Step 3: Fetch sequences from database (tylko poziom 1 - reszta będzie dodana później)
-    console.log("Fetching sequences for level 1...");
-    const { data: sequences, error: sequencesError } = await supabase
-      .from("sequence")
-      .select("id, level_id, sequence_beginning, sequence_end")
-      .eq("level_id", 1); // Demo: tylko poziom 1
+    // Step 3: Fetch sequences from database
+    // If levelId is provided, fetch only that level; otherwise fetch levels 1-3
+    let query = supabase.from("sequence").select("id, level_id, sequence_beginning, sequence_end");
+
+    if (requestedLevelId !== undefined) {
+      console.log(`Fetching sequences for level ${requestedLevelId}...`);
+      query = query.eq("level_id", requestedLevelId);
+    } else {
+      console.log("Fetching sequences for levels 1-3...");
+      query = query.in("level_id", [1, 2, 3]);
+    }
+
+    const { data: sequences, error: sequencesError } = await query;
 
     console.log("Sequences query result:", { sequences, error: sequencesError });
 
@@ -94,10 +101,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
     if (!sequences || sequences.length === 0) {
       console.log("No sequences found - returning 404");
+      const levelMsg = requestedLevelId ? `level ${requestedLevelId}` : "levels 1-3";
       return new Response(
         JSON.stringify({
           error: "not_found",
-          message: "No sequences found for demo (level 1). Please run database migrations.",
+          message: `No sequences found for demo (${levelMsg}). Please run database migrations.`,
         } as APIErrorResponse),
         { status: 404, headers: { "Content-Type": "application/json" } }
       );

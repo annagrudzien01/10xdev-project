@@ -235,14 +235,14 @@ async function fetchDemoSequences(levelId?: number): Promise<DemoSequenceDTO[]> 
 export function useDemoGame() {
   const [state, dispatch] = useReducer(demoGameReducer, initialState);
 
-  // Fetch sequences for all demo levels (1-3)
+  // Fetch sequences for demo level 1 (can be extended to 1-3 when more sequences available)
   const {
     data: allSequences,
     isLoading: isLoadingSequences,
     error: sequencesError,
   } = useQuery({
-    queryKey: ["demoSequences"],
-    queryFn: () => fetchDemoSequences(),
+    queryKey: ["demoSequences", 1], // Fetch only level 1 for now
+    queryFn: () => fetchDemoSequences(1), // Pass levelId = 1
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
