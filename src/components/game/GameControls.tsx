@@ -18,6 +18,8 @@ interface GameControlsProps {
   onSubmit: () => void;
   /** Whether the game is in a loading/processing state */
   isLoading?: boolean;
+  /** Demo mode - can be used for UI adjustments */
+  demoMode?: boolean;
 }
 
 function GameControlsComponent({
@@ -26,6 +28,7 @@ function GameControlsComponent({
   onPlaySequence,
   onSubmit,
   isLoading = false,
+  demoMode = false,
 }: GameControlsProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-center items-center w-full max-w-md">

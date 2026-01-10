@@ -1,0 +1,10 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { DemoGameApp } from "@/components/game/demo/DemoGameApp";
+---
+
+<Layout title="Rytmik - Demo">
+  <main class="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 pb-8">
+    <DemoGameApp client:load />
+  </main>
+</Layout>
