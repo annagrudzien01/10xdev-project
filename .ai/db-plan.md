@@ -60,6 +60,7 @@
 | updated_at | TIMESTAMPTZ |                                                          |
 
 **Session Duration Logic:**
+
 - New sessions automatically have `ended_at = started_at + 10 minutes`
 - Sessions can be extended by 2 minutes using the refresh endpoint
 - Session status is computed dynamically based on `ended_at > current_time`
@@ -99,19 +100,20 @@ When a task is completed (answer submitted), these fields are populated with act
 
 ## 3. Indeksy
 
-| Tabela         | Nazwa indeksu                     | Definicja / Kolumny                                      |
-| -------------- | --------------------------------- | -------------------------------------------------------- |
-| child_profiles | idx_child_parent                  | (parent_id)                                              |
-| sessions       | idx_sessions_child_started        | (child_id, started_at DESC)                              |
-| sessions       | idx_sessions_active               | (child_id, ended_at) WHERE ended_at > now()              |
-| task_results   | idx_task_completed_at             | (completed_at)                                           |
-| task_results   | idx_task_results_session          | (session_id, completed_at)                               |
-| task_results   | idx_task_results_incomplete       | (child_id, created_at DESC) WHERE completed_at IS NULL   |
-| task_results   | ux_incomplete_task_per_child_seq  | UNIQUE(child_id, sequence_id) WHERE completed_at IS NULL |
+| Tabela         | Nazwa indeksu                    | Definicja / Kolumny                                      |
+| -------------- | -------------------------------- | -------------------------------------------------------- |
+| child_profiles | idx_child_parent                 | (parent_id)                                              |
+| sessions       | idx_sessions_child_started       | (child_id, started_at DESC)                              |
+| sessions       | idx_sessions_active              | (child_id, ended_at) WHERE ended_at > now()              |
+| task_results   | idx_task_completed_at            | (completed_at)                                           |
+| task_results   | idx_task_results_session         | (session_id, completed_at)                               |
+| task_results   | idx_task_results_incomplete      | (child_id, created_at DESC) WHERE completed_at IS NULL   |
+| task_results   | ux_incomplete_task_per_child_seq | UNIQUE(child_id, sequence_id) WHERE completed_at IS NULL |
 
-**Note:** 
+**Note:**
+
 - `ux_active_session_per_child` was removed - now multiple "active" sessions (ended_at in future) can exist temporarily
-- `idx_sessions_active` is a partial index for filtering active sessions (ended_at > now()) 
+- `idx_sessions_active` is a partial index for filtering active sessions (ended_at > now())
 - The unique constraint `(child_id, level_id)` was removed to allow multiple task attempts per level.
 - New constraints focus on preventing duplicate incomplete tasks per sequence.
 - For sessions: `ux_active_session_per_child` ensures only one session without `ended_at` per child (max 1 active).

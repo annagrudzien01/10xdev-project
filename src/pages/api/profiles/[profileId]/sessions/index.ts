@@ -3,7 +3,7 @@
  * GET /api/profiles/{profileId}/sessions
  *
  * Manages game sessions for a child profile.
- * POST: Starts a new session, automatically deactivating previous active session
+ * POST: Starts a new session (10 min duration), automatically closing previous active sessions
  * GET: Lists sessions with optional filtering and pagination
  */
 
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     // Step 4: Start new session
     const sessionService = new SessionService(supabase);
-    const session: SessionStartDTO = await sessionService.startSession(profileId, user.id);
+    const session: SessionStartDTO = await sessionService.startSession(profileId);
 
     // Step 5: Return success response
     return new Response(JSON.stringify(session), {

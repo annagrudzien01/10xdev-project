@@ -56,12 +56,12 @@ export interface CurrentPuzzleDTO {
 4. Service **TasksService.getCurrentTask(profileId)**:
    - Zapytanie SQL:
      ```sql
-     SELECT 
-       tr.sequence_id, 
-       tr.level_id, 
+     SELECT
+       tr.sequence_id,
+       tr.level_id,
        tr.attempts_used,
        tr.session_id,
-       seq.sequence_beginning, 
+       seq.sequence_beginning,
        seq.sequence_end
      FROM task_results tr
      JOIN sequence seq ON seq.id = tr.sequence_id

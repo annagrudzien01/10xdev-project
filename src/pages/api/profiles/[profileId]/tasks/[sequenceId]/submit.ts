@@ -73,16 +73,22 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       throw new ValidationError({ answer: "Answer is required" });
     }
 
+    if (!body.sessionId || typeof body.sessionId !== "string") {
+      throw new ValidationError({ sessionId: "Session ID is required" });
+    }
+
     // Step 4: Verify profile ownership
     const profileService = new ProfileService(supabase);
     await profileService.validateOwnership(profileId, user.id);
 
     // Step 5: Get the task_result record (created by POST /tasks/next)
+    // Filter by session_id to ensure we're updating the correct task for this session
     const { data: taskResult, error: taskError } = await supabase
       .from("task_results")
       .select("*")
       .eq("child_id", profileId)
       .eq("sequence_id", sequenceId)
+      .eq("session_id", body.sessionId)
       .is("completed_at", null)
       .single();
 

@@ -11,10 +11,16 @@ import { ProfileService } from "@/lib/services/profile.service";
 import { TaskService } from "@/lib/services/task.service";
 import { UnauthorizedError, ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors/api-errors";
 import { profileIdParamSchema } from "@/lib/schemas/task.schema";
+import { z } from "zod";
+
+// Schema for request body
+const nextTaskBodySchema = z.object({
+  sessionId: z.string().uuid({ message: "Invalid session ID format" }),
+});
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ params, locals }) => {
+export const POST: APIRoute = async ({ params, request, locals }) => {
   // Declare user in outer scope for error logging
   let user: { id: string } | null = null;
 
@@ -52,6 +58,20 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     const { profileId } = validationResult.data;
 
+    // Step 2.5: Validate request body (sessionId)
+    const body = await request.json();
+    const bodyValidation = nextTaskBodySchema.safeParse(body);
+    if (!bodyValidation.success) {
+      const details: Record<string, string> = {};
+      bodyValidation.error.errors.forEach((err) => {
+        const field = err.path.join(".");
+        details[field] = err.message;
+      });
+      throw new ValidationError(details);
+    }
+
+    const { sessionId } = bodyValidation.data;
+
     // Step 3: Verify profile ownership
     // eslint-disable-next-line no-console
     console.log("Step 3: Verifying profile ownership...");
@@ -60,12 +80,12 @@ export const POST: APIRoute = async ({ params, locals }) => {
     // eslint-disable-next-line no-console
     console.log("Step 3: Profile ownership verified");
 
-    // Step 4: Check if there's already an active task
+    // Step 4: Check if there's already an active task for this session
     // eslint-disable-next-line no-console
     console.log("Step 4: Checking for existing task...");
     const taskService = new TaskService(supabase);
     try {
-      const existingTask = await taskService.getCurrentTask(profileId);
+      const existingTask = await taskService.getCurrentTask(profileId, sessionId);
       // eslint-disable-next-line no-console
       console.log("Step 4: Found existing task, returning it");
       return new Response(JSON.stringify(existingTask), {
@@ -124,12 +144,14 @@ export const POST: APIRoute = async ({ params, locals }) => {
     // - score: 0 (not scored yet)
     // - attempts_used: 0 (no attempts yet)
     // - completed_at: null (task not completed)
+    // - session_id: current session ID
     // eslint-disable-next-line no-console
     console.log("Step 7: Creating task_result record...");
     const { error: insertError } = await supabase.from("task_results").insert({
       child_id: profileId,
       level_id: randomSequence.level_id,
       sequence_id: randomSequence.id,
+      session_id: sessionId, // Link task to current session
       attempts_used: 0, // Initial value: no attempts yet
       score: 0, // Initial value: not scored yet
       completed_at: null, // NULL: task is incomplete

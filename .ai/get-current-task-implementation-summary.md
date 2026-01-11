@@ -53,15 +53,15 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 
 **Exports:**
 
-- `TaskService` class with `getCurrentTask(profileId)` method
+- `TaskService` class with `getCurrentTask(profileId, sessionId)` method
 
 **Key Features:**
 
 - Queries `task_results` table with JOIN to `sequence` table
 - Filters for incomplete tasks (`completed_at IS NULL`)
-- Returns most recent incomplete task
+- **Filters by current session (`session_id`)**
+- Returns most recent incomplete task for the current session
 - Retrieves `attempts_used` to show progress
-- Retrieves `session_id` for session tracking
 - Calculates `expectedSlots` from `sequence_end`
 - Throws `NotFoundError` if no active puzzle exists
 
@@ -69,11 +69,12 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 
 `src/lib/schemas/task.schema.ts`
 
-**Purpose:** Zod schema for validating path parameters.
+**Purpose:** Zod schemas for validating path and query parameters.
 
 **Exports:**
 
 - `profileIdParamSchema` - validates UUID format for `profileId` parameter
+- `sessionIdQuerySchema` - validates UUID format for `sessionId` query parameter
 
 ### 4. **API Endpoint**
 
@@ -85,13 +86,18 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 
 **Path:** `/api/profiles/{profileId}/tasks/current`
 
+**Query Parameters:**
+
+- `sessionId` (required) - UUID of the current game session
+
 **Flow:**
 
 1. Validates authentication (Supabase JWT)
 2. Validates `profileId` parameter (must be UUID)
-3. Verifies profile ownership (using `ProfileService.validateOwnership`)
-4. Retrieves current task (using `TaskService.getCurrentTask`)
-5. Returns `CurrentPuzzleDTO`
+3. Validates `sessionId` query parameter (must be UUID)
+4. Verifies profile ownership (using `ProfileService.validateOwnership`)
+5. Retrieves current task for the session (using `TaskService.getCurrentTask`)
+6. Returns `CurrentPuzzleDTO`
 
 **Response Codes:**
 
@@ -121,6 +127,7 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 **Changes:**
 
 - Added `CurrentPuzzleDTO` interface (with `attemptsUsed` field)
+- Updated `SubmitAnswerCommand` to include `sessionId` field
 - Added `calculateExpectedSlots(sequenceEnd: string)` helper function
 
 ### 3. **Profile Service**
@@ -187,6 +194,7 @@ CREATE INDEX idx_task_results_session
 
    ```
    POST /api/profiles/{profileId}/tasks/next
+   Body: { sessionId: "current-session-uuid" }
    → Creates task_result with completed_at = NULL, session_id = current_session_id
    → Returns puzzle data
    ```
@@ -194,8 +202,8 @@ CREATE INDEX idx_task_results_session
 2. **Player refreshes page:**
 
    ```
-   GET /api/profiles/{profileId}/tasks/current
-   → Returns existing incomplete puzzle with attempts_used
+   GET /api/profiles/{profileId}/tasks/current?sessionId=current-session-uuid
+   → Returns existing incomplete puzzle for this session with attempts_used
    → No new task_result created
    ```
 
@@ -203,16 +211,18 @@ CREATE INDEX idx_task_results_session
 
    ```
    POST /api/profiles/{profileId}/tasks/{sequenceId}/submit
+   Body: { answer: "C4-E4-G4", sessionId: "current-session-uuid" }
    → Updates task_result: sets completed_at, attempts_used, score
-   → session_id remains unchanged
+   → Filters by session_id to ensure correct task is updated
    → Returns scoring data
    ```
 
 4. **Player requests next puzzle:**
    ```
    POST /api/profiles/{profileId}/tasks/next
+   Body: { sessionId: "current-session-uuid" }
    → Previous task is completed, creates new task_result
-   → Links to same session_id if session is still active
+   → Links to same session_id (session is still active)
    → Returns new puzzle data
    ```
 
@@ -282,6 +292,7 @@ npx supabase db push
 ```
 
 **Required migrations:**
+
 - `20260106000000_alter_task_results_completed_at.sql`
 - `20260111000000_add_session_id_to_task_results.sql`
 
@@ -363,7 +374,7 @@ Authorization: Bearer <jwt-token>
 4. Set up monitoring with Prometheus/Grafana
 5. Consider caching strategy for frequently accessed puzzles
 6. Add audit logging for security-sensitive operations
-7. Enforce `session_id` as NOT NULL after backfilling old data
+7. Session ID is now required for task operations to ensure proper session scoping
 8. Add endpoint to retrieve per-session statistics using `session_id`
 
 ---

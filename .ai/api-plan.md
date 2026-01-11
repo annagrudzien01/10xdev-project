@@ -2,14 +2,14 @@
 
 ## 1. Resources
 
-| Resource              | Backing Table    | Description                                                         |
-| --------------------- | ---------------- | ------------------------------------------------------------------- |
-| Levels                | `levels`         | Read-only catalogue of difficulty levels (1-20)                     |
-| Sequences             | `sequence`       | Melody fragments with correct answears linked o a level             |
-| Child Profiles        | `child_profiles` | Playable child account belonging to a parent (`auth.users`)         |
-| Sessions              | `sessions`       | A play session for a single child profile (status computed by dates)|
-| Task Results          | `task_results`   | A puzzle attempt for a child profile, linked to a session           |
-| Dashboard (aggregate) | —                | Derived view combining `child_profiles`, `task_results`, `sessions` |
+| Resource              | Backing Table    | Description                                                          |
+| --------------------- | ---------------- | -------------------------------------------------------------------- |
+| Levels                | `levels`         | Read-only catalogue of difficulty levels (1-20)                      |
+| Sequences             | `sequence`       | Melody fragments with correct answears linked o a level              |
+| Child Profiles        | `child_profiles` | Playable child account belonging to a parent (`auth.users`)          |
+| Sessions              | `sessions`       | A play session for a single child profile (status computed by dates) |
+| Task Results          | `task_results`   | A puzzle attempt for a child profile, linked to a session            |
+| Dashboard (aggregate) | —                | Derived view combining `child_profiles`, `task_results`, `sessions`  |
 
 ---
 
@@ -119,14 +119,15 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 
 ### 2.3 Sessions
 
-| Method | Path                             | Description                                   |
-| ------ | -------------------------------- | --------------------------------------------- |
+| Method | Path                             | Description                                               |
+| ------ | -------------------------------- | --------------------------------------------------------- |
 | POST   | `/profiles/{profileId}/sessions` | Start new session (10 min duration, auto-closes previous) |
-| POST   | `/sessions/{sessionId}/refresh`  | Extend session by 2 minutes                   |
-| PATCH  | `/sessions/{sessionId}/end`      | End current session immediately (sets ended_at to now) |
-| GET    | `/profiles/{profileId}/sessions` | List sessions (filter `active=true` computed) |
+| POST   | `/sessions/{sessionId}/refresh`  | Extend session by 2 minutes                               |
+| PATCH  | `/sessions/{sessionId}/end`      | End current session immediately (sets ended_at to now)    |
+| GET    | `/profiles/{profileId}/sessions` | List sessions (filter `active=true` computed)             |
 
-**Note:** 
+**Note:**
+
 - Session duration: **10 minutes** by default
 - Session status is computed based on `started_at` and `ended_at`:
   - **Active:** `ended_at > current_time`
@@ -181,7 +182,8 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 }
 ```
 
-**Note:** 
+**Note:**
+
 - `sequenceBeginning` is returned as a `string` with notes separated by hyphens, including octave numbers (e.g., `"C4-E4-G4"`). Frontend must parse it using `split("-")` to get an array.
 - Requires an active session for the profile. If no active session exists, returns `400 Bad Request` with message `"No active session found. Please start a session first."`
 - The generated task is automatically linked to the active session via `session_id` in `task_results`.
@@ -198,7 +200,8 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 }
 ```
 
-**Note:** 
+**Note:**
+
 - Returns the current puzzle if one exists. Returns `404 Not Found` if no current puzzle exists (user needs to call `POST /tasks/next` to generate a new one).
 - Includes `sessionId` to track which session the task belongs to.
 
@@ -224,7 +227,8 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 }
 ```
 
-**Note:** 
+**Note:**
+
 - `score` is `10` for correct answer, `0` for incorrect.
 - `sessionId` confirms which session the result was recorded to.
 
@@ -271,11 +275,11 @@ Below, **`{id}`** denotes a UUID unless noted otherwise.
 
 ## 4. Validation & Business Logic
 
-| Resource      | Validation Rules (DB & API)                                                     | Business Logic                                                                              |
-| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Levels        | `id` 1-20, `seq_length`>0, `tempo`>0                                            | Read-only catalogue                                                                         |
-| Child Profile | `profile_name` regex, unique per parent, ≤10 profiles, DOB past                 | Trigger updates `updated_at` ; index `one_parent_ten_profiles` prevents >10                 |
-| Session       | `ended_at > started_at`, session duration 10 min default                        | Auto-set `ended_at = started_at + 10 min` on create ; refresh adds 2 min to `ended_at`     |
+| Resource      | Validation Rules (DB & API)                                                                             | Business Logic                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Levels        | `id` 1-20, `seq_length`>0, `tempo`>0                                                                    | Read-only catalogue                                                                                                             |
+| Child Profile | `profile_name` regex, unique per parent, ≤10 profiles, DOB past                                         | Trigger updates `updated_at` ; index `one_parent_ten_profiles` prevents >10                                                     |
+| Session       | `ended_at > started_at`, session duration 10 min default                                                | Auto-set `ended_at = started_at + 10 min` on create ; refresh adds 2 min to `ended_at`                                          |
 | Task Result   | `attempts_used` 0-3, `score` 0-10, requires active `session_id`, unique per child+sequence (incomplete) | After 5 successes → level+1 (max 20) implemented in service ; trigger updates `total_score` ; session_id required for analytics |
 
 Common error codes

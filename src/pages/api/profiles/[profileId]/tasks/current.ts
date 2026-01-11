@@ -21,7 +21,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { profileIdParamSchema } from "@/lib/schemas/task.schema";
+import { profileIdParamSchema, sessionIdQuerySchema } from "@/lib/schemas/task.schema";
 import { ProfileService } from "@/lib/services/profile.service";
 import { TaskService } from "@/lib/services/task.service";
 import { ValidationError, UnauthorizedError, ForbiddenError, NotFoundError } from "@/lib/errors/api-errors";
@@ -32,7 +32,7 @@ export const prerender = false;
 /**
  * GET handler for retrieving current active puzzle
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, url, locals }) => {
   try {
     // Step 1: Validate authentication
     const supabase = locals.supabase;
@@ -62,13 +62,27 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     const { profileId } = validationResult.data;
 
+    // Step 2.5: Validate query parameters (sessionId)
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const queryValidation = sessionIdQuerySchema.safeParse(queryParams);
+    if (!queryValidation.success) {
+      const details: Record<string, string> = {};
+      queryValidation.error.errors.forEach((err) => {
+        const field = err.path.join(".");
+        details[field] = err.message;
+      });
+      throw new ValidationError(details);
+    }
+
+    const { sessionId } = queryValidation.data;
+
     // Step 3: Verify profile ownership
     const profileService = new ProfileService(supabase);
     await profileService.validateOwnership(profileId, user.id);
 
-    // Step 4: Get current task
+    // Step 4: Get current task for the session
     const taskService = new TaskService(supabase);
-    const currentPuzzle: CurrentPuzzleDTO = await taskService.getCurrentTask(profileId);
+    const currentPuzzle: CurrentPuzzleDTO = await taskService.getCurrentTask(profileId, sessionId);
 
     // Step 5: Return success response
     return new Response(JSON.stringify(currentPuzzle), {

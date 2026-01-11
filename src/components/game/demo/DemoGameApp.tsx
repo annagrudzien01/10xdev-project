@@ -101,9 +101,7 @@ function DemoGameContent() {
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-8 flex flex-col gap-8">
         {/* Game Header */}
-        {currentTask && (
-          <GameHeader level={level} score={score} attemptsLeft={attemptsLeft} demoMode={true} />
-        )}
+        {currentTask && <GameHeader level={level} score={score} attemptsLeft={attemptsLeft} demoMode={true} />}
 
         {/* Level Info */}
         {levelConfig && (
@@ -142,9 +140,7 @@ function DemoGameContent() {
                   ${feedback.isCorrect ? "bg-green-500" : "bg-red-500"} text-white`}
               >
                 <div className="text-6xl mb-4">{feedback.isCorrect ? "✓" : "✗"}</div>
-                <div className="text-3xl font-bold mb-2">
-                  {feedback.isCorrect ? "Dobrze!" : "Spróbuj ponownie"}
-                </div>
+                <div className="text-3xl font-bold mb-2">{feedback.isCorrect ? "Dobrze!" : "Spróbuj ponownie"}</div>
                 {feedback.isCorrect && feedback.score > 0 && (
                   <div className="text-2xl font-semibold">+{feedback.score} pkt</div>
                 )}

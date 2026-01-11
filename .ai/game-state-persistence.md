@@ -81,7 +81,11 @@ This document describes the implementation of automatic game state persistence i
 
 ### 1. GET /api/profiles/{profileId}/tasks/current
 
-**Purpose:** Retrieve currently active (incomplete) puzzle
+**Purpose:** Retrieve currently active (incomplete) puzzle for a specific session
+
+**Query Parameters:**
+
+- `sessionId` (required) - UUID of the current game session
 
 **Response (200 OK):**
 
@@ -90,7 +94,8 @@ This document describes the implementation of automatic game state persistence i
   "sequenceId": "uuid",
   "levelId": 1,
   "sequenceBeginning": "C4-E4-G4",
-  "expectedSlots": 2
+  "expectedSlots": 2,
+  "attemptsUsed": 0
 }
 ```
 
@@ -105,7 +110,15 @@ This document describes the implementation of automatic game state persistence i
 
 ### 2. POST /api/profiles/{profileId}/tasks/next
 
-**Purpose:** Generate a new puzzle
+**Purpose:** Generate a new puzzle for a specific session
+
+**Request Body:**
+
+```json
+{
+  "sessionId": "uuid"
+}
+```
 
 **Response (200 OK):**
 
@@ -131,7 +144,7 @@ This document describes the implementation of automatic game state persistence i
 **Logic:**
 
 ```typescript
-1. Try GET /tasks/current
+1. Try GET /tasks/current?sessionId={currentSessionId}
 2. If 200 OK → Restore puzzle state
 3. If 404 Not Found → Call loadNextTask()
 4. If other error → Throw error
@@ -161,8 +174,8 @@ await loadCurrentOrNextTask();
 **Logic:**
 
 ```typescript
-1. POST /tasks/next
-2. Create new task_result record
+1. POST /tasks/next with { sessionId }
+2. Create new task_result record with session_id
 3. Update game state
 ```
 
@@ -290,14 +303,16 @@ INSERT INTO task_results (
   child_id,
   level_id,
   sequence_id,
-  completed_at,  -- NULL (incomplete)
-  attempts_used, -- NULL (not yet attempted)
-  score          -- NULL (not yet scored)
+  session_id,      -- Required: links task to current session
+  completed_at,    -- NULL (incomplete)
+  attempts_used,   -- NULL (not yet attempted)
+  score            -- NULL (not yet scored)
 ) VALUES (...);
 
--- 2. Puzzle is active (GET /tasks/current returns it)
+-- 2. Puzzle is active (GET /tasks/current returns it for this session)
 SELECT * FROM task_results
 WHERE child_id = '...'
+  AND session_id = '...'
   AND completed_at IS NULL
 ORDER BY created_at DESC
 LIMIT 1;
@@ -309,9 +324,10 @@ SET
   attempts_used = 1,
   score = 10
 WHERE sequence_id = '...'
-  AND child_id = '...';
+  AND child_id = '...'
+  AND session_id = '...';
 
--- 4. Next GET /tasks/current returns 404 (no incomplete tasks)
+-- 4. Next GET /tasks/current returns 404 (no incomplete tasks for this session)
 ```
 
 ---

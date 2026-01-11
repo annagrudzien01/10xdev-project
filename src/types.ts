@@ -299,6 +299,8 @@ export function toGeneratePuzzleDTO(entity: SequenceEntity, expectedSlots: numbe
 export interface SubmitAnswerCommand {
   /** The user's answer as a string of notes (e.g., "C-E-G-G#") */
   answer: string;
+  /** The session ID for tracking which session this submission belongs to */
+  sessionId: string;
 }
 
 /**

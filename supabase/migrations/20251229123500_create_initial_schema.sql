@@ -30,10 +30,9 @@ language plpgsql
 as $$
 begin
   update public.sessions
-     set is_active = false,
-         ended_at   = coalesce(ended_at, now())
+     set ended_at   = coalesce(ended_at, now())
    where child_id = new.child_id
-     and is_active;
+     and ended_at is null or ended_at > now();
   return new;
 end;
 $$;
@@ -94,7 +93,6 @@ create table public.child_profiles (
 create table public.sessions (
   id          uuid         primary key default uuid_generate_v4(),
   child_id    uuid         not null references public.child_profiles(id) on delete cascade,
-  is_active   boolean      not null default true,
   started_at  timestamptz  not null default now(),
   ended_at    timestamptz,
   created_at  timestamptz  not null default now(),
@@ -119,7 +117,6 @@ create table public.task_results (
 -- indices
 -- =====================================
 create index idx_child_profiles_parent on public.child_profiles(parent_id);
-create unique index ux_active_session_per_child on public.sessions(child_id) where is_active;
 create index idx_task_completed_at on public.task_results(completed_at);
 
 -- =====================================

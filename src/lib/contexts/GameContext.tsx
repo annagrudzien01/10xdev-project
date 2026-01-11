@@ -2,6 +2,7 @@
  * GameContext - Context for managing game state
  *
  * Provides game state and methods for:
+ * - Managing game sessions (creating, refreshing)
  * - Managing current task/puzzle
  * - Handling user's answer (selected notes)
  * - Submitting answers and receiving feedback
@@ -9,9 +10,16 @@
  * - Level progression
  * - Restoring game state from active tasks (including attempts used)
  * - Manual next task loading (user-triggered after task completion)
+ * - Automatic session refresh every 2 minutes
+ *
+ * Session Cookie Management:
+ * - Cookie expiry is synchronized with session's endedAt timestamp
+ * - If cookie exists, the session is guaranteed to be active
+ * - Cookie is automatically updated when session is refreshed
+ * - No need for additional verification - browser handles expiry
  */
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { GeneratePuzzleDTO, SubmitAnswerResponseDTO, CurrentPuzzleDTO } from "@/types";
 
 /**
@@ -53,6 +61,7 @@ export interface GameState {
   isSubmitting: boolean;
   feedback: GameFeedback | null;
   taskCompletionState: TaskCompletionState;
+  currentSessionId: string | null;
 
   // Methods
   addNote: (note: string) => void;
@@ -66,6 +75,7 @@ export interface GameState {
   loadNextTaskManually: () => Promise<void>;
   resetGame: () => void;
   clearFeedback: () => void;
+  ensureActiveSession: () => Promise<string>;
 }
 
 /**
@@ -84,6 +94,7 @@ const GameContext = createContext<GameState | undefined>(undefined);
  * GameProvider Component
  *
  * Manages the game state and provides methods for game interactions
+ * Handles session management with automatic refresh every 2 minutes
  */
 export function GameProvider({ children, profileId, initialLevel, initialScore }: GameProviderProps) {
   // Game state
@@ -97,6 +108,132 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<GameFeedback | null>(null);
   const [taskCompletionState, setTaskCompletionState] = useState<TaskCompletionState>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  // Ref to track refresh interval
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  /**
+   * Gets session cookie value
+   */
+  const getSessionFromCookie = useCallback((): string | null => {
+    const cookieName = `game_session_${profileId}`;
+    const cookies = document.cookie.split("; ");
+    const sessionCookie = cookies.find((cookie) => cookie.startsWith(`${cookieName}=`));
+    return sessionCookie ? sessionCookie.split("=")[1] : null;
+  }, [profileId]);
+
+  /**
+   * Saves session ID to cookie with expiry matching session's endedAt
+   */
+  const saveSessionToCookie = useCallback(
+    (sessionId: string, endedAt: string) => {
+      const cookieName = `game_session_${profileId}`;
+      const expires = new Date(endedAt);
+      document.cookie = `${cookieName}=${sessionId}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+    },
+    [profileId]
+  );
+
+  /**
+   * Ensures an active session exists for the profile
+   * Creates new session if none exists or if cookie expired
+   * Returns the active session ID
+   *
+   * Note: Cookie expiry is synchronized with session's endedAt.
+   * If cookie exists, the session is guaranteed to be active (endedAt > now).
+   */
+  const ensureActiveSession = useCallback(async (): Promise<string> => {
+    // Check if we already have a session in state
+    if (currentSessionId) {
+      return currentSessionId;
+    }
+
+    // Check cookie - if it exists, it's guaranteed to be active
+    // (cookie expires at the same time as session's endedAt)
+    const cookieSessionId = getSessionFromCookie();
+    if (cookieSessionId) {
+      setCurrentSessionId(cookieSessionId);
+      return cookieSessionId;
+    }
+
+    // No valid session found - create a new one
+    try {
+      const response = await fetch(`/api/profiles/${profileId}/sessions`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create session");
+      }
+
+      const data = await response.json();
+      const newSessionId = data.sessionId;
+      const endedAt = data.endedAt;
+
+      // Save to state and cookie (with session's endedAt as expiry)
+      setCurrentSessionId(newSessionId);
+      saveSessionToCookie(newSessionId, endedAt);
+
+      return newSessionId;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error creating session:", error);
+      throw error;
+    }
+  }, [currentSessionId, profileId, getSessionFromCookie, saveSessionToCookie]);
+
+  /**
+   * Refreshes the current active session (extends by 2 minutes)
+   * Also updates the cookie expiry to match the new endedAt
+   */
+  const refreshSession = useCallback(async () => {
+    const sessionId = currentSessionId || getSessionFromCookie();
+
+    if (!sessionId) {
+      // eslint-disable-next-line no-console
+      console.warn("No active session to refresh");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        // Session might have expired - clear it
+        if (response.status === 400 || response.status === 404) {
+          setCurrentSessionId(null);
+          // Clear cookie
+          document.cookie = `game_session_${profileId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to refresh session");
+      }
+
+      const data = await response.json();
+      const newEndedAt = data.endedAt;
+
+      // Update cookie with new expiry time
+      saveSessionToCookie(sessionId, newEndedAt);
+
+      // eslint-disable-next-line no-console
+      console.log("Session refreshed successfully, cookie updated");
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error refreshing session:", error);
+    }
+  }, [currentSessionId, profileId, getSessionFromCookie, saveSessionToCookie]);
 
   /**
    * Adds a note to the user's answer
@@ -132,15 +269,20 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
   /**
    * Loads the next task from the API
    * Generates a new puzzle/task
+   * Ensures active session before loading
    */
   const loadNextTask = useCallback(async () => {
     try {
+      // Ensure we have an active session
+      const sessionId = await ensureActiveSession();
+
       const response = await fetch(`/api/profiles/${profileId}/tasks/next`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ sessionId }),
       });
 
       if (!response.ok) {
@@ -171,7 +313,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
       console.error("Error loading next task:", error);
       throw error;
     }
-  }, [profileId]);
+  }, [profileId, ensureActiveSession]);
 
   /**
    * Loads the next task manually (triggered by user clicking button)
@@ -197,11 +339,15 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
   /**
    * Tries to load current task, if not found loads next task
    * This ensures game state persistence after page refresh
+   * Ensures active session before loading
    */
   const loadCurrentOrNextTask = useCallback(async () => {
     try {
+      // Ensure we have an active session
+      const sessionId = await ensureActiveSession();
+
       // First, try to get current active task
-      const currentResponse = await fetch(`/api/profiles/${profileId}/tasks/current`, {
+      const currentResponse = await fetch(`/api/profiles/${profileId}/tasks/current?sessionId=${sessionId}`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -240,7 +386,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
       console.error("Error loading current or next task:", error);
       throw error;
     }
-  }, [profileId, loadNextTask]);
+  }, [profileId, loadNextTask, ensureActiveSession]);
 
   /**
    * Submits the user's answer to the API
@@ -257,6 +403,9 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     try {
       setIsSubmitting(true);
 
+      // Ensure we have an active session
+      const sessionId = await ensureActiveSession();
+
       // Convert notes array to string format (["A4", "B4", "C5"] -> "A4-B4-C5")
       const answerString = selectedNotes.join("-");
 
@@ -266,7 +415,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ answer: answerString }),
+        body: JSON.stringify({ answer: answerString, sessionId }),
       });
 
       if (!response.ok) {
@@ -338,7 +487,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentTask, selectedNotes, profileId, isSubmitting]);
+  }, [currentTask, selectedNotes, profileId, isSubmitting, ensureActiveSession]);
 
   /**
    * Triggers sequence playback (sets state for Piano component)
@@ -377,6 +526,30 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     });
   }, [loadCurrentOrNextTask]);
 
+  // Setup automatic session refresh every 2 minutes
+  useEffect(() => {
+    // Only setup refresh if we have an active session
+    if (currentSessionId) {
+      // Clear any existing interval
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+
+      // Refresh every 2 minutes (120000ms)
+      refreshIntervalRef.current = setInterval(() => {
+        refreshSession();
+      }, 120000);
+
+      // Cleanup on unmount or when sessionId changes
+      return () => {
+        if (refreshIntervalRef.current) {
+          clearInterval(refreshIntervalRef.current);
+          refreshIntervalRef.current = null;
+        }
+      };
+    }
+  }, [currentSessionId, refreshSession]);
+
   const value: GameState = {
     currentLevel,
     totalScore,
@@ -388,6 +561,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     isSubmitting,
     feedback,
     taskCompletionState,
+    currentSessionId,
     addNote,
     removeLastNote,
     clearNotes,
@@ -399,6 +573,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     loadNextTaskManually,
     resetGame,
     clearFeedback,
+    ensureActiveSession,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

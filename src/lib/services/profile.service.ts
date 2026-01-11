@@ -239,14 +239,14 @@ export class ProfileService {
    * Deletes a child profile
    *
    * Business rules:
-   * - Cannot delete if profile has an active session
+   * - Automatically ends any active sessions before deletion
    * - Must verify parent ownership
+   * - Cascade deletes sessions, task_results, and other related data
    *
    * @param profileId - The profile UUID
    * @param parentId - The authenticated parent's user ID
    * @throws NotFoundError if profile doesn't exist or doesn't belong to parent
-   * @throws ConflictError if profile has an active session
-   * @throws Error for other database errors
+   * @throws Error for database errors
    */
   async deleteChildProfile(profileId: string, parentId: string): Promise<void> {
     // Step 1: Verify profile exists and belongs to parent
@@ -261,23 +261,19 @@ export class ProfileService {
       throw new NotFoundError("Profile not found or access denied");
     }
 
-    // Step 2: Check for active sessions
-    const { data: activeSessions, error: sessionError } = await this.supabase
+    // Step 2: Automatically end any active sessions before deletion
+    const now = new Date().toISOString();
+    const { error: sessionEndError } = await this.supabase
       .from("sessions")
-      .select("id")
+      .update({ ended_at: now })
       .eq("child_id", profileId)
-      .eq("is_active", true)
-      .limit(1);
+      .gt("ended_at", now);
 
-    if (sessionError) {
-      throw new Error(`Failed to check active sessions: ${sessionError.message}`);
+    if (sessionEndError) {
+      throw new Error(`Failed to end active sessions: ${sessionEndError.message}`);
     }
 
-    if (activeSessions && activeSessions.length > 0) {
-      throw new ConflictError("Cannot delete profile with an active session");
-    }
-
-    // Step 3: Delete profile
+    // Step 3: Delete profile (cascade will delete sessions, tasks, etc.)
     const { error } = await this.supabase.from("child_profiles").delete().eq("id", profileId).eq("parent_id", parentId);
 
     if (error) {

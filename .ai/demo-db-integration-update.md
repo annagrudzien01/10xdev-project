@@ -20,6 +20,7 @@
 **Plik**: `src/lib/hooks/useDemoGame.ts`
 
 **Zmiany**:
+
 - Dodano TanStack Query do pobierania sekwencji
 - Funkcja `fetchDemoSequences()` - fetch z API
 - Query key: `['demoSequences']`
@@ -34,6 +35,7 @@
 **Plik**: `src/components/game/demo/DemoGameApp.tsx`
 
 **Zmiany**:
+
 - Dodano `QueryClientProvider` wrapper
 - Podział na `DemoGameContent` (internal) i `DemoGameApp` (wrapper)
 - Obsługa stanów: loading, error, success
@@ -45,6 +47,7 @@
 **Plik**: `.ai/demo-view-implementation-plan.md`
 
 **Sekcja 6 i 7**:
+
 - Opisano integrację z TanStack Query
 - Dodano informacje o endpointach API
 - Wyjaśniono strategię cache'owania
@@ -52,16 +55,19 @@
 ## Korzyści
 
 ### 1. Autentyczne doświadczenie
+
 - Użytkownicy demo grają na tych samych sekwencjach co zarejestrowani
 - Sekwencje są wysokiej jakości (stworzone przez zespół)
 - Brak różnic między demo a pełną wersją pod względem trudności
 
 ### 2. Łatwiejsze zarządzanie
+
 - Sekwencje zarządzane centralnie w bazie danych
 - Łatwa aktualizacja bez zmian w kodzie frontendu
 - Możliwość A/B testingu sekwencji
 
 ### 3. Skalowalność
+
 - Automatyczne pobieranie nowych sekwencji
 - Cache redukuje obciążenie serwera
 - Możliwość dodania więcej poziomów demo w przyszłości
@@ -71,7 +77,7 @@
 ✅ **Brak mutacji w DB** - Postępy demo NIE są zapisywane  
 ✅ **Lokalna walidacja** - Sprawdzanie odpowiedzi po stronie klienta  
 ✅ **Lokalna punktacja** - Scoring bez zapytań do backendu  
-✅ **Komponenty UI** - Wszystkie bez zmian  
+✅ **Komponenty UI** - Wszystkie bez zmian
 
 ## Bezpieczeństwo
 
@@ -83,6 +89,7 @@
 ## Testy
 
 ### Do przetestowania:
+
 1. [ ] Wejście na `/demo` → loading → sekwencje załadowane
 2. [ ] Sprawdź DevTools Network → request do `/api/demo/sequences`
 3. [ ] Sprawdź czy sekwencje są cache'owane (kolejne wizyty bez requesta)

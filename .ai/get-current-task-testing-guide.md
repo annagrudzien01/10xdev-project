@@ -102,7 +102,8 @@ curl -X GET http://localhost:4321/api/profiles/YOUR_PROFILE_ID/tasks/current \
 # }
 ```
 
-**Verify:** 
+**Verify:**
+
 - `sequenceId` matches the one from step 4
 - `attemptsUsed` is 0 (no submission attempts yet)
 
@@ -481,12 +482,12 @@ ORDER BY tr.created_at DESC;
 ```sql
 -- Verify index is being used
 EXPLAIN ANALYZE
-SELECT 
-  tr.sequence_id, 
-  tr.level_id, 
+SELECT
+  tr.sequence_id,
+  tr.level_id,
   tr.attempts_used,
   tr.session_id,
-  seq.sequence_beginning, 
+  seq.sequence_beginning,
   seq.sequence_end
 FROM task_results tr
 JOIN sequence seq ON seq.id = tr.sequence_id

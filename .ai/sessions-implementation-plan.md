@@ -5,12 +5,14 @@
 System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profili dzieci. Każda sesja ma domyślny czas trwania **10 minut**, który można wydłużyć o **2 minuty** za pomocą endpointu refresh. Status sesji jest obliczany dynamicznie na podstawie `ended_at > current_time`.
 
 ### Endpoints:
+
 1. **POST /api/profiles/{profileId}/sessions** - Rozpocznij nową sesję (10 min, zamyka poprzednie aktywne sesje)
 2. **POST /api/sessions/{sessionId}/refresh** - Wydłuż sesję o 2 minuty
 3. **PATCH /api/sessions/{sessionId}/end** - Zakończ sesję natychmiast (ustaw `ended_at = now()`)
 4. **GET /api/profiles/{profileId}/sessions** - Wyświetl listę sesji z opcjonalnym filtrem `active=true`
 
 ### Kluczowe funkcjonalności:
+
 - Automatyczne ustawienie `ended_at = started_at + 10 min` przy tworzeniu sesji
 - Możliwość wydłużenia sesji o 2 minuty (refresh)
 - Automatyczne zamykanie poprzednich aktywnych sesji przy tworzeniu nowej
@@ -32,20 +34,22 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 **Struktura URL:** `/api/profiles/{profileId}/sessions`
 
 **Parametry:**
+
 - **Wymagane:**
   - `profileId` (path parameter) - UUID profilu dziecka
-  
 - **Opcjonalne:** Brak
 
 **Request Body:** Brak
 
 **Walidacja:**
+
 - `profileId` musi być poprawnym UUID
 - Profil musi istnieć
 - Profil musi należeć do uwierzytelnionego rodzica
 - Nie wymaga żadnych dodatkowych danych wejściowych
 
 **Logika biznesowa:**
+
 - Poprzednie aktywne sesje (gdzie `ended_at > now()`) są automatycznie zamykane (SET `ended_at = now()`)
 - Nowa sesja ma automatycznie ustawione `ended_at = started_at + 10 minut`
 
@@ -58,20 +62,22 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 **Struktura URL:** `/api/sessions/{sessionId}/refresh`
 
 **Parametry:**
+
 - **Wymagane:**
   - `sessionId` (path parameter) - UUID sesji do wydłużenia
-  
 - **Opcjonalne:** Brak
 
 **Request Body:** Brak
 
 **Walidacja:**
+
 - `sessionId` musi być poprawnym UUID
 - Sesja musi istnieć
 - Sesja musi należeć do profilu dziecka uwierzytelnionego rodzica
 - Sesja musi być aktywna (`ended_at > current_time`)
 
 **Logika biznesowa:**
+
 - Wydłuża sesję o 2 minuty: `ended_at = ended_at + 2 min`
 - Można wywoływać wielokrotnie
 - Opcjonalnie można wprowadzić limit maksymalnego czasu sesji (np. max 30 minut)
@@ -85,14 +91,15 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 **Struktura URL:** `/api/sessions/{sessionId}/end`
 
 **Parametry:**
+
 - **Wymagane:**
   - `sessionId` (path parameter) - UUID sesji do zakończenia
-  
 - **Opcjonalne:** Brak
 
 **Request Body:** Brak
 
 **Walidacja:**
+
 - `sessionId` musi być poprawnym UUID
 - Sesja musi istnieć
 - Sesja musi należeć do profilu dziecka uwierzytelnionego rodzica
@@ -107,9 +114,9 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 **Struktura URL:** `/api/profiles/{profileId}/sessions`
 
 **Parametry:**
+
 - **Wymagane:**
   - `profileId` (path parameter) - UUID profilu dziecka
-  
 - **Opcjonalne:**
   - `active` (query parameter) - boolean, filtr dla aktywnych sesji (np. `?active=true`)
   - `page` (query parameter) - numer strony (domyślnie: 1)
@@ -118,6 +125,7 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 **Request Body:** Brak
 
 **Walidacja:**
+
 - `profileId` musi być poprawnym UUID
 - `active` musi być boolean ("true" lub "false" jako string w query)
 - `page` musi być liczbą całkowitą > 0
@@ -132,57 +140,64 @@ System zarządzania sesjami gry umożliwia śledzenie sesji rozgrywki dla profil
 ### 3.1 Istniejące typy w `src/types.ts`:
 
 **SessionStartDTO** - Odpowiedź dla POST (utworzenie sesji):
+
 ```typescript
 export interface SessionStartDTO {
-  sessionId: string;        // UUID sesji
-  startedAt: string;        // ISO timestamp rozpoczęcia
-  endedAt: string;          // ISO timestamp zakończenia (started_at + 10 min)
-  isActive: boolean;        // Czy sesja jest aktywna (zawsze true dla nowo utworzonej - computed field)
+  sessionId: string; // UUID sesji
+  startedAt: string; // ISO timestamp rozpoczęcia
+  endedAt: string; // ISO timestamp zakończenia (started_at + 10 min)
+  isActive: boolean; // Czy sesja jest aktywna (zawsze true dla nowo utworzonej - computed field)
 }
 ```
 
-**Note:** 
+**Note:**
+
 - `isActive` jest polem obliczanym, nie jest przechowywane w bazie danych
 - `endedAt` jest automatycznie ustawiane na `startedAt + 10 minut`
 
 **SessionRefreshDTO** - Odpowiedź dla POST refresh (wydłużenie sesji):
+
 ```typescript
 export interface SessionRefreshDTO {
-  sessionId: string;        // UUID sesji
-  endedAt: string;          // Nowy ISO timestamp zakończenia (poprzedni + 2 min)
-  message: string;          // Komunikat potwierdzający ("Session extended by 2 minutes")
+  sessionId: string; // UUID sesji
+  endedAt: string; // Nowy ISO timestamp zakończenia (poprzedni + 2 min)
+  message: string; // Komunikat potwierdzający ("Session extended by 2 minutes")
 }
 ```
 
 **SessionDTO** - Pełna reprezentacja sesji dla GET (lista):
+
 ```typescript
 export interface SessionDTO {
-  id: string;               // UUID sesji
-  childId: string;          // UUID profilu dziecka
-  isActive: boolean;        // Czy sesja jest aktywna (computed: ended_at > now())
-  startedAt: string;        // ISO timestamp rozpoczęcia
-  endedAt: string;          // ISO timestamp zakończenia (nigdy null - zawsze ustawione)
-  createdAt: string;        // ISO timestamp utworzenia rekordu
+  id: string; // UUID sesji
+  childId: string; // UUID profilu dziecka
+  isActive: boolean; // Czy sesja jest aktywna (computed: ended_at > now())
+  startedAt: string; // ISO timestamp rozpoczęcia
+  endedAt: string; // ISO timestamp zakończenia (nigdy null - zawsze ustawione)
+  createdAt: string; // ISO timestamp utworzenia rekordu
   updatedAt: string | null; // ISO timestamp ostatniej aktualizacji
 }
 ```
 
-**Note:** 
+**Note:**
+
 - `isActive` jest polem obliczanym na podstawie `ended_at > now()`, nie jest przechowywane w bazie
 - `endedAt` jest zawsze ustawione (10 min od start lub wydłużone przez refresh)
 
 **SessionListParams** - Parametry zapytania dla GET (lista):
+
 ```typescript
 export interface SessionListParams extends PaginationParams {
-  active?: boolean;         // Filtr dla aktywnych sesji
+  active?: boolean; // Filtr dla aktywnych sesji
 }
 ```
 
 **Helper Functions** (już istnieją):
+
 ```typescript
-export function toSessionStartDTO(entity: SessionEntity): SessionStartDTO
-export function toSessionRefreshDTO(entity: SessionEntity): SessionRefreshDTO
-export function toSessionDTO(entity: SessionEntity): SessionDTO
+export function toSessionStartDTO(entity: SessionEntity): SessionStartDTO;
+export function toSessionRefreshDTO(entity: SessionEntity): SessionRefreshDTO;
+export function toSessionDTO(entity: SessionEntity): SessionDTO;
 ```
 
 ### 3.2 Nowe schematy walidacji do utworzenia:
@@ -214,10 +229,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   active: z
     .string()
     .optional()
-    .refine(
-      (val) => val === undefined || val === "true" || val === "false",
-      "active must be 'true' or 'false'"
-    )
+    .refine((val) => val === undefined || val === "true" || val === "false", "active must be 'true' or 'false'")
     .transform((val) => (val === "true" ? true : val === "false" ? false : undefined)),
 });
 ```
@@ -231,6 +243,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ### 4.1 POST /api/profiles/{profileId}/sessions
 
 **Sukces - 201 Created:**
+
 ```json
 {
   "sessionId": "550e8400-e29b-41d4-a716-446655440000",
@@ -243,7 +256,9 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 **Note:** `endedAt` jest automatycznie ustawione na `startedAt + 10 minut`.
 
 **Błędy:**
+
 - **400 Bad Request:**
+
   ```json
   {
     "error": "invalid_request",
@@ -255,6 +270,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **401 Unauthorized:**
+
   ```json
   {
     "error": "unauthenticated",
@@ -263,6 +279,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **403 Forbidden:**
+
   ```json
   {
     "error": "forbidden",
@@ -271,6 +288,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **404 Not Found:**
+
   ```json
   {
     "error": "not_found",
@@ -291,6 +309,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ### 4.2 POST /api/sessions/{sessionId}/refresh
 
 **Sukces - 200 OK:**
+
 ```json
 {
   "sessionId": "550e8400-e29b-41d4-a716-446655440000",
@@ -302,7 +321,9 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 **Note:** `endedAt` jest wydłużone o 2 minuty względem poprzedniej wartości.
 
 **Błędy:**
+
 - **400 Bad Request (Invalid format):**
+
   ```json
   {
     "error": "invalid_request",
@@ -314,6 +335,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **400 Bad Request (Session expired):**
+
   ```json
   {
     "error": "invalid_request",
@@ -322,6 +344,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **401 Unauthorized:**
+
   ```json
   {
     "error": "unauthenticated",
@@ -330,6 +353,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **403 Forbidden:**
+
   ```json
   {
     "error": "forbidden",
@@ -338,6 +362,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **404 Not Found:**
+
   ```json
   {
     "error": "not_found",
@@ -358,6 +383,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ### 4.3 PATCH /api/sessions/{sessionId}/end
 
 **Sukces - 200 OK:**
+
 ```json
 {
   "message": "Session ended successfully"
@@ -365,7 +391,9 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ```
 
 **Błędy:**
+
 - **400 Bad Request (Invalid format):**
+
   ```json
   {
     "error": "invalid_request",
@@ -377,6 +405,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **400 Bad Request (Already ended):**
+
   ```json
   {
     "error": "invalid_request",
@@ -385,6 +414,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **401 Unauthorized:**
+
   ```json
   {
     "error": "unauthenticated",
@@ -393,6 +423,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **403 Forbidden:**
+
   ```json
   {
     "error": "forbidden",
@@ -401,6 +432,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **404 Not Found:**
+
   ```json
   {
     "error": "not_found",
@@ -421,6 +453,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ### 4.4 GET /api/profiles/{profileId}/sessions
 
 **Sukces - 200 OK:**
+
 ```json
 {
   "data": [
@@ -453,6 +486,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ```
 
 **Przykład z filtrem aktywnych:** `GET /api/profiles/{profileId}/sessions?active=true`
+
 ```json
 {
   "data": [
@@ -476,7 +510,9 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 ```
 
 **Błędy:**
+
 - **400 Bad Request:**
+
   ```json
   {
     "error": "invalid_request",
@@ -488,6 +524,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **401 Unauthorized:**
+
   ```json
   {
     "error": "unauthenticated",
@@ -496,6 +533,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **403 Forbidden:**
+
   ```json
   {
     "error": "forbidden",
@@ -504,6 +542,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   ```
 
 - **404 Not Found:**
+
   ```json
   {
     "error": "not_found",
@@ -537,7 +576,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
    ↓
    - Sprawdzenie autentykacji (locals.supabase, locals.user)
    - Walidacja `profileId` (UUID) za pomocą `profileIdParamSchema`
-   
+
 3. ProfileService.validateOwnership(profileId, user.id)
    ↓
    - SQL: SELECT id, parent_id FROM child_profiles WHERE id = $1
@@ -550,7 +589,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
       SQL: UPDATE sessions
            SET ended_at = now()
            WHERE child_id = $1 AND ended_at > now()
-   
+
    b) Utworzenie nowej sesji z automatycznym ustawieniem ended_at:
       SQL: INSERT INTO sessions (child_id, started_at, ended_at)
            VALUES ($1, now(), now() + interval '10 minutes')
@@ -559,15 +598,16 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 5. Transformacja SessionEntity → SessionStartDTO (helper function)
    - Obliczenie `isActive = true` (ended_at jest 10 minut w przyszłości)
    - Zwrócenie sessionId, startedAt, endedAt, isActive
-   
+
 6. Zwrócenie Response 201 Created z SessionStartDTO
 ```
 
 **SQL Query:**
+
 ```sql
 -- 1. Zamknięcie poprzednich aktywnych sesji
-UPDATE sessions 
-SET ended_at = now() 
+UPDATE sessions
+SET ended_at = now()
 WHERE child_id = $1 AND ended_at > now();
 
 -- 2. Utworzenie nowej sesji (INSERT)
@@ -582,12 +622,12 @@ RETURNING id, child_id, started_at, ended_at, created_at, updated_at;
 
 ```
 1. Middleware (jak wyżej)
-   
+
 2. Handler POST (`src/pages/api/sessions/[sessionId]/refresh.ts`)
    ↓
    - Sprawdzenie autentykacji
    - Walidacja `sessionId` (UUID) za pomocą `sessionIdParamSchema`
-   
+
 3. SessionService.refreshSession(sessionId, user.id)
    ↓
    a) Weryfikacja własności i statusu:
@@ -595,17 +635,17 @@ RETURNING id, child_id, started_at, ended_at, created_at, updated_at;
            FROM sessions s
            JOIN child_profiles cp ON s.child_id = cp.id
            WHERE s.id = $1
-      
+
       - Jeśli brak rekordu → throw NotFoundError
       - Jeśli parent_id ≠ user.id → throw ForbiddenError
       - Jeśli ended_at <= now() → throw ValidationError ("Session has already expired")
-   
+
    b) Wydłużenie sesji:
       SQL: UPDATE sessions
            SET ended_at = ended_at + interval '2 minutes'
            WHERE id = $1 AND ended_at > now()
            RETURNING *
-      
+
       - Trigger `set_updated_at()` automatycznie ustawia `updated_at = now()`
 
 4. Transformacja SessionEntity → SessionRefreshDTO
@@ -615,6 +655,7 @@ RETURNING id, child_id, started_at, ended_at, created_at, updated_at;
 ```
 
 **SQL Queries:**
+
 ```sql
 -- 1. Weryfikacja własności i statusu
 SELECT s.id, s.ended_at, cp.parent_id
@@ -635,12 +676,12 @@ RETURNING *;
 
 ```
 1. Middleware (jak wyżej)
-   
+
 2. Handler PATCH (`src/pages/api/sessions/[sessionId]/end.ts`)
    ↓
    - Sprawdzenie autentykacji
    - Walidacja `sessionId` (UUID) za pomocą `sessionIdParamSchema`
-   
+
 3. SessionService.endSession(sessionId, user.id)
    ↓
    a) Weryfikacja własności:
@@ -648,23 +689,24 @@ RETURNING *;
            FROM sessions s
            JOIN child_profiles cp ON s.child_id = cp.id
            WHERE s.id = $1
-      
+
       - Jeśli brak rekordu → throw NotFoundError
       - Jeśli parent_id ≠ user.id → throw ForbiddenError
       - Jeśli ended_at IS NOT NULL AND ended_at <= now() → throw ValidationError ("Session is already ended")
-   
+
    b) Zakończenie sesji:
       SQL: UPDATE sessions
            SET ended_at = now()
            WHERE id = $1 AND (ended_at IS NULL OR ended_at > now())
            RETURNING *
-      
+
       - Trigger `set_updated_at()` automatycznie ustawia `updated_at = now()`
 
 4. Zwrócenie Response 200 OK z komunikatem sukcesu
 ```
 
 **SQL Queries:**
+
 ```sql
 -- 1. Weryfikacja własności i stanu
 SELECT s.id, s.ended_at, cp.parent_id
@@ -685,13 +727,13 @@ RETURNING *;
 
 ```
 1. Middleware (jak wyżej)
-   
+
 2. Handler GET (`src/pages/api/profiles/[profileId]/sessions/index.ts`)
    ↓
    - Sprawdzenie autentykacji
    - Walidacja `profileId` (UUID)
    - Walidacja query params (page, pageSize, active) za pomocą `sessionListParamsSchema`
-   
+
 3. ProfileService.validateOwnership(profileId, user.id)
    ↓
    - Jak w POST (sprawdzenie, czy profil należy do rodzica)
@@ -700,11 +742,11 @@ RETURNING *;
    ↓
    - Obliczenie offset = (page - 1) * pageSize
    - Obliczenie range: offset do offset + pageSize - 1
-   
-   SQL: SELECT *, 
-               CASE 
-                 WHEN ended_at > now() THEN true 
-                 ELSE false 
+
+   SQL: SELECT *,
+               CASE
+                 WHEN ended_at > now() THEN true
+                 ELSE false
                END as is_active_computed
         FROM sessions
         WHERE child_id = $1
@@ -712,7 +754,7 @@ RETURNING *;
         [AND ended_at <= now() IF params.active = false]
         ORDER BY started_at DESC
         LIMIT $pageSize OFFSET $offset
-   
+
    SQL (count): SELECT COUNT(*) FROM sessions
                 WHERE child_id = $1
                 [AND ended_at > now() IF params.active = true]
@@ -720,7 +762,7 @@ RETURNING *;
 
 5. Transformacja SessionEntity[] → SessionDTO[] (helper functions)
    - Obliczenie `isActive` dla każdej sesji na podstawie `ended_at`
-   
+
 6. Utworzenie PaginatedResponse<SessionDTO>
    - data: SessionDTO[]
    - pagination: { page, pageSize, totalItems, totalPages }
@@ -729,12 +771,13 @@ RETURNING *;
 ```
 
 **SQL Queries:**
+
 ```sql
 -- 1. Pobieranie sesji z paginacją
 SELECT id, child_id, started_at, ended_at, created_at, updated_at,
-       CASE 
-         WHEN ended_at > now() THEN true 
-         ELSE false 
+       CASE
+         WHEN ended_at > now() THEN true
+         ELSE false
        END as is_active
 FROM sessions
 WHERE child_id = $1
@@ -767,12 +810,14 @@ WHERE child_id = $1
 ### 6.2 Autoryzacja
 
 **POST /profiles/{profileId}/sessions:**
+
 - Weryfikacja, że `profileId` należy do uwierzytelnionego rodzica
 - SQL: `SELECT parent_id FROM child_profiles WHERE id = profileId`
 - Porównanie: `parent_id === user.id`
 - Błąd: 403 Forbidden jeśli profil nie należy do rodzica
 
 **POST /sessions/{sessionId}/refresh:**
+
 - Weryfikacja, że sesja należy do profilu dziecka rodzica
 - SQL: `SELECT cp.parent_id FROM sessions s JOIN child_profiles cp WHERE s.id = sessionId`
 - Porównanie: `parent_id === user.id`
@@ -781,22 +826,25 @@ WHERE child_id = $1
 - Błąd: 400 Bad Request jeśli sesja wygasła
 
 **PATCH /sessions/{sessionId}/end:**
+
 - Weryfikacja, że sesja należy do profilu dziecka rodzica
 - SQL: `SELECT cp.parent_id FROM sessions s JOIN child_profiles cp WHERE s.id = sessionId`
 - Porównanie: `parent_id === user.id`
 - Błąd: 403 Forbidden jeśli sesja nie należy do rodzica
 
 **GET /profiles/{profileId}/sessions:**
+
 - Weryfikacja jak w POST (profil należy do rodzica)
 - RLS dodatkowo wymusza `parent_id = auth.uid()` na poziomie bazy
 
 ### 6.3 Row Level Security (RLS)
 
 Tabela `sessions` ma włączone RLS z polityką:
+
 ```sql
 CREATE POLICY sessions_owner ON sessions
 USING (EXISTS (
-  SELECT 1 FROM child_profiles cp 
+  SELECT 1 FROM child_profiles cp
   WHERE cp.id = child_id AND cp.parent_id = auth.uid()
 ));
 ```
@@ -809,11 +857,13 @@ USING (EXISTS (
 ### 6.4 Input Validation
 
 **Wszystkie endpointy:**
+
 - UUID format validation (profileId, sessionId)
 - Używamy Zod schemas dla spójnej walidacji
 - Błędy walidacji zwracają 400 z szczegółami
 
 **GET sessions (query params):**
+
 - `page`: musi być integer > 0
 - `pageSize`: musi być integer > 0 i <= 100
 - `active`: musi być "true" lub "false" (string transformowany do boolean, używany do filtrowania po `ended_at > now()`)
@@ -821,20 +871,24 @@ USING (EXISTS (
 ### 6.5 Business Logic Security
 
 **POST sessions:**
+
 - Automatyczne zamykanie poprzednich aktywnych sesji (UPDATE `ended_at = now()` WHERE `ended_at > now()`)
 - Automatyczne ustawienie `ended_at = started_at + 10 minutes` dla nowej sesji
 - Nie można rozpocząć sesji dla nieistniejącego profilu (404)
 
 **POST refresh:**
+
 - Nie można wydłużyć wygasłej sesji (400)
 - Sprawdzenie `ended_at > now()` przed aktualizacją
 - Sesja wydłużana o dokładnie 2 minuty
 
 **PATCH end session:**
+
 - Nie można zakończyć już zakończonej sesji (400)
 - Sprawdzenie `ended_at > now()` przed aktualizacją
 
 **Rate Limiting:**
+
 - Globalne rate limiting: 100 requests/minute per token
 - Błąd: 429 Too Many Requests (jeśli zaimplementowane)
 
@@ -852,58 +906,59 @@ USING (EXISTS (
 
 ### 7.1 Macierz błędów dla POST /profiles/{profileId}/sessions
 
-| Scenariusz                       | Kod | Error Code          | Message                                | Throwing Point        |
-| -------------------------------- | --- | ------------------- | -------------------------------------- | --------------------- |
-| Brak/nieprawidłowy JWT           | 401 | `unauthenticated`   | "Authentication required"              | Handler (auth check)  |
-| Niepoprawny format profileId     | 400 | `invalid_request`   | "Validation failed" + details          | Handler (validation)  |
-| Profil nie istnieje              | 404 | `not_found`         | "Profile not found"                    | ProfileService        |
-| Profil nie należy do rodzica     | 403 | `forbidden`         | "Profile does not belong to parent"    | ProfileService        |
-| Błąd bazy danych (INSERT)        | 500 | `internal_error`    | "An unexpected error occurred"         | SessionService        |
+| Scenariusz                   | Kod | Error Code        | Message                             | Throwing Point       |
+| ---------------------------- | --- | ----------------- | ----------------------------------- | -------------------- |
+| Brak/nieprawidłowy JWT       | 401 | `unauthenticated` | "Authentication required"           | Handler (auth check) |
+| Niepoprawny format profileId | 400 | `invalid_request` | "Validation failed" + details       | Handler (validation) |
+| Profil nie istnieje          | 404 | `not_found`       | "Profile not found"                 | ProfileService       |
+| Profil nie należy do rodzica | 403 | `forbidden`       | "Profile does not belong to parent" | ProfileService       |
+| Błąd bazy danych (INSERT)    | 500 | `internal_error`  | "An unexpected error occurred"      | SessionService       |
 
 ---
 
 ### 7.2 Macierz błędów dla POST /sessions/{sessionId}/refresh
 
-| Scenariusz                       | Kod | Error Code          | Message                                | Throwing Point        |
-| -------------------------------- | --- | ------------------- | -------------------------------------- | --------------------- |
-| Brak/nieprawidłowy JWT           | 401 | `unauthenticated`   | "Authentication required"              | Handler (auth check)  |
-| Niepoprawny format sessionId     | 400 | `invalid_request`   | "Validation failed" + details          | Handler (validation)  |
-| Sesja nie istnieje               | 404 | `not_found`         | "Session not found"                    | SessionService        |
-| Sesja nie należy do rodzica      | 403 | `forbidden`         | "Session does not belong to parent"    | SessionService        |
-| Sesja już wygasła                | 400 | `invalid_request`   | "Session has already expired"          | SessionService        |
-| Błąd bazy danych (UPDATE)        | 500 | `internal_error`    | "An unexpected error occurred"         | SessionService        |
+| Scenariusz                   | Kod | Error Code        | Message                             | Throwing Point       |
+| ---------------------------- | --- | ----------------- | ----------------------------------- | -------------------- |
+| Brak/nieprawidłowy JWT       | 401 | `unauthenticated` | "Authentication required"           | Handler (auth check) |
+| Niepoprawny format sessionId | 400 | `invalid_request` | "Validation failed" + details       | Handler (validation) |
+| Sesja nie istnieje           | 404 | `not_found`       | "Session not found"                 | SessionService       |
+| Sesja nie należy do rodzica  | 403 | `forbidden`       | "Session does not belong to parent" | SessionService       |
+| Sesja już wygasła            | 400 | `invalid_request` | "Session has already expired"       | SessionService       |
+| Błąd bazy danych (UPDATE)    | 500 | `internal_error`  | "An unexpected error occurred"      | SessionService       |
 
 ---
 
 ### 7.3 Macierz błędów dla PATCH /sessions/{sessionId}/end
 
-| Scenariusz                       | Kod | Error Code          | Message                                | Throwing Point        |
-| -------------------------------- | --- | ------------------- | -------------------------------------- | --------------------- |
-| Brak/nieprawidłowy JWT           | 401 | `unauthenticated`   | "Authentication required"              | Handler (auth check)  |
-| Niepoprawny format sessionId     | 400 | `invalid_request`   | "Validation failed" + details          | Handler (validation)  |
-| Sesja nie istnieje               | 404 | `not_found`         | "Session not found"                    | SessionService        |
-| Sesja nie należy do rodzica      | 403 | `forbidden`         | "Session does not belong to parent"    | SessionService        |
-| Sesja już zakończona             | 400 | `invalid_request`   | "Session is already ended"             | SessionService        |
-| Błąd bazy danych (UPDATE)        | 500 | `internal_error`    | "An unexpected error occurred"         | SessionService        |
+| Scenariusz                   | Kod | Error Code        | Message                             | Throwing Point       |
+| ---------------------------- | --- | ----------------- | ----------------------------------- | -------------------- |
+| Brak/nieprawidłowy JWT       | 401 | `unauthenticated` | "Authentication required"           | Handler (auth check) |
+| Niepoprawny format sessionId | 400 | `invalid_request` | "Validation failed" + details       | Handler (validation) |
+| Sesja nie istnieje           | 404 | `not_found`       | "Session not found"                 | SessionService       |
+| Sesja nie należy do rodzica  | 403 | `forbidden`       | "Session does not belong to parent" | SessionService       |
+| Sesja już zakończona         | 400 | `invalid_request` | "Session is already ended"          | SessionService       |
+| Błąd bazy danych (UPDATE)    | 500 | `internal_error`  | "An unexpected error occurred"      | SessionService       |
 
 ---
 
 ### 7.3 Macierz błędów dla GET /profiles/{profileId}/sessions
 
-| Scenariusz                       | Kod | Error Code          | Message                                | Throwing Point        |
-| -------------------------------- | --- | ------------------- | -------------------------------------- | --------------------- |
-| Brak/nieprawidłowy JWT           | 401 | `unauthenticated`   | "Authentication required"              | Handler (auth check)  |
-| Niepoprawny format profileId     | 400 | `invalid_request`   | "Validation failed" + details          | Handler (validation)  |
-| Niepoprawne query params         | 400 | `invalid_request`   | "Validation failed" + details          | Handler (validation)  |
-| Profil nie istnieje              | 404 | `not_found`         | "Profile not found"                    | ProfileService        |
-| Profil nie należy do rodzica     | 403 | `forbidden`         | "Profile does not belong to parent"    | ProfileService        |
-| Błąd bazy danych (SELECT)        | 500 | `internal_error`    | "An unexpected error occurred"         | SessionService        |
+| Scenariusz                   | Kod | Error Code        | Message                             | Throwing Point       |
+| ---------------------------- | --- | ----------------- | ----------------------------------- | -------------------- |
+| Brak/nieprawidłowy JWT       | 401 | `unauthenticated` | "Authentication required"           | Handler (auth check) |
+| Niepoprawny format profileId | 400 | `invalid_request` | "Validation failed" + details       | Handler (validation) |
+| Niepoprawne query params     | 400 | `invalid_request` | "Validation failed" + details       | Handler (validation) |
+| Profil nie istnieje          | 404 | `not_found`       | "Profile not found"                 | ProfileService       |
+| Profil nie należy do rodzica | 403 | `forbidden`       | "Profile does not belong to parent" | ProfileService       |
+| Błąd bazy danych (SELECT)    | 500 | `internal_error`  | "An unexpected error occurred"      | SessionService       |
 
 ---
 
 ### 7.5 Logowanie błędów
 
 **Wszystkie endpointy:**
+
 ```typescript
 console.error("Unexpected error in [ENDPOINT PATH]:", {
   error: error instanceof Error ? error.message : "Unknown error",
@@ -913,6 +968,7 @@ console.error("Unexpected error in [ENDPOINT PATH]:", {
 ```
 
 **Zasady logowania:**
+
 - Logujemy tylko błędy 500 (unexpected errors)
 - Nie logujemy błędów 400/401/403/404 (expected errors)
 - Nie logujemy danych wrażliwych (GDPR)
@@ -920,6 +976,7 @@ console.error("Unexpected error in [ENDPOINT PATH]:", {
 - Stack trace tylko w środowisku development
 
 **Przykłady:**
+
 ```typescript
 // POST sessions - unexpected database error
 console.error("Unexpected error in POST /api/profiles/{profileId}/sessions:", {
@@ -943,23 +1000,25 @@ console.error("Unexpected error in PATCH /api/sessions/{sessionId}/end:", {
 ### 8.1 Indeksy bazy danych
 
 **Zalecane indeksy:**
+
 ```sql
 -- Indeks dla szybkiego wyszukiwania sesji dziecka + sortowania (GET sessions)
-CREATE INDEX idx_sessions_child_started 
+CREATE INDEX idx_sessions_child_started
 ON sessions(child_id, started_at DESC);
 
 -- Indeks dla filtrowania aktywnych sesji
-CREATE INDEX idx_sessions_active 
-ON sessions(child_id, ended_at) 
+CREATE INDEX idx_sessions_active
+ON sessions(child_id, ended_at)
 WHERE ended_at > now();
 
 -- Indeks dla JOIN z child_profiles (weryfikacja własności)
-CREATE INDEX idx_sessions_child_parent 
-ON sessions(child_id) 
+CREATE INDEX idx_sessions_child_parent
+ON sessions(child_id)
 INCLUDE (id);
 ```
 
 **Uzasadnienie:**
+
 - `idx_sessions_child_started`: Przyspiesza `WHERE child_id = $1 ORDER BY started_at DESC`
 - `idx_sessions_active`: Optymalizuje filtrowanie aktywnych sesji (WHERE `ended_at > now()`)
 - `idx_sessions_child_parent`: Przyspiesza JOINy z child_profiles dla weryfikacji własności
@@ -971,37 +1030,41 @@ INCLUDE (id);
 ### 8.2 Optymalizacje zapytań
 
 **POST sessions:**
+
 - UPDATE poprzednich aktywnych sesji + INSERT nowej w jednej transakcji
 - Automatyczne ustawienie `ended_at = started_at + 10 min`
 - Koszt: ~5-10ms (UPDATE + INSERT)
 
 **POST refresh:**
+
 - Weryfikacja + UPDATE `ended_at` o +2 min
 - Można zoptymalizować do pojedynczego UPDATE z RETURNING + JOIN:
   ```sql
   UPDATE sessions s
   SET ended_at = ended_at + interval '2 minutes'
   FROM child_profiles cp
-  WHERE s.id = $1 AND s.child_id = cp.id AND cp.parent_id = $2 
+  WHERE s.id = $1 AND s.child_id = cp.id AND cp.parent_id = $2
     AND s.ended_at > now()
   RETURNING s.*;
   ```
 - Koszt: ~3-8ms
 
 **PATCH end session:**
+
 - Weryfikacja + UPDATE w jednej transakcji
 - Można zoptymalizować do pojedynczego UPDATE z RETURNING + JOIN:
   ```sql
   UPDATE sessions s
   SET ended_at = now()
   FROM child_profiles cp
-  WHERE s.id = $1 AND s.child_id = cp.id AND cp.parent_id = $2 
+  WHERE s.id = $1 AND s.child_id = cp.id AND cp.parent_id = $2
     AND s.ended_at > now()
   RETURNING s.*;
   ```
 - Koszt: ~3-8ms
 
 **GET sessions:**
+
 - SELECT z paginacją (LIMIT/OFFSET)
 - Obliczenie `isActive` w SELECT lub w aplikacji
 - COUNT query może być kosztowne dla dużych zbiorów
@@ -1013,16 +1076,19 @@ INCLUDE (id);
 ### 8.3 Paginacja i limity
 
 **Domyślne wartości:**
+
 - `pageSize`: 20 (default)
 - `pageSize` max: 100 (enforce w validation)
 - `page`: 1 (default)
 
 **Strategie optymalizacji:**
+
 - Dla profilów z setkami sesji: OFFSET może być wolny
 - Rozważyć cursor-based pagination w przyszłości (zamiast OFFSET)
 - Cache pierwszy page (najczęściej używany)
 
 **Przykład cursor-based (przyszłość):**
+
 ```sql
 SELECT * FROM sessions
 WHERE child_id = $1 AND started_at < $cursor
@@ -1035,6 +1101,7 @@ LIMIT 20;
 ### 8.4 Caching strategii
 
 **Kandydaci do cache:**
+
 1. **Active session per profile** (GET with `active=true`)
    - TTL: 1 minuta (sesje mają krótki czas życia)
    - Invalidacja: po POST/POST refresh/PATCH end sessions
@@ -1045,6 +1112,7 @@ LIMIT 20;
    - Benefit: Przyspiesza paginację
 
 **Nie cache'ować:**
+
 - Pełna lista sesji (często się zmienia z powodu automatycznego wygasania)
 - Pojedyncze sesje (małe obciążenie, rzadko używane)
 
@@ -1054,26 +1122,28 @@ LIMIT 20;
 
 ### 8.5 Potencjalne wąskie gardła
 
-| Wąskie gardło                     | Prawdopodobieństwo | Mitigation                               |
-| --------------------------------- | ------------------ | ---------------------------------------- |
-| UPDATE + INSERT w POST sessions   | Niskie             | Używamy indeksów + transakcja           |
-| COUNT(*) dla paginacji            | Średnie            | Index + cache count                      |
-| OFFSET dla dużych zbiorów         | Średnie            | Cursor-based pagination (przyszłość)     |
-| Częste refresh requests           | Średnie            | Rate limiting per session                |
-| JOIN child_profiles → sessions    | Niskie             | Index na child_id + RLS cache            |
-| Obliczanie isActive dla dużych list| Niskie            | Obliczanie w SELECT lub cache w Redis    |
+| Wąskie gardło                       | Prawdopodobieństwo | Mitigation                            |
+| ----------------------------------- | ------------------ | ------------------------------------- |
+| UPDATE + INSERT w POST sessions     | Niskie             | Używamy indeksów + transakcja         |
+| COUNT(\*) dla paginacji             | Średnie            | Index + cache count                   |
+| OFFSET dla dużych zbiorów           | Średnie            | Cursor-based pagination (przyszłość)  |
+| Częste refresh requests             | Średnie            | Rate limiting per session             |
+| JOIN child_profiles → sessions      | Niskie             | Index na child_id + RLS cache         |
+| Obliczanie isActive dla dużych list | Niskie             | Obliczanie w SELECT lub cache w Redis |
 
 ---
 
 ### 8.6 Metryki do monitorowania
 
 **SLA targets:**
+
 - POST sessions: < 50ms (p95)
 - POST refresh: < 30ms (p95)
 - PATCH end session: < 100ms (p95)
 - GET sessions (20 items): < 150ms (p95)
 
 **Monitorować:**
+
 - Query execution time per endpoint
 - Database connection pool usage
 - UPDATE execution time (POST sessions and refresh)
@@ -1092,6 +1162,7 @@ LIMIT 20;
 **Plik:** `src/lib/schemas/session.schema.ts`
 
 **Zadanie:**
+
 1. Zaimportować `z` z "zod"
 2. Zaimportować `paginationParamsSchema` z "./pagination.schema"
 3. Utworzyć `profileIdParamSchema` (lub zaimportować z task.schema.ts jeśli już istnieje)
@@ -1100,6 +1171,7 @@ LIMIT 20;
 6. Dodać walidację i transformację dla parametru `active` (string "true"/"false" → boolean)
 
 **Przykładowy kod:**
+
 ```typescript
 import { z } from "zod";
 import { paginationParamsSchema } from "./pagination.schema";
@@ -1116,15 +1188,13 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
   active: z
     .string()
     .optional()
-    .refine(
-      (val) => val === undefined || val === "true" || val === "false",
-      "active must be 'true' or 'false'"
-    )
+    .refine((val) => val === undefined || val === "true" || val === "false", "active must be 'true' or 'false'")
     .transform((val) => (val === "true" ? true : val === "false" ? false : undefined)),
 });
 ```
 
 **Weryfikacja:**
+
 - Uruchom TypeScript compiler: `npm run build`
 - Upewnij się, że nie ma błędów kompilacji
 
@@ -1135,6 +1205,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 **Plik:** `src/lib/services/session.service.ts`
 
 **Zadanie:**
+
 1. Zaimportować typy: `SupabaseClient`, `SessionDTO`, `SessionStartDTO`, `SessionRefreshDTO`, `PaginatedResponse`, `SessionListParams`
 2. Zaimportować helper functions: `toSessionDTO`, `toSessionStartDTO`, `toSessionRefreshDTO`
 3. Zaimportować błędy: `NotFoundError`, `ForbiddenError`, `ValidationError`
@@ -1147,6 +1218,7 @@ export const sessionListParamsSchema = paginationParamsSchema.extend({
 **Szczegóły implementacji:**
 
 **startSession:**
+
 ```typescript
 async startSession(profileId: string, parentId: string): Promise<SessionStartDTO> {
   // Step 1: Close any previous active sessions
@@ -1180,6 +1252,7 @@ async startSession(profileId: string, parentId: string): Promise<SessionStartDTO
 ```
 
 **refreshSession:**
+
 ```typescript
 async refreshSession(sessionId: string, parentId: string): Promise<SessionRefreshDTO> {
   // Step 1: Verify ownership and check if expired
@@ -1232,6 +1305,7 @@ async refreshSession(sessionId: string, parentId: string): Promise<SessionRefres
 ```
 
 **endSession:**
+
 ```typescript
 async endSession(sessionId: string, parentId: string): Promise<void> {
   // Step 1: Verify ownership and check if already expired
@@ -1276,47 +1350,48 @@ async endSession(sessionId: string, parentId: string): Promise<void> {
   }
 }
 ```
-  const { data: session, error: fetchError } = await this.supabase
-    .from("sessions")
-    .select(`
-      id,
+
+const { data: session, error: fetchError } = await this.supabase
+.from("sessions")
+.select(`       id,
       ended_at,
       child_profiles!inner(parent_id)
     `)
-    .eq("id", sessionId)
-    .single();
+.eq("id", sessionId)
+.single();
 
-  if (fetchError) {
-    if (fetchError.code === "PGRST116") {
-      throw new NotFoundError("Session not found");
-    }
-    throw new Error(`Failed to fetch session: ${fetchError.message}`);
-  }
-
-  // Check ownership
-  const profile = session.child_profiles as unknown as { parent_id: string };
-  if (profile.parent_id !== parentId) {
-    throw new ForbiddenError("Session does not belong to this parent");
-  }
-
-  // Check if already ended
-  if (session.ended_at !== null && new Date(session.ended_at) <= new Date()) {
-    throw new ValidationError({ session: "Session is already ended" });
-  }
-
-  // Step 2: End the session
-  const { error: updateError } = await this.supabase
-    .from("sessions")
-    .update({
-      ended_at: new Date().toISOString(),
-    })
-    .eq("id", sessionId);
-
-  if (updateError) {
-    throw new Error(`Failed to end session: ${updateError.message}`);
-  }
+if (fetchError) {
+if (fetchError.code === "PGRST116") {
+throw new NotFoundError("Session not found");
 }
-```
+throw new Error(`Failed to fetch session: ${fetchError.message}`);
+}
+
+// Check ownership
+const profile = session.child_profiles as unknown as { parent_id: string };
+if (profile.parent_id !== parentId) {
+throw new ForbiddenError("Session does not belong to this parent");
+}
+
+// Check if already ended
+if (session.ended_at !== null && new Date(session.ended_at) <= new Date()) {
+throw new ValidationError({ session: "Session is already ended" });
+}
+
+// Step 2: End the session
+const { error: updateError } = await this.supabase
+.from("sessions")
+.update({
+ended_at: new Date().toISOString(),
+})
+.eq("id", sessionId);
+
+if (updateError) {
+throw new Error(`Failed to end session: ${updateError.message}`);
+}
+}
+
+````
 
 **listSessions:**
 ```typescript
@@ -1372,9 +1447,10 @@ async listSessions(
     },
   };
 }
-```
+````
 
 **Weryfikacja:**
+
 - Uruchom TypeScript compiler: `npm run build`
 - Sprawdź, czy wszystkie typy są poprawne
 - Sprawdź, czy wszystkie importy działają
@@ -1386,6 +1462,7 @@ async listSessions(
 **Plik:** `src/pages/api/profiles/[profileId]/sessions/index.ts`
 
 **Zadanie:**
+
 1. Zaimportować `APIRoute` z "astro"
 2. Zaimportować schemat `profileIdParamSchema` z schemas
 3. Zaimportować `ProfileService` i `SessionService`
@@ -1395,6 +1472,7 @@ async listSessions(
 7. Zaimplementować handler `POST: APIRoute`
 
 **Struktura handlera POST:**
+
 ```typescript
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
@@ -1404,7 +1482,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
       throw new UnauthorizedError();
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new UnauthorizedError();
     }
@@ -1443,6 +1524,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 ```
 
 **Error handling (w catch block):**
+
 - 400 ValidationError
 - 401 UnauthorizedError
 - 403 ForbiddenError
@@ -1450,6 +1532,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 - 500 Unexpected errors (z logowaniem)
 
 **Weryfikacja:**
+
 - Uruchom dev server: `npm run dev`
 - Test z Postman/curl: `POST /api/profiles/{validProfileId}/sessions` z JWT
 - Sprawdź response 201 z SessionStartDTO
@@ -1462,12 +1545,14 @@ export const POST: APIRoute = async ({ params, locals }) => {
 **Plik:** `src/pages/api/sessions/[sessionId]/refresh.ts`
 
 **Zadanie:**
+
 1. Utworzyć strukturę katalogów: `src/pages/api/sessions/[sessionId]/`
 2. Utworzyć plik `refresh.ts`
 3. Zaimportować wymagane zależności
 4. Zaimplementować handler `POST: APIRoute`
 
 **Struktura handlera POST:**
+
 ```typescript
 import type { APIRoute } from "astro";
 import { sessionIdParamSchema } from "@/lib/schemas/session.schema";
@@ -1485,7 +1570,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
       throw new UnauthorizedError();
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new UnauthorizedError();
     }
@@ -1520,6 +1608,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 ```
 
 **Error handling (w catch block):**
+
 - 400 ValidationError (invalid format lub session expired)
 - 401 UnauthorizedError
 - 403 ForbiddenError
@@ -1527,6 +1616,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
 - 500 Unexpected errors (z logowaniem)
 
 **Weryfikacja:**
+
 - Test z Postman: `POST /api/sessions/{validSessionId}/refresh` z JWT
 - Sprawdź response 200 z SessionRefreshDTO
 - Test ponownego refresh: powinien wydłużyć o kolejne 2 minuty
@@ -1539,11 +1629,13 @@ export const POST: APIRoute = async ({ params, locals }) => {
 **Ten sam plik:** `src/pages/api/profiles/[profileId]/sessions/index.ts`
 
 **Zadanie:**
+
 1. Zaimportować `sessionListParamsSchema` z schemas
 2. Zaimportować typy: `PaginatedResponse`, `SessionDTO`
 3. Dodać handler `GET: APIRoute` do tego samego pliku (po POST)
 
 **Struktura handlera GET:**
+
 ```typescript
 export const GET: APIRoute = async ({ params, url, locals }) => {
   try {
@@ -1553,7 +1645,10 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
       throw new UnauthorizedError();
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new UnauthorizedError();
     }
@@ -1607,6 +1702,7 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
 ```
 
 **Weryfikacja:**
+
 - Test z Postman: `GET /api/profiles/{profileId}/sessions`
 - Test z filtrem: `GET /api/profiles/{profileId}/sessions?active=true`
 - Test paginacji: `GET /api/profiles/{profileId}/sessions?page=2&pageSize=10`
@@ -1620,12 +1716,14 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
 **Plik:** `src/pages/api/sessions/[sessionId]/end.ts`
 
 **Zadanie:**
+
 1. Utworzyć strukturę katalogów: `src/pages/api/sessions/[sessionId]/`
 2. Utworzyć plik `end.ts`
 3. Zaimportować wymagane zależności
 4. Zaimplementować handler `PATCH: APIRoute`
 
 **Struktura handlera PATCH:**
+
 ```typescript
 import type { APIRoute } from "astro";
 import { sessionIdParamSchema } from "@/lib/schemas/session.schema";
@@ -1643,7 +1741,10 @@ export const PATCH: APIRoute = async ({ params, locals }) => {
       throw new UnauthorizedError();
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new UnauthorizedError();
     }
@@ -1666,13 +1767,10 @@ export const PATCH: APIRoute = async ({ params, locals }) => {
     await sessionService.endSession(sessionId, user.id);
 
     // Step 4: Return success response
-    return new Response(
-      JSON.stringify({ message: "Session ended successfully" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ message: "Session ended successfully" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     // Step 5: Handle errors
     // ... error handling (ValidationError, UnauthorizedError, ForbiddenError, NotFoundError, 500)
@@ -1681,6 +1779,7 @@ export const PATCH: APIRoute = async ({ params, locals }) => {
 ```
 
 **Weryfikacja:**
+
 - Test z Postman: `PATCH /api/sessions/{validSessionId}/end` z JWT
 - Sprawdź response 200 z message
 - Test double-end: drugi request powinien zwrócić 400 "already ended"
@@ -1695,6 +1794,7 @@ export const PATCH: APIRoute = async ({ params, locals }) => {
 **Scenariusze testowe:**
 
 **Test 1: Rozpocznij nową sesję (happy path)**
+
 ```bash
 POST /api/profiles/{profileId}/sessions
 Authorization: Bearer {validJWT}
@@ -1704,6 +1804,7 @@ Response: { sessionId, startedAt, isActive: true }
 ```
 
 **Test 2: Sprawdź automatyczne zamknięcie poprzedniej sesji**
+
 ```bash
 1. POST /api/profiles/{profileId}/sessions → session1 (ends at T+10min)
 2. POST /api/profiles/{profileId}/sessions → session2 (ends at T+10min)
@@ -1713,6 +1814,7 @@ Expected: Tylko session2 jest aktywna, session1 ma ended_at = now
 ```
 
 **Test 2a: Sprawdź wydłużanie sesji (refresh)**
+
 ```bash
 1. POST /api/profiles/{profileId}/sessions → session (ends at T+10min)
 2. POST /api/sessions/{sessionId}/refresh → (ends at T+12min)
@@ -1723,6 +1825,7 @@ Expected: ended_at wydłużone o 2 minuty za każdym razem
 ```
 
 **Test 3: Zakończ sesję ręcznie**
+
 ```bash
 PATCH /api/sessions/{sessionId}/end
 Authorization: Bearer {validJWT}
@@ -1732,6 +1835,7 @@ Response: { message: "Session ended successfully" }
 ```
 
 **Test 4: Lista sesji z filtrowaniem**
+
 ```bash
 GET /api/profiles/{profileId}/sessions?active=false&page=1&pageSize=10
 Authorization: Bearer {validJWT}
@@ -1741,6 +1845,7 @@ Response: PaginatedResponse with inactive sessions only
 ```
 
 **Test 5: Błędy autoryzacji**
+
 ```bash
 # Bez JWT
 POST /api/profiles/{profileId}/sessions
@@ -1753,6 +1858,7 @@ Expected: 403 Forbidden
 ```
 
 **Test 6: Błędy walidacji**
+
 ```bash
 # Niepoprawny UUID
 POST /api/profiles/invalid-uuid/sessions
@@ -1764,6 +1870,7 @@ Expected: 400 Bad Request
 ```
 
 **Test 7: Nie można zakończyć już wygasłej sesji**
+
 ```bash
 1. Zaczekaj aż sesja wygaśnie (ended_at <= now)
 2. PATCH /api/sessions/{sessionId}/end → 400 Bad Request
@@ -1771,6 +1878,7 @@ Expected: "Session is already ended"
 ```
 
 **Test 8: Nie można wydłużyć wygasłej sesji**
+
 ```bash
 1. Zaczekaj aż sesja wygaśnie (ended_at <= now)
 2. POST /api/sessions/{sessionId}/refresh → 400 Bad Request
@@ -1784,18 +1892,20 @@ Expected: "Session has already expired"
 **Plik:** `supabase/migrations/[timestamp]_add_sessions_indexes.sql`
 
 **Zadanie:**
+
 1. Utworzyć nową migrację Supabase
 2. Dodać indeksy dla optymalizacji wydajności (jeśli jeszcze nie istnieją)
 
 **SQL:**
+
 ```sql
 -- Index for fast child_id lookups + sorting
-CREATE INDEX IF NOT EXISTS idx_sessions_child_started 
+CREATE INDEX IF NOT EXISTS idx_sessions_child_started
 ON sessions(child_id, started_at DESC);
 
 -- Index for filtering active sessions (ended_at > now)
-CREATE INDEX IF NOT EXISTS idx_sessions_active 
-ON sessions(child_id, ended_at) 
+CREATE INDEX IF NOT EXISTS idx_sessions_active
+ON sessions(child_id, ended_at)
 WHERE ended_at > now();
 
 -- Analyze table for query planner
@@ -1803,6 +1913,7 @@ ANALYZE sessions;
 ```
 
 **Zastosowanie:**
+
 ```bash
 # Lokalnie
 npx supabase db push
@@ -1812,6 +1923,7 @@ npx supabase db push --linked
 ```
 
 **Weryfikacja:**
+
 - Sprawdź EXPLAIN ANALYZE dla queries
 - Porównaj query execution time przed i po
 
@@ -1820,21 +1932,23 @@ npx supabase db push --linked
 ### Krok 8: Dokumentacja i kod review
 
 **Zadanie:**
+
 1. Dodać komentarze JSDoc do SessionService methods
 2. Zaktualizować README (jeśli istnieje) z nowymi endpointami
 3. Utworzyć przykłady użycia w dokumentacji API
 4. Code review z team lead przed merge do main
 
 **Przykładowy JSDoc:**
+
 ```typescript
 /**
  * Starts a new game session for a child profile.
- * 
+ *
  * Business logic:
  * - Automatically closes any previous active sessions for this profile
  * - New session has 10-minute duration (ended_at = started_at + 10 min)
  * - Session can be extended using refreshSession() method
- * 
+ *
  * @param profileId - The child profile UUID
  * @param parentId - The authenticated parent's user ID
  * @returns SessionStartDTO with new session data (including endedAt)
@@ -1844,12 +1958,12 @@ async startSession(profileId: string, parentId: string): Promise<SessionStartDTO
 
 /**
  * Extends an active session by 2 minutes.
- * 
+ *
  * Business logic:
  * - Only active sessions (ended_at > now) can be extended
  * - Each call adds exactly 2 minutes to ended_at
  * - Can be called multiple times
- * 
+ *
  * @param sessionId - The session UUID to extend
  * @param parentId - The authenticated parent's user ID
  * @returns SessionRefreshDTO with updated endedAt
@@ -1860,6 +1974,7 @@ async refreshSession(sessionId: string, parentId: string): Promise<SessionRefres
 ```
 
 **Checklist przed merge:**
+
 - [ ] Wszystkie testy przechodzą
 - [ ] Kod jest sformatowany (prettier/eslint)
 - [ ] TypeScript kompiluje się bez błędów
@@ -1874,6 +1989,7 @@ async refreshSession(sessionId: string, parentId: string): Promise<SessionRefres
 ### Krok 9: Monitoring i deployment
 
 **Po wdrożeniu:**
+
 1. Monitoruj logi serwera dla błędów 500
 2. Sprawdź metryki wydajności (response time)
 3. Monitoruj użycie bazy danych (connection pool)
@@ -1883,6 +1999,7 @@ async refreshSession(sessionId: string, parentId: string): Promise<SessionRefres
    - Database connection pool exhaustion
 
 **Narzędzia:**
+
 - Supabase Dashboard → Logs
 - Application monitoring (np. Sentry)
 - Database monitoring (Supabase → Database → Performance)
@@ -1934,12 +2051,14 @@ Implementacja endpointów zarządzania sesjami obejmuje:
 **Priorytet:** Wysoki (wymagane dla funkcjonalności gry)
 
 **Zależności:**
+
 - ProfileService (istniejący)
 - Typy SessionDTO, SessionStartDTO, SessionRefreshDTO (do utworzenia)
 - Middleware autentykacji (istniejący)
 - RLS policies (istniejące)
 
 **Kluczowe zmiany względem poprzedniej wersji:**
+
 - Usunięto kolumnę `is_active` z tabeli `sessions`
 - Status sesji obliczany na podstawie `ended_at > now()` (nie przechowywany)
 - **Nowe:** Automatyczne ustawienie `ended_at = started_at + 10 min` przy tworzeniu
@@ -1948,6 +2067,7 @@ Implementacja endpointów zarządzania sesjami obejmuje:
 - Usunięto unique constraint `ux_active_session_per_child`
 
 **Następne kroki po implementacji:**
+
 - Integracja z frontendem (GameContext)
 - Automatyczne wywoływanie refresh co np. 8 minut aby przedłużyć sesję
 - Testy E2E z frontendem

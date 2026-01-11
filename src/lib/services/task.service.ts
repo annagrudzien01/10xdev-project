@@ -13,16 +13,17 @@ export class TaskService {
   constructor(private supabase: SupabaseClient) {}
 
   /**
-   * Gets the current active puzzle for a child profile.
+   * Gets the current active puzzle for a child profile in a specific session.
    * This is used to resume game state after page refresh.
    *
    * @param profileId - The child profile UUID
+   * @param sessionId - The session UUID
    * @returns CurrentPuzzleDTO with active puzzle data including attempts used
    * @throws NotFoundError if no active puzzle exists
    * @throws Error for other database errors
    */
-  async getCurrentTask(profileId: string): Promise<CurrentPuzzleDTO> {
-    // Query for the most recent incomplete task
+  async getCurrentTask(profileId: string, sessionId: string): Promise<CurrentPuzzleDTO> {
+    // Query for the most recent incomplete task in the current session
     const { data, error } = await this.supabase
       .from("task_results")
       .select(
@@ -37,6 +38,7 @@ export class TaskService {
       `
       )
       .eq("child_id", profileId)
+      .eq("session_id", sessionId)
       .is("completed_at", null)
       .order("created_at", { ascending: false })
       .limit(1)
