@@ -1,0 +1,19 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import DashboardView from "@/components/dashboard/DashboardView";
+
+// Guard autoryzacji - sprawdzenie obecności tokenu
+const token = Astro.cookies.get("sb-access-token");
+if (!token?.value) {
+  return Astro.redirect("/login");
+}
+
+// Wyłączenie prerenderowania dla dynamicznej strony
+export const prerender = false;
+---
+
+<Layout title="Dashboard - Rytmik">
+  <div class="min-h-screen flex flex-col bg-background">
+    <DashboardView client:load />
+  </div>
+</Layout>

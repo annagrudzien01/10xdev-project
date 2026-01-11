@@ -422,6 +422,7 @@ FROM (
 ### Solution Evolution
 
 #### ❌ First Approach: API Verification (Rejected)
+
 - Added `verifySession()` method to SessionService
 - Created `GET /api/sessions/:sessionId/verify` endpoint
 - Made additional API call on every page load
@@ -440,13 +441,13 @@ FROM (
 // Before
 const saveSessionToCookie = (sessionId: string) => {
   expires.setMinutes(expires.getMinutes() + 30); // Fixed 30 min
-}
+};
 
 // After
 const saveSessionToCookie = (sessionId: string, endedAt: string) => {
   const expires = new Date(endedAt); // Use session's endedAt
   document.cookie = `${cookieName}=${sessionId}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
-}
+};
 ```
 
 2. **Simplified `ensureActiveSession()`:**
@@ -469,11 +470,11 @@ const ensureActiveSession = useCallback(async (): Promise<string> => {
   // Create new session
   const response = await fetch(`/api/profiles/${profileId}/sessions`, { method: "POST" });
   const data = await response.json();
-  
+
   // Save with session's endedAt as cookie expiry
   setCurrentSessionId(data.sessionId);
   saveSessionToCookie(data.sessionId, data.endedAt);
-  
+
   return data.sessionId;
 }, [currentSessionId, profileId, getSessionFromCookie, saveSessionToCookie]);
 ```
@@ -484,10 +485,10 @@ const ensureActiveSession = useCallback(async (): Promise<string> => {
 const refreshSession = useCallback(async () => {
   const response = await fetch(`/api/sessions/${sessionId}/refresh`, { method: "POST" });
   const data = await response.json();
-  
+
   // Update cookie with new expiry time
   saveSessionToCookie(sessionId, data.endedAt);
-  
+
   console.log("Session refreshed, cookie updated");
 }, [currentSessionId, profileId, getSessionFromCookie, saveSessionToCookie]);
 ```
@@ -521,13 +522,13 @@ Cookie Expired:
 
 ### Comparison
 
-| Aspect | API Verification | Cookie Sync |
-|--------|-----------------|-------------|
-| HTTP Requests | +1 per page load | 0 extra |
-| Complexity | High (3 files) | Low (1 file) |
-| Synchronization | Manual check | Automatic |
-| Correctness | Depends on timing | Guaranteed |
-| Browser Support | N/A | Native |
+| Aspect          | API Verification  | Cookie Sync  |
+| --------------- | ----------------- | ------------ |
+| HTTP Requests   | +1 per page load  | 0 extra      |
+| Complexity      | High (3 files)    | Low (1 file) |
+| Synchronization | Manual check      | Automatic    |
+| Correctness     | Depends on timing | Guaranteed   |
+| Browser Support | N/A               | Native       |
 
 ---
 

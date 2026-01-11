@@ -134,11 +134,7 @@ export class SessionService {
    * @returns true if session exists and is active (ended_at > now), false otherwise
    */
   async verifySession(sessionId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from("sessions")
-      .select("ended_at")
-      .eq("id", sessionId)
-      .single();
+    const { data, error } = await this.supabase.from("sessions").select("ended_at").eq("id", sessionId).single();
 
     if (error || !data || !data.ended_at) {
       return false;
