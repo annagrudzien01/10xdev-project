@@ -26,11 +26,24 @@ All implementation steps from the plan have been completed successfully.
 - Added index `idx_task_results_incomplete` for efficient querying of incomplete tasks
 - Added unique constraint `ux_incomplete_task_per_child_sequence` to prevent duplicate incomplete tasks
 
-**⚠️ IMPORTANT:** After running this migration, regenerate database types:
+**⚠️ IMPORTANT:** This migration should be followed by `20260111000000_add_session_id_to_task_results.sql` which adds session tracking. After running both migrations, regenerate database types:
 
 ```bash
 npx supabase gen types typescript --project-id <your-project-id> > src/db/database.types.ts
 ```
+
+### 1a. **Session Tracking Migration**
+
+`supabase/migrations/20260111000000_add_session_id_to_task_results.sql`
+
+**Purpose:** Adds session tracking to task_results for analytics and metrics.
+
+**Changes:**
+
+- Added `session_id` column (nullable for backward compatibility)
+- Added foreign key to `sessions` table with cascade delete
+- Added index `idx_task_results_session` on `(session_id, completed_at)`
+- Application code should ALWAYS provide `session_id` for new task_results
 
 ### 2. **Service Layer**
 
@@ -47,6 +60,8 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 - Queries `task_results` table with JOIN to `sequence` table
 - Filters for incomplete tasks (`completed_at IS NULL`)
 - Returns most recent incomplete task
+- Retrieves `attempts_used` to show progress
+- Retrieves `session_id` for session tracking
 - Calculates `expectedSlots` from `sequence_end`
 - Throws `NotFoundError` if no active puzzle exists
 
@@ -105,7 +120,7 @@ npx supabase gen types typescript --project-id <your-project-id> > src/db/databa
 
 **Changes:**
 
-- Added `CurrentPuzzleDTO` interface
+- Added `CurrentPuzzleDTO` interface (with `attemptsUsed` field)
 - Added `calculateExpectedSlots(sequenceEnd: string)` helper function
 
 ### 3. **Profile Service**
@@ -145,6 +160,7 @@ CREATE TABLE task_results (
   completed_at TIMESTAMPTZ, -- nullable, no default
   attempts_used SMALLINT CHECK (attempts_used IS NULL OR attempts_used BETWEEN 1 AND 3),
   score SMALLINT CHECK (score IS NULL OR score BETWEEN 0 AND 10),
+  session_id UUID REFERENCES sessions(id) ON DELETE CASCADE, -- added in migration 20260111000000
   -- unique constraint removed
 );
 
@@ -156,6 +172,9 @@ CREATE INDEX idx_task_results_incomplete
 CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
   ON task_results(child_id, sequence_id)
   WHERE completed_at IS NULL;
+
+CREATE INDEX idx_task_results_session
+  ON task_results(session_id, completed_at);
 ```
 
 ---
@@ -168,7 +187,7 @@ CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
 
    ```
    POST /api/profiles/{profileId}/tasks/next
-   → Creates task_result with completed_at = NULL
+   → Creates task_result with completed_at = NULL, session_id = current_session_id
    → Returns puzzle data
    ```
 
@@ -176,7 +195,7 @@ CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
 
    ```
    GET /api/profiles/{profileId}/tasks/current
-   → Returns existing incomplete puzzle
+   → Returns existing incomplete puzzle with attempts_used
    → No new task_result created
    ```
 
@@ -185,6 +204,7 @@ CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
    ```
    POST /api/profiles/{profileId}/tasks/{sequenceId}/submit
    → Updates task_result: sets completed_at, attempts_used, score
+   → session_id remains unchanged
    → Returns scoring data
    ```
 
@@ -192,6 +212,7 @@ CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
    ```
    POST /api/profiles/{profileId}/tasks/next
    → Previous task is completed, creates new task_result
+   → Links to same session_id if session is still active
    → Returns new puzzle data
    ```
 
@@ -251,13 +272,18 @@ CREATE UNIQUE INDEX ux_incomplete_task_per_child_sequence
 
 ## Deployment Steps
 
-### 1. Run Migration
+### 1. Run Migrations
 
 ```bash
+# Run both required migrations
 npx supabase migration up
 # or
 npx supabase db push
 ```
+
+**Required migrations:**
+- `20260106000000_alter_task_results_completed_at.sql`
+- `20260111000000_add_session_id_to_task_results.sql`
 
 ### 2. Regenerate Database Types
 
@@ -302,9 +328,12 @@ Authorization: Bearer <jwt-token>
   "sequenceId": "987fcdeb-51a2-4b7f-9c3e-123456789abc",
   "levelId": 3,
   "sequenceBeginning": "C4-E4-G4-G#4",
-  "expectedSlots": 2
+  "expectedSlots": 2,
+  "attemptsUsed": 0
 }
 ```
+
+**Note:** `attemptsUsed` indicates how many submission attempts have been made for this puzzle (0-3).
 
 ### Example Error Response (404 Not Found)
 
@@ -324,6 +353,7 @@ Authorization: Bearer <jwt-token>
 1. Database types (`src/db/database.types.ts`) need manual regeneration after migration
 2. No automated tests included in this implementation
 3. No monitoring/metrics (e.g., Prometheus counter for `tasks_current_hit`)
+4. Session ID is nullable in database for backward compatibility, but should always be set for new tasks
 
 ### Recommended Improvements
 
@@ -333,6 +363,8 @@ Authorization: Bearer <jwt-token>
 4. Set up monitoring with Prometheus/Grafana
 5. Consider caching strategy for frequently accessed puzzles
 6. Add audit logging for security-sensitive operations
+7. Enforce `session_id` as NOT NULL after backfilling old data
+8. Add endpoint to retrieve per-session statistics using `session_id`
 
 ---
 

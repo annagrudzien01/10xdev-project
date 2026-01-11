@@ -146,6 +146,8 @@ export interface SessionStartDTO {
   sessionId: string;
   /** Session start timestamp (ISO timestamp) */
   startedAt: string;
+  /** Session end timestamp (ISO timestamp, started_at + 10 minutes) */
+  endedAt: string;
   /** Whether this session is currently active */
   isActive: boolean;
 }
@@ -155,22 +157,38 @@ export interface SessionStartDTO {
  *
  * Complete session data for GET /profiles/{profileId}/sessions.
  * Derived from `sessions` table with camelCase field names.
+ * Session status is computed based on ended_at > current_time.
  */
 export interface SessionDTO {
   /** Unique session identifier (UUID) */
   id: string;
   /** Child profile ID this session belongs to */
   childId: string;
-  /** Whether this session is currently active (only one active per child) */
+  /** Whether this session is currently active (computed: ended_at > now) */
   isActive: boolean;
   /** Session start timestamp (ISO timestamp) */
   startedAt: string;
-  /** Session end timestamp (ISO timestamp or null if still active) */
-  endedAt: string | null;
+  /** Session end timestamp (ISO timestamp, always set) */
+  endedAt: string;
   /** Session creation timestamp (ISO timestamp) */
   createdAt: string;
   /** Last update timestamp (ISO timestamp or null) */
   updatedAt: string | null;
+}
+
+/**
+ * Session Refresh DTO - Response for extending session duration
+ *
+ * Returned by POST /sessions/{sessionId}/refresh.
+ * Contains updated end time after extending session by 2 minutes.
+ */
+export interface SessionRefreshDTO {
+  /** Session identifier (UUID) */
+  sessionId: string;
+  /** Updated session end timestamp (ISO timestamp, previous + 2 minutes) */
+  endedAt: string;
+  /** Confirmation message */
+  message: string;
 }
 
 /**
@@ -180,7 +198,7 @@ export function toSessionDTO(entity: SessionEntity): SessionDTO {
   return {
     id: entity.id,
     childId: entity.child_id,
-    isActive: entity.is_active,
+    isActive: new Date(entity.ended_at) > new Date(),
     startedAt: entity.started_at,
     endedAt: entity.ended_at,
     createdAt: entity.created_at,
@@ -195,7 +213,19 @@ export function toSessionStartDTO(entity: SessionEntity): SessionStartDTO {
   return {
     sessionId: entity.id,
     startedAt: entity.started_at,
-    isActive: entity.is_active,
+    endedAt: entity.ended_at,
+    isActive: new Date(entity.ended_at) > new Date(),
+  };
+}
+
+/**
+ * Helper to transform SessionEntity to SessionRefreshDTO
+ */
+export function toSessionRefreshDTO(entity: SessionEntity): SessionRefreshDTO {
+  return {
+    sessionId: entity.id,
+    endedAt: entity.ended_at,
+    message: "Session extended by 2 minutes",
   };
 }
 

@@ -31,8 +31,11 @@ export interface CurrentPuzzleDTO {
   levelId: number; // Bieżący poziom trudności
   sequenceBeginning: string; // Np. "C4-E4-G4" (nuty z oktawami, rozdzielone myślnikiem)
   expectedSlots: number; // Ile nut użytkownik musi uzupełnić
+  attemptsUsed: number; // Liczba wykorzystanych prób (0-3)
 }
 ```
+
+**Uwaga:** Od wersji z migracją `20260111000000_add_session_id_to_task_results.sql`, tabela `task_results` zawiera kolumnę `session_id`, która łączy zadanie z sesją gry.
 
 ## 4. Szczegóły odpowiedzi
 
@@ -53,13 +56,20 @@ export interface CurrentPuzzleDTO {
 4. Service **TasksService.getCurrentTask(profileId)**:
    - Zapytanie SQL:
      ```sql
-     SELECT tr.sequence_id, tr.level_id, seq.sequence_beginning, seq.expected_slots
+     SELECT 
+       tr.sequence_id, 
+       tr.level_id, 
+       tr.attempts_used,
+       tr.session_id,
+       seq.sequence_beginning, 
+       seq.sequence_end
      FROM task_results tr
      JOIN sequence seq ON seq.id = tr.sequence_id
      WHERE tr.child_id = $1 AND tr.completed_at IS NULL
      ORDER BY tr.created_at DESC
      LIMIT 1;
      ```
+   - **Uwaga:** `session_id` jest pobierane z `task_results` i powinno być zawsze ustawione dla nowych zadań (od migracji `20260111000000`)
    - Jeżeli brak rekordu → 404.
 5. Mapowanie kolumn na `CurrentPuzzleDTO`.
 6. Zwrócenie `200 OK`.
@@ -88,13 +98,16 @@ Logowanie: błędy 5xx logowane w `logger.error()` z kontekstem `userId`, `profi
 
 ## 8. Rozważania dotyczące wydajności
 
-- Indeks `child_id, score, created_at DESC` na `task_results` minimalizuje koszt zapytania.
+- Indeks `idx_task_results_incomplete` na `task_results(child_id, created_at DESC) WHERE completed_at IS NULL` minimalizuje koszt zapytania.
+- Indeks `idx_task_results_session` na `task_results(session_id, completed_at)` wspiera zapytania sesyjne.
 - Limit 1 rekord.
 - Odpowiedź ma <1kB.
 
 ## 9. Etapy wdrożenia
 
-1. **SQL**: upewnić się, że na `task_results(child_id, score, created_at)` istnieje złożony indeks.
+1. **SQL**: upewnić się, że migracje zostały uruchomione:
+   - `20260106000000_alter_task_results_completed_at.sql` (nullable completed_at + indeksy)
+   - `20260111000000_add_session_id_to_task_results.sql` (dodanie session_id)
 2. **Service**: dodać metodę `getCurrentTask(profileId)` w `task.service.ts`.
 3. **API Handler**: `src/pages/api/profiles/[profileId]/tasks/current.ts`.
 4. **Zod**: schema paramów `{ profileId: z.string().uuid() }`.
@@ -102,6 +115,7 @@ Logowanie: błędy 5xx logowane w `logger.error()` z kontekstem `userId`, `profi
    - ownership OK → 200
    - brak puzzle → 404
    - cudzy profil → 403
+   - sprawdzenie czy `attemptsUsed` jest zwracane
 6. **E2E**: Cypress – odświeżenie strony gry → wznawia zagadkę.
 7. **Docs**: zaktualizować `api-plan.md` (już zrobione) + Swagger.
 8. **Monitoring**: dodać metricę `tasks_current_hit` (Prometheus).

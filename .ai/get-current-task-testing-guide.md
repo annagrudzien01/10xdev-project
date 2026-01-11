@@ -97,11 +97,14 @@ curl -X GET http://localhost:4321/api/profiles/YOUR_PROFILE_ID/tasks/current \
 #   "sequenceId": "same-uuid-as-above",
 #   "levelId": 1,
 #   "sequenceBeginning": "C4-E4-G4-C4-E4-G4",
-#   "expectedSlots": 2
+#   "expectedSlots": 2,
+#   "attemptsUsed": 0
 # }
 ```
 
-**Verify:** `sequenceId` matches the one from step 4.
+**Verify:** 
+- `sequenceId` matches the one from step 4
+- `attemptsUsed` is 0 (no submission attempts yet)
 
 ### 6. Test Scenario: Invalid UUID (400)
 
@@ -196,11 +199,19 @@ Create a new collection with these requests:
     pm.expect(json).to.have.property("levelId");
     pm.expect(json).to.have.property("sequenceBeginning");
     pm.expect(json).to.have.property("expectedSlots");
+    pm.expect(json).to.have.property("attemptsUsed");
   });
 
   pm.test("sequenceId is a valid UUID", () => {
     const json = pm.response.json();
     pm.expect(json.sequenceId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  });
+
+  pm.test("attemptsUsed is within valid range", () => {
+    const json = pm.response.json();
+    pm.expect(json.attemptsUsed).to.be.a("number");
+    pm.expect(json.attemptsUsed).to.be.at.least(0);
+    pm.expect(json.attemptsUsed).to.be.at.most(3);
   });
   ```
 
@@ -257,6 +268,8 @@ describe("TaskService", () => {
     const mockData = {
       sequence_id: "123e4567-e89b-12d3-a456-426614174000",
       level_id: 1,
+      attempts_used: 0,
+      session_id: "456e7890-e12b-34d5-a678-912345678000",
       sequence: {
         sequence_beginning: "C4-E4-G4",
         sequence_end: "C4-E4",
@@ -272,6 +285,7 @@ describe("TaskService", () => {
       levelId: 1,
       sequenceBeginning: "C4-E4-G4",
       expectedSlots: 2,
+      attemptsUsed: 0,
     });
   });
 
@@ -445,6 +459,7 @@ describe("Puzzle State Persistence", () => {
 SELECT
   tr.id,
   tr.child_id,
+  tr.session_id,
   tr.sequence_id,
   tr.level_id,
   tr.completed_at,
@@ -459,12 +474,20 @@ WHERE tr.completed_at IS NULL
 ORDER BY tr.created_at DESC;
 ```
 
+**Note:** All incomplete tasks should have `session_id` populated (since migration `20260111000000`).
+
 ### Check Index Usage
 
 ```sql
 -- Verify index is being used
 EXPLAIN ANALYZE
-SELECT tr.sequence_id, tr.level_id, seq.sequence_beginning, seq.sequence_end
+SELECT 
+  tr.sequence_id, 
+  tr.level_id, 
+  tr.attempts_used,
+  tr.session_id,
+  seq.sequence_beginning, 
+  seq.sequence_end
 FROM task_results tr
 JOIN sequence seq ON seq.id = tr.sequence_id
 WHERE tr.child_id = 'test-profile-id'

@@ -54,11 +54,17 @@
 | ---------- | ----------- | -------------------------------------------------------- |
 | id         | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                   |
 | child_id   | UUID        | NOT NULL REFERENCES child_profiles(id) ON DELETE CASCADE |
-| is_active  | BOOLEAN     | NOT NULL DEFAULT TRUE                                    |
 | started_at | TIMESTAMPTZ | DEFAULT now() NOT NULL                                   |
-| ended_at   | TIMESTAMPTZ | NULLABLE                                                 |
+| ended_at   | TIMESTAMPTZ | NOT NULL (default: started_at + 10 minutes)              |
 | created_at | TIMESTAMPTZ | DEFAULT now() NOT NULL                                   |
 | updated_at | TIMESTAMPTZ |                                                          |
+
+**Session Duration Logic:**
+- New sessions automatically have `ended_at = started_at + 10 minutes`
+- Sessions can be extended by 2 minutes using the refresh endpoint
+- Session status is computed dynamically based on `ended_at > current_time`
+- **Active:** `ended_at > current_time`
+- **Inactive:** `ended_at <= current_time`
 
 ---
 
@@ -68,6 +74,7 @@
 | ------------- | ----------- | --------------------------------------------------------- |
 | id            | UUID        | PRIMARY KEY DEFAULT uuid_generate_v4()                    |
 | child_id      | UUID        | NOT NULL REFERENCES child_profiles(id) ON DELETE CASCADE  |
+| session_id    | UUID        | NOT NULL REFERENCES sessions(id) ON DELETE CASCADE        |
 | level_id      | SMALLINT    | NOT NULL REFERENCES levels(id)                            |
 | sequence_id   | UUID        | NOT NULL REFERENCES sequence(id)                          |
 | attempts_used | SMALLINT    | NULLABLE CHECK (attempts_used IS NULL OR BETWEEN 0 AND 3) |
@@ -83,23 +90,31 @@ When a task is completed (answer submitted), these fields are populated with act
 ## 2. Relacje między tabelami
 
 1. **auth.users → child_profiles** – 1:N (rodzic do profili dzieci).
-2. **child_profiles → sessions** – 1:N (profil → sesje), ale max 1 aktywna.
+2. **child_profiles → sessions** – 1:N (profil → sesje), każda sesja ma 10-minutowy czas trwania.
 3. **child_profiles → task_results** – 1:N.
-4. **levels → task_results** – 1:N.
-5. **levels → sequence** – 1:N.
+4. **sessions → task_results** – 1:N (sesja → wyniki zadań w tej sesji).
+5. **levels → task_results** – 1:N.
+6. **levels → sequence** – 1:N.
+7. **sequence → task_results** – 1:N.
 
 ## 3. Indeksy
 
-| Tabela         | Nazwa indeksu                    | Definicja / Kolumny                                      |
-| -------------- | -------------------------------- | -------------------------------------------------------- |
-| child_profiles | idx_child_parent                 | (parent_id)                                              |
-| sessions       | ux_active_session_per_child      | UNIQUE(child_id) WHERE is_active                         |
-| task_results   | idx_task_completed_at            | (completed_at)                                           |
-| task_results   | idx_task_results_incomplete      | (child_id, created_at DESC) WHERE completed_at IS NULL   |
-| task_results   | ux_incomplete_task_per_child_seq | UNIQUE(child_id, sequence_id) WHERE completed_at IS NULL |
+| Tabela         | Nazwa indeksu                     | Definicja / Kolumny                                      |
+| -------------- | --------------------------------- | -------------------------------------------------------- |
+| child_profiles | idx_child_parent                  | (parent_id)                                              |
+| sessions       | idx_sessions_child_started        | (child_id, started_at DESC)                              |
+| sessions       | idx_sessions_active               | (child_id, ended_at) WHERE ended_at > now()              |
+| task_results   | idx_task_completed_at             | (completed_at)                                           |
+| task_results   | idx_task_results_session          | (session_id, completed_at)                               |
+| task_results   | idx_task_results_incomplete       | (child_id, created_at DESC) WHERE completed_at IS NULL   |
+| task_results   | ux_incomplete_task_per_child_seq  | UNIQUE(child_id, sequence_id) WHERE completed_at IS NULL |
 
-**Note:** The unique constraint `(child_id, level_id)` was removed to allow multiple task attempts per level.
-New constraints focus on preventing duplicate incomplete tasks per sequence.
+**Note:** 
+- `ux_active_session_per_child` was removed - now multiple "active" sessions (ended_at in future) can exist temporarily
+- `idx_sessions_active` is a partial index for filtering active sessions (ended_at > now()) 
+- The unique constraint `(child_id, level_id)` was removed to allow multiple task attempts per level.
+- New constraints focus on preventing duplicate incomplete tasks per sequence.
+- For sessions: `ux_active_session_per_child` ensures only one session without `ended_at` per child (max 1 active).
 
 ## 4. Zasady PostgreSQL (RLS)
 
@@ -126,7 +141,8 @@ Rola `service_role` ma `bypass RLS` dla zadań cron.
 ## 5. Dodatkowe uwagi / decyzje projektowe
 
 - **Audit trigger** – wspólny trigger `set_updated_at()` ustawiający `NEW.updated_at = now()` na `BEFORE UPDATE` we wszystkich tabelach.
-- **Sesja – wymuszenie jednej aktywnej** – trigger `deactivate_last_session()` przed `INSERT` w `sessions` ustawia `is_active = FALSE` dla wcześniejszego rekordu.
+- **Sesja – wymuszenie jednej aktywnej** – unique constraint `ux_active_session_per_child` na `(child_id) WHERE ended_at IS NULL` zapewnia max 1 aktywną sesję (sesję bez daty zakończenia).
+- **Status sesji** – obliczany dynamicznie w aplikacji/zapytaniach na podstawie `started_at` i `ended_at`, nie przechowywany w bazie.
 - **Retencja danych** – `ON DELETE CASCADE` od `auth.users` w dół oraz dodatkowy cron usuwający nieaktywne konta.
 - **Agregacja wyników** – do rozstrzygnięcia: materialized view `child_totals` vs. `total_score` w `child_profiles` aktualizowane triggerem.
 - **Sekwencyjne zadania** – aplikacja lub advisory lock `pg_advisory_xact_lock(child_id)` przy generowaniu następnego zadania, by zapobiec równoległym wywołaniom.
