@@ -25,6 +25,15 @@ ESLint 9 + Prettier (linting i formatowanie kodu)
 Husky + lint-staged (git hooks, automatyczna kontrola jakości przed commitem)
 TypeScript ESLint (statyczna analiza kodu TypeScript)
 
+Testowanie:
+
+Vitest (test runner dla testów jednostkowych i integracyjnych)
+React Testing Library (testowanie komponentów React)
+@testing-library/user-event (symulacja interakcji użytkownika)
+MSW - Mock Service Worker (mockowanie API calls)
+Playwright (cross-browser automation dla testów E2E)
+@axe-core/playwright (automatyczne testy dostępności WCAG 2.1)
+
 Deployment:
 
 Node.js adapter (standalone mode) dla Astro

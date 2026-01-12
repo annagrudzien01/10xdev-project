@@ -33,6 +33,8 @@ The primary MVP feature showcased here is an **interactive piano** capable of **
 | UI primitives        | shadcn/ui (Radix UI + class-variance-authority) |
 | Audio engine         | Tone.js 15                                      |
 | Backend-as-a-Service | Supabase                                        |
+| Unit Testing         | Vitest + React Testing Library + MSW            |
+| E2E Testing          | Playwright + @axe-core/playwright               |
 
 ## Getting Started Locally
 
