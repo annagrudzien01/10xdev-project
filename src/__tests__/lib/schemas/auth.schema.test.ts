@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   loginSchema,
   registerSchema,
@@ -8,12 +8,12 @@ import {
   type RegisterInput,
   type ForgotPasswordInput,
   type ResetPasswordInput,
-} from '@/lib/schemas/auth.schema';
-import { ZodError } from 'zod';
+} from "@/lib/schemas/auth.schema";
+import { ZodError } from "zod";
 
 /**
  * Unit tests for authentication schemas
- * 
+ *
  * Coverage:
  * - Email validation (format, required)
  * - Password validation (length, complexity)
@@ -22,17 +22,17 @@ import { ZodError } from 'zod';
  * - Error messages in Polish
  */
 
-describe('auth.schema', () => {
+describe("auth.schema", () => {
   // =================================================================
   // LOGIN SCHEMA
   // =================================================================
-  describe('loginSchema', () => {
-    describe('valid inputs', () => {
-      it('should accept valid email and password', () => {
+  describe("loginSchema", () => {
+    describe("valid inputs", () => {
+      it("should accept valid email and password", () => {
         // Arrange
         const validInput = {
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         };
 
         // Act
@@ -45,10 +45,10 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should accept password with single character', () => {
+      it("should accept password with single character", () => {
         const input = {
-          email: 'user@test.pl',
-          password: 'x',
+          email: "user@test.pl",
+          password: "x",
         };
 
         const result = loginSchema.safeParse(input);
@@ -56,10 +56,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept email with subdomains', () => {
+      it("should accept email with subdomains", () => {
         const input = {
-          email: 'user@mail.example.com',
-          password: 'pass',
+          email: "user@mail.example.com",
+          password: "pass",
         };
 
         const result = loginSchema.safeParse(input);
@@ -67,10 +67,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept email with plus sign', () => {
+      it("should accept email with plus sign", () => {
         const input = {
-          email: 'user+tag@example.com',
-          password: 'pass',
+          email: "user+tag@example.com",
+          password: "pass",
         };
 
         const result = loginSchema.safeParse(input);
@@ -78,10 +78,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept email with dots in local part', () => {
+      it("should accept email with dots in local part", () => {
         const input = {
-          email: 'first.last@example.com',
-          password: 'pass',
+          email: "first.last@example.com",
+          password: "pass",
         };
 
         const result = loginSchema.safeParse(input);
@@ -90,39 +90,39 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('invalid email', () => {
-      it('should reject empty email', () => {
+    describe("invalid email", () => {
+      it("should reject empty email", () => {
         const input = {
-          email: '',
-          password: 'password',
+          email: "",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.errors[0].message).toBe('E-mail jest wymagany');
+          expect(result.error.errors[0].message).toBe("E-mail jest wymagany");
         }
       });
 
-      it('should reject email without @ symbol', () => {
+      it("should reject email without @ symbol", () => {
         const input = {
-          email: 'invalid.email.com',
-          password: 'password',
+          email: "invalid.email.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.errors[0].message).toBe('Podaj prawidłowy adres e-mail');
+          expect(result.error.errors[0].message).toBe("Podaj prawidłowy adres e-mail");
         }
       });
 
-      it('should reject email without domain', () => {
+      it("should reject email without domain", () => {
         const input = {
-          email: 'user@',
-          password: 'password',
+          email: "user@",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -130,10 +130,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject email without local part', () => {
+      it("should reject email without local part", () => {
         const input = {
-          email: '@example.com',
-          password: 'password',
+          email: "@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -141,10 +141,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject email with spaces', () => {
+      it("should reject email with spaces", () => {
         const input = {
-          email: 'user name@example.com',
-          password: 'password',
+          email: "user name@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -152,10 +152,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject email without TLD', () => {
+      it("should reject email without TLD", () => {
         const input = {
-          email: 'user@domain',
-          password: 'password',
+          email: "user@domain",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -164,26 +164,26 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('invalid password', () => {
-      it('should reject empty password', () => {
+    describe("invalid password", () => {
+      it("should reject empty password", () => {
         const input = {
-          email: 'test@example.com',
-          password: '',
+          email: "test@example.com",
+          password: "",
         };
 
         const result = loginSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.errors[0].message).toBe('Hasło jest wymagane');
+          expect(result.error.errors[0].message).toBe("Hasło jest wymagane");
         }
       });
     });
 
-    describe('missing fields', () => {
-      it('should reject when email is missing', () => {
+    describe("missing fields", () => {
+      it("should reject when email is missing", () => {
         const input = {
-          password: 'password',
+          password: "password",
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -191,9 +191,9 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject when password is missing', () => {
+      it("should reject when password is missing", () => {
         const input = {
-          email: 'test@example.com',
+          email: "test@example.com",
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -201,7 +201,7 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject empty object', () => {
+      it("should reject empty object", () => {
         const result = loginSchema.safeParse({});
 
         expect(result.success).toBe(false);
@@ -211,11 +211,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('type inference', () => {
-      it('should correctly infer LoginInput type', () => {
+    describe("type inference", () => {
+      it("should correctly infer LoginInput type", () => {
         const input: LoginInput = {
-          email: 'test@example.com',
-          password: 'password',
+          email: "test@example.com",
+          password: "password",
         };
 
         const result = loginSchema.parse(input);
@@ -229,13 +229,13 @@ describe('auth.schema', () => {
   // =================================================================
   // REGISTER SCHEMA
   // =================================================================
-  describe('registerSchema', () => {
-    describe('valid inputs', () => {
-      it('should accept valid email and strong password', () => {
+  describe("registerSchema", () => {
+    describe("valid inputs", () => {
+      it("should accept valid email and strong password", () => {
         // Arrange
         const validInput = {
-          email: 'newuser@example.com',
-          password: 'Strong1Pass!',
+          email: "newuser@example.com",
+          password: "Strong1Pass!",
         };
 
         // Act
@@ -248,10 +248,10 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should accept password with all required character types', () => {
+      it("should accept password with all required character types", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Abc123!@#',
+          email: "user@test.com",
+          password: "Abc123!@#",
         };
 
         const result = registerSchema.safeParse(input);
@@ -259,10 +259,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept password with exactly 8 characters', () => {
+      it("should accept password with exactly 8 characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pass123!',
+          email: "user@test.com",
+          password: "Pass123!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -270,12 +270,33 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept password with various special characters', () => {
-        const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', ',', '.', '?', '"', ':', '{', '}', '|', '<', '>'];
-        
+      it("should accept password with various special characters", () => {
+        const specialChars = [
+          "!",
+          "@",
+          "#",
+          "$",
+          "%",
+          "^",
+          "&",
+          "*",
+          "(",
+          ")",
+          ",",
+          ".",
+          "?",
+          '"',
+          ":",
+          "{",
+          "}",
+          "|",
+          "<",
+          ">",
+        ];
+
         specialChars.forEach((char) => {
           const input = {
-            email: 'user@test.com',
+            email: "user@test.com",
             password: `Pass123${char}`,
           };
 
@@ -285,10 +306,10 @@ describe('auth.schema', () => {
         });
       });
 
-      it('should accept long password with all requirements', () => {
+      it("should accept long password with all requirements", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'VeryLongPassword123!WithManyCharacters',
+          email: "user@test.com",
+          password: "VeryLongPassword123!WithManyCharacters",
         };
 
         const result = registerSchema.safeParse(input);
@@ -297,28 +318,26 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password length validation', () => {
-      it('should reject password with less than 8 characters', () => {
+    describe("password length validation", () => {
+      it("should reject password with less than 8 characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Abc12!', // 6 characters
+          email: "user@test.com",
+          password: "Abc12!", // 6 characters
         };
 
         const result = registerSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          const lengthError = result.error.errors.find(
-            (err) => err.message === 'Hasło musi mieć co najmniej 8 znaków'
-          );
+          const lengthError = result.error.errors.find((err) => err.message === "Hasło musi mieć co najmniej 8 znaków");
           expect(lengthError).toBeDefined();
         }
       });
 
-      it('should reject password with exactly 7 characters', () => {
+      it("should reject password with exactly 7 characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pass12!', // 7 characters
+          email: "user@test.com",
+          password: "Pass12!", // 7 characters
         };
 
         const result = registerSchema.safeParse(input);
@@ -326,10 +345,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject empty password', () => {
+      it("should reject empty password", () => {
         const input = {
-          email: 'user@test.com',
-          password: '',
+          email: "user@test.com",
+          password: "",
         };
 
         const result = registerSchema.safeParse(input);
@@ -341,11 +360,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password uppercase letter validation', () => {
-      it('should reject password without uppercase letter', () => {
+    describe("password uppercase letter validation", () => {
+      it("should reject password without uppercase letter", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'password123!',
+          email: "user@test.com",
+          password: "password123!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -353,16 +372,16 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           const upperError = result.error.errors.find(
-            (err) => err.message === 'Hasło musi zawierać co najmniej jedną wielką literę'
+            (err) => err.message === "Hasło musi zawierać co najmniej jedną wielką literę"
           );
           expect(upperError).toBeDefined();
         }
       });
 
-      it('should accept password with multiple uppercase letters', () => {
+      it("should accept password with multiple uppercase letters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'PASSWORDabc123!', // Must have lowercase too
+          email: "user@test.com",
+          password: "PASSWORDabc123!", // Must have lowercase too
         };
 
         const result = registerSchema.safeParse(input);
@@ -370,12 +389,12 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept password with uppercase at different positions', () => {
-        const positions = ['Password123!', 'passWord123!', 'password123!P'];
+      it("should accept password with uppercase at different positions", () => {
+        const positions = ["Password123!", "passWord123!", "password123!P"];
 
         positions.forEach((password) => {
           const input = {
-            email: 'user@test.com',
+            email: "user@test.com",
             password,
           };
 
@@ -388,11 +407,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password lowercase letter validation', () => {
-      it('should reject password without lowercase letter', () => {
+    describe("password lowercase letter validation", () => {
+      it("should reject password without lowercase letter", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'PASSWORD123!',
+          email: "user@test.com",
+          password: "PASSWORD123!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -400,16 +419,16 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           const lowerError = result.error.errors.find(
-            (err) => err.message === 'Hasło musi zawierać co najmniej jedną małą literę'
+            (err) => err.message === "Hasło musi zawierać co najmniej jedną małą literę"
           );
           expect(lowerError).toBeDefined();
         }
       });
 
-      it('should accept password with multiple lowercase letters', () => {
+      it("should accept password with multiple lowercase letters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Abcdefgh123!',
+          email: "user@test.com",
+          password: "Abcdefgh123!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -418,11 +437,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password digit validation', () => {
-      it('should reject password without digit', () => {
+    describe("password digit validation", () => {
+      it("should reject password without digit", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Password!',
+          email: "user@test.com",
+          password: "Password!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -430,16 +449,16 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           const digitError = result.error.errors.find(
-            (err) => err.message === 'Hasło musi zawierać co najmniej jedną cyfrę'
+            (err) => err.message === "Hasło musi zawierać co najmniej jedną cyfrę"
           );
           expect(digitError).toBeDefined();
         }
       });
 
-      it('should accept password with multiple digits', () => {
+      it("should accept password with multiple digits", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pass1234!',
+          email: "user@test.com",
+          password: "Pass1234!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -447,12 +466,12 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept password with digits at different positions', () => {
-        const positions = ['1Password!', 'Pass1word!', 'Password1!'];
+      it("should accept password with digits at different positions", () => {
+        const positions = ["1Password!", "Pass1word!", "Password1!"];
 
         positions.forEach((password) => {
           const input = {
-            email: 'user@test.com',
+            email: "user@test.com",
             password,
           };
 
@@ -463,11 +482,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password special character validation', () => {
-      it('should reject password without special character', () => {
+    describe("password special character validation", () => {
+      it("should reject password without special character", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Password123',
+          email: "user@test.com",
+          password: "Password123",
         };
 
         const result = registerSchema.safeParse(input);
@@ -475,16 +494,16 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           const specialError = result.error.errors.find(
-            (err) => err.message === 'Hasło musi zawierać co najmniej jeden znak specjalny'
+            (err) => err.message === "Hasło musi zawierać co najmniej jeden znak specjalny"
           );
           expect(specialError).toBeDefined();
         }
       });
 
-      it('should accept password with multiple special characters', () => {
+      it("should accept password with multiple special characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pass123!@#',
+          email: "user@test.com",
+          password: "Pass123!@#",
         };
 
         const result = registerSchema.safeParse(input);
@@ -492,10 +511,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should reject password with only alphanumeric characters', () => {
+      it("should reject password with only alphanumeric characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Password123',
+          email: "user@test.com",
+          password: "Password123",
         };
 
         const result = registerSchema.safeParse(input);
@@ -504,11 +523,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('combined validation failures', () => {
-      it('should report multiple validation errors', () => {
+    describe("combined validation failures", () => {
+      it("should report multiple validation errors", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'short', // too short, no uppercase, no digit, no special char
+          email: "user@test.com",
+          password: "short", // too short, no uppercase, no digit, no special char
         };
 
         const result = registerSchema.safeParse(input);
@@ -519,17 +538,17 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should validate all requirements independently', () => {
+      it("should validate all requirements independently", () => {
         const testCases = [
-          { password: 'pass', expectedErrors: 4 }, // missing: length, uppercase, digit, special
-          { password: 'Password', expectedErrors: 2 }, // missing: digit, special (length is 8, OK)
-          { password: 'Password1', expectedErrors: 1 }, // missing: special
-          { password: 'Password1!', expectedErrors: 0 }, // valid
+          { password: "pass", expectedErrors: 4 }, // missing: length, uppercase, digit, special
+          { password: "Password", expectedErrors: 2 }, // missing: digit, special (length is 8, OK)
+          { password: "Password1", expectedErrors: 1 }, // missing: special
+          { password: "Password1!", expectedErrors: 0 }, // valid
         ];
 
         testCases.forEach(({ password, expectedErrors }) => {
           const input = {
-            email: 'user@test.com',
+            email: "user@test.com",
             password,
           };
 
@@ -547,11 +566,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle password with unicode characters', () => {
+    describe("edge cases", () => {
+      it("should handle password with unicode characters", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pássw0rd!', // contains ó
+          email: "user@test.com",
+          password: "Pássw0rd!", // contains ó
         };
 
         const result = registerSchema.safeParse(input);
@@ -560,10 +579,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should handle password with emojis', () => {
+      it("should handle password with emojis", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'Pass123!😀',
+          email: "user@test.com",
+          password: "Pass123!😀",
         };
 
         const result = registerSchema.safeParse(input);
@@ -571,10 +590,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should handle very long password', () => {
+      it("should handle very long password", () => {
         const input = {
-          email: 'user@test.com',
-          password: 'A'.repeat(100) + 'a1!',
+          email: "user@test.com",
+          password: "A".repeat(100) + "a1!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -583,26 +602,26 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('email validation', () => {
-      it('should reject invalid email in registration', () => {
+    describe("email validation", () => {
+      it("should reject invalid email in registration", () => {
         const input = {
-          email: 'not-an-email',
-          password: 'Password123!',
+          email: "not-an-email",
+          password: "Password123!",
         };
 
         const result = registerSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          const emailError = result.error.errors.find((err) => err.path[0] === 'email');
+          const emailError = result.error.errors.find((err) => err.path[0] === "email");
           expect(emailError).toBeDefined();
         }
       });
 
-      it('should reject empty email in registration', () => {
+      it("should reject empty email in registration", () => {
         const input = {
-          email: '',
-          password: 'Password123!',
+          email: "",
+          password: "Password123!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -611,11 +630,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('type inference', () => {
-      it('should correctly infer RegisterInput type', () => {
+    describe("type inference", () => {
+      it("should correctly infer RegisterInput type", () => {
         const input: RegisterInput = {
-          email: 'test@example.com',
-          password: 'Password123!',
+          email: "test@example.com",
+          password: "Password123!",
         };
 
         const result = registerSchema.parse(input);
@@ -629,12 +648,12 @@ describe('auth.schema', () => {
   // =================================================================
   // FORGOT PASSWORD SCHEMA
   // =================================================================
-  describe('forgotPasswordSchema', () => {
-    describe('valid inputs', () => {
-      it('should accept valid email', () => {
+  describe("forgotPasswordSchema", () => {
+    describe("valid inputs", () => {
+      it("should accept valid email", () => {
         // Arrange
         const validInput = {
-          email: 'user@example.com',
+          email: "user@example.com",
         };
 
         // Act
@@ -647,13 +666,8 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should accept email with various formats', () => {
-        const emails = [
-          'simple@example.com',
-          'user+tag@example.com',
-          'user.name@example.co.uk',
-          'user123@test.org',
-        ];
+      it("should accept email with various formats", () => {
+        const emails = ["simple@example.com", "user+tag@example.com", "user.name@example.co.uk", "user123@test.org"];
 
         emails.forEach((email) => {
           const input = { email };
@@ -664,22 +678,22 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('invalid inputs', () => {
-      it('should reject empty email', () => {
+    describe("invalid inputs", () => {
+      it("should reject empty email", () => {
         const input = {
-          email: '',
+          email: "",
         };
 
         const result = forgotPasswordSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.errors[0].message).toBe('E-mail jest wymagany');
+          expect(result.error.errors[0].message).toBe("E-mail jest wymagany");
         }
       });
 
-      it('should reject invalid email format', () => {
-        const invalidEmails = ['notanemail', 'missing@domain', '@nodomain.com', 'spaces in@email.com'];
+      it("should reject invalid email format", () => {
+        const invalidEmails = ["notanemail", "missing@domain", "@nodomain.com", "spaces in@email.com"];
 
         invalidEmails.forEach((email) => {
           const input = { email };
@@ -689,17 +703,17 @@ describe('auth.schema', () => {
         });
       });
 
-      it('should reject when email field is missing', () => {
+      it("should reject when email field is missing", () => {
         const result = forgotPasswordSchema.safeParse({});
 
         expect(result.success).toBe(false);
       });
     });
 
-    describe('type inference', () => {
-      it('should correctly infer ForgotPasswordInput type', () => {
+    describe("type inference", () => {
+      it("should correctly infer ForgotPasswordInput type", () => {
         const input: ForgotPasswordInput = {
-          email: 'test@example.com',
+          email: "test@example.com",
         };
 
         const result = forgotPasswordSchema.parse(input);
@@ -712,14 +726,14 @@ describe('auth.schema', () => {
   // =================================================================
   // RESET PASSWORD SCHEMA
   // =================================================================
-  describe('resetPasswordSchema', () => {
-    describe('valid inputs', () => {
-      it('should accept valid tokens and strong password', () => {
+  describe("resetPasswordSchema", () => {
+    describe("valid inputs", () => {
+      it("should accept valid tokens and strong password", () => {
         // Arrange
         const validInput = {
-          accessToken: 'valid-access-token-xyz123',
-          refreshToken: 'valid-refresh-token-abc456',
-          password: 'NewPass123!',
+          accessToken: "valid-access-token-xyz123",
+          refreshToken: "valid-refresh-token-abc456",
+          password: "NewPass123!",
         };
 
         // Act
@@ -732,11 +746,11 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should accept long token strings', () => {
+      it("should accept long token strings", () => {
         const input = {
-          accessToken: 'a'.repeat(500),
-          refreshToken: 'b'.repeat(500),
-          password: 'Password123!',
+          accessToken: "a".repeat(500),
+          refreshToken: "b".repeat(500),
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -744,11 +758,11 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept tokens with special characters', () => {
+      it("should accept tokens with special characters", () => {
         const input = {
-          accessToken: 'token-with-dashes_and_underscores.and.dots',
-          refreshToken: 'another+token/with=special&chars',
-          password: 'Password123!',
+          accessToken: "token-with-dashes_and_underscores.and.dots",
+          refreshToken: "another+token/with=special&chars",
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -757,47 +771,43 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('token validation', () => {
-      it('should reject empty access token', () => {
+    describe("token validation", () => {
+      it("should reject empty access token", () => {
         const input = {
-          accessToken: '',
-          refreshToken: 'valid-token',
-          password: 'Password123!',
+          accessToken: "",
+          refreshToken: "valid-token",
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          const tokenError = result.error.errors.find(
-            (err) => err.message === 'Token dostępu jest wymagany'
-          );
+          const tokenError = result.error.errors.find((err) => err.message === "Token dostępu jest wymagany");
           expect(tokenError).toBeDefined();
         }
       });
 
-      it('should reject empty refresh token', () => {
+      it("should reject empty refresh token", () => {
         const input = {
-          accessToken: 'valid-token',
-          refreshToken: '',
-          password: 'Password123!',
+          accessToken: "valid-token",
+          refreshToken: "",
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          const tokenError = result.error.errors.find(
-            (err) => err.message === 'Token odświeżania jest wymagany'
-          );
+          const tokenError = result.error.errors.find((err) => err.message === "Token odświeżania jest wymagany");
           expect(tokenError).toBeDefined();
         }
       });
 
-      it('should reject missing access token', () => {
+      it("should reject missing access token", () => {
         const input = {
-          refreshToken: 'valid-token',
-          password: 'Password123!',
+          refreshToken: "valid-token",
+          password: "Password123!",
         } as any;
 
         const result = resetPasswordSchema.safeParse(input);
@@ -805,10 +815,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject missing refresh token', () => {
+      it("should reject missing refresh token", () => {
         const input = {
-          accessToken: 'valid-token',
-          password: 'Password123!',
+          accessToken: "valid-token",
+          password: "Password123!",
         } as any;
 
         const result = resetPasswordSchema.safeParse(input);
@@ -817,12 +827,12 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('password validation', () => {
-      it('should apply same password rules as registration', () => {
+    describe("password validation", () => {
+      it("should apply same password rules as registration", () => {
         const input = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'weak', // too short, no uppercase, no digit, no special char
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "weak", // too short, no uppercase, no digit, no special char
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -834,11 +844,11 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should reject password without uppercase', () => {
+      it("should reject password without uppercase", () => {
         const input = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'password123!',
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -846,11 +856,11 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject password without digit', () => {
+      it("should reject password without digit", () => {
         const input = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'Password!',
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "Password!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -858,11 +868,11 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject password without special character', () => {
+      it("should reject password without special character", () => {
         const input = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'Password123',
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "Password123",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -870,11 +880,11 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should accept strong password meeting all criteria', () => {
+      it("should accept strong password meeting all criteria", () => {
         const input = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'MyNewPass123!',
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "MyNewPass123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -883,12 +893,12 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('combined validation', () => {
-      it('should validate all fields together', () => {
+    describe("combined validation", () => {
+      it("should validate all fields together", () => {
         const input = {
-          accessToken: '',
-          refreshToken: '',
-          password: 'weak',
+          accessToken: "",
+          refreshToken: "",
+          password: "weak",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -900,11 +910,11 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should pass when all fields are valid', () => {
+      it("should pass when all fields are valid", () => {
         const input = {
-          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-          refreshToken: 'refresh_token_abc123def456',
-          password: 'SecurePass123!',
+          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+          refreshToken: "refresh_token_abc123def456",
+          password: "SecurePass123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -913,12 +923,12 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('type inference', () => {
-      it('should correctly infer ResetPasswordInput type', () => {
+    describe("type inference", () => {
+      it("should correctly infer ResetPasswordInput type", () => {
         const input: ResetPasswordInput = {
-          accessToken: 'token1',
-          refreshToken: 'token2',
-          password: 'Password123!',
+          accessToken: "token1",
+          refreshToken: "token2",
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.parse(input);
@@ -933,12 +943,12 @@ describe('auth.schema', () => {
   // =================================================================
   // SECURITY & EDGE CASES
   // =================================================================
-  describe('security and edge cases', () => {
-    describe('whitespace handling', () => {
-      it('should not trim email with leading/trailing spaces in loginSchema', () => {
+  describe("security and edge cases", () => {
+    describe("whitespace handling", () => {
+      it("should not trim email with leading/trailing spaces in loginSchema", () => {
         const input = {
-          email: '  test@example.com  ',
-          password: 'password',
+          email: "  test@example.com  ",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -950,10 +960,10 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should handle password with whitespace characters', () => {
+      it("should handle password with whitespace characters", () => {
         const input = {
-          email: 'test@example.com',
-          password: '  password with spaces  ',
+          email: "test@example.com",
+          password: "  password with spaces  ",
         };
 
         const result = loginSchema.safeParse(input);
@@ -965,10 +975,10 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should accept password that is only spaces for login (weak validation)', () => {
+      it("should accept password that is only spaces for login (weak validation)", () => {
         const input = {
-          email: 'test@example.com',
-          password: '   ', // 3 spaces
+          email: "test@example.com",
+          password: "   ", // 3 spaces
         };
 
         const result = loginSchema.safeParse(input);
@@ -977,10 +987,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should reject password with only spaces for registration', () => {
+      it("should reject password with only spaces for registration", () => {
         const input = {
-          email: 'test@example.com',
-          password: '        ', // 8 spaces
+          email: "test@example.com",
+          password: "        ", // 8 spaces
         };
 
         const result = registerSchema.safeParse(input);
@@ -990,11 +1000,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('null and undefined values', () => {
-      it('should reject null email', () => {
+    describe("null and undefined values", () => {
+      it("should reject null email", () => {
         const input = {
           email: null,
-          password: 'password',
+          password: "password",
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -1002,9 +1012,9 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject undefined password', () => {
+      it("should reject undefined password", () => {
         const input = {
-          email: 'test@example.com',
+          email: "test@example.com",
           password: undefined,
         } as any;
 
@@ -1013,24 +1023,24 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject null object', () => {
+      it("should reject null object", () => {
         const result = loginSchema.safeParse(null);
 
         expect(result.success).toBe(false);
       });
 
-      it('should reject undefined object', () => {
+      it("should reject undefined object", () => {
         const result = loginSchema.safeParse(undefined);
 
         expect(result.success).toBe(false);
       });
     });
 
-    describe('type coercion attempts', () => {
-      it('should reject numeric email', () => {
+    describe("type coercion attempts", () => {
+      it("should reject numeric email", () => {
         const input = {
           email: 12345,
-          password: 'password',
+          password: "password",
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -1038,9 +1048,9 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject boolean password', () => {
+      it("should reject boolean password", () => {
         const input = {
-          email: 'test@example.com',
+          email: "test@example.com",
           password: true,
         } as any;
 
@@ -1049,10 +1059,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject array as email', () => {
+      it("should reject array as email", () => {
         const input = {
-          email: ['test@example.com'],
-          password: 'password',
+          email: ["test@example.com"],
+          password: "password",
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -1060,10 +1070,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject object as password', () => {
+      it("should reject object as password", () => {
         const input = {
-          email: 'test@example.com',
-          password: { value: 'password' },
+          email: "test@example.com",
+          password: { value: "password" },
         } as any;
 
         const result = loginSchema.safeParse(input);
@@ -1072,12 +1082,12 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('unknown fields handling', () => {
-      it('should strip unknown fields from loginSchema by default', () => {
+    describe("unknown fields handling", () => {
+      it("should strip unknown fields from loginSchema by default", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'password',
-          extraField: 'should be removed',
+          email: "test@example.com",
+          password: "password",
+          extraField: "should be removed",
           anotherField: 123,
         } as any;
 
@@ -1085,35 +1095,35 @@ describe('auth.schema', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data).not.toHaveProperty('extraField');
-          expect(result.data).not.toHaveProperty('anotherField');
+          expect(result.data).not.toHaveProperty("extraField");
+          expect(result.data).not.toHaveProperty("anotherField");
           expect(Object.keys(result.data)).toHaveLength(2);
         }
       });
 
-      it('should strip unknown fields from registerSchema', () => {
+      it("should strip unknown fields from registerSchema", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'Password123!',
+          email: "test@example.com",
+          password: "Password123!",
           rememberMe: true,
-          csrf: 'token',
+          csrf: "token",
         } as any;
 
         const result = registerSchema.safeParse(input);
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data).not.toHaveProperty('rememberMe');
-          expect(result.data).not.toHaveProperty('csrf');
+          expect(result.data).not.toHaveProperty("rememberMe");
+          expect(result.data).not.toHaveProperty("csrf");
         }
       });
     });
 
-    describe('SQL injection and XSS attempts in emails', () => {
-      it('should handle email with SQL injection attempt', () => {
+    describe("SQL injection and XSS attempts in emails", () => {
+      it("should handle email with SQL injection attempt", () => {
         const input = {
           email: "admin'--@example.com",
-          password: 'password',
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1123,10 +1133,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should handle email with script tags', () => {
+      it("should handle email with script tags", () => {
         const input = {
           email: '<script>alert("xss")</script>@example.com',
-          password: 'password',
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1135,9 +1145,9 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should handle password with SQL injection attempt', () => {
+      it("should handle password with SQL injection attempt", () => {
         const input = {
-          email: 'test@example.com',
+          email: "test@example.com",
           password: "'; DROP TABLE users; --",
         };
 
@@ -1151,9 +1161,9 @@ describe('auth.schema', () => {
         }
       });
 
-      it('should handle password with HTML/script tags', () => {
+      it("should handle password with HTML/script tags", () => {
         const input = {
-          email: 'test@example.com',
+          email: "test@example.com",
           password: '<script>alert("xss")</script>',
         };
 
@@ -1164,11 +1174,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('internationalization edge cases', () => {
-      it('should handle email with internationalized domain', () => {
+    describe("internationalization edge cases", () => {
+      it("should handle email with internationalized domain", () => {
         const input = {
-          email: 'test@münchen.de',
-          password: 'password',
+          email: "test@münchen.de",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1178,10 +1188,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should handle email with cyrillic characters', () => {
+      it("should handle email with cyrillic characters", () => {
         const input = {
-          email: 'тест@example.com',
-          password: 'password',
+          email: "тест@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1189,10 +1199,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should accept password with Polish characters', () => {
+      it("should accept password with Polish characters", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'Hasło123!ąćęłńóśźż',
+          email: "test@example.com",
+          password: "Hasło123!ąćęłńóśźż",
         };
 
         const result = registerSchema.safeParse(input);
@@ -1200,10 +1210,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should accept password with mixed language characters', () => {
+      it("should accept password with mixed language characters", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'Pass123!中文字符',
+          email: "test@example.com",
+          password: "Pass123!中文字符",
         };
 
         const result = registerSchema.safeParse(input);
@@ -1212,11 +1222,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('maximum length validation', () => {
-      it('should handle extremely long email (potential DoS)', () => {
+    describe("maximum length validation", () => {
+      it("should handle extremely long email (potential DoS)", () => {
         const input = {
-          email: 'a'.repeat(10000) + '@example.com',
-          password: 'password',
+          email: "a".repeat(10000) + "@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1225,10 +1235,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should handle extremely long password (potential DoS)', () => {
+      it("should handle extremely long password (potential DoS)", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'A'.repeat(1000000) + 'a1!',
+          email: "test@example.com",
+          password: "A".repeat(1000000) + "a1!",
         };
 
         const result = registerSchema.safeParse(input);
@@ -1237,11 +1247,11 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should handle extremely long tokens in resetPasswordSchema', () => {
+      it("should handle extremely long tokens in resetPasswordSchema", () => {
         const input = {
-          accessToken: 'a'.repeat(100000),
-          refreshToken: 'b'.repeat(100000),
-          password: 'Password123!',
+          accessToken: "a".repeat(100000),
+          refreshToken: "b".repeat(100000),
+          password: "Password123!",
         };
 
         const result = resetPasswordSchema.safeParse(input);
@@ -1250,11 +1260,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('special email formats', () => {
-      it('should handle quoted local part in email', () => {
+    describe("special email formats", () => {
+      it("should handle quoted local part in email", () => {
         const input = {
           email: '"john..doe"@example.com',
-          password: 'password',
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1262,10 +1272,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should handle IP address as domain', () => {
+      it("should handle IP address as domain", () => {
         const input = {
-          email: 'user@[192.168.1.1]',
-          password: 'password',
+          email: "user@[192.168.1.1]",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1273,10 +1283,10 @@ describe('auth.schema', () => {
         expect(() => result).not.toThrow();
       });
 
-      it('should reject email with multiple @ symbols', () => {
+      it("should reject email with multiple @ symbols", () => {
         const input = {
-          email: 'user@@example.com',
-          password: 'password',
+          email: "user@@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1284,10 +1294,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject email with consecutive dots in domain', () => {
+      it("should reject email with consecutive dots in domain", () => {
         const input = {
-          email: 'user@example..com',
-          password: 'password',
+          email: "user@example..com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1296,11 +1306,11 @@ describe('auth.schema', () => {
       });
     });
 
-    describe('newline and control characters', () => {
-      it('should handle email with newline characters', () => {
+    describe("newline and control characters", () => {
+      it("should handle email with newline characters", () => {
         const input = {
-          email: 'test\n@example.com',
-          password: 'password',
+          email: "test\n@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1308,10 +1318,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should handle password with newline characters', () => {
+      it("should handle password with newline characters", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'pass\nword',
+          email: "test@example.com",
+          password: "pass\nword",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1320,10 +1330,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should handle password with tab characters', () => {
+      it("should handle password with tab characters", () => {
         const input = {
-          email: 'test@example.com',
-          password: 'pass\tword',
+          email: "test@example.com",
+          password: "pass\tword",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1331,10 +1341,10 @@ describe('auth.schema', () => {
         expect(result.success).toBe(true);
       });
 
-      it('should handle email with null byte', () => {
+      it("should handle email with null byte", () => {
         const input = {
-          email: 'test\0@example.com',
-          password: 'password',
+          email: "test\0@example.com",
+          password: "password",
         };
 
         const result = loginSchema.safeParse(input);
@@ -1347,63 +1357,59 @@ describe('auth.schema', () => {
   // =================================================================
   // CROSS-SCHEMA CONSISTENCY
   // =================================================================
-  describe('cross-schema consistency', () => {
-    it('should use same email validation across all schemas', () => {
-      const validEmail = 'test@example.com';
-      const invalidEmail = 'not-an-email';
+  describe("cross-schema consistency", () => {
+    it("should use same email validation across all schemas", () => {
+      const validEmail = "test@example.com";
+      const invalidEmail = "not-an-email";
 
       // Test valid email
-      expect(loginSchema.safeParse({ email: validEmail, password: 'pass' }).success).toBe(true);
-      expect(registerSchema.safeParse({ email: validEmail, password: 'Pass123!' }).success).toBe(true);
+      expect(loginSchema.safeParse({ email: validEmail, password: "pass" }).success).toBe(true);
+      expect(registerSchema.safeParse({ email: validEmail, password: "Pass123!" }).success).toBe(true);
       expect(forgotPasswordSchema.safeParse({ email: validEmail }).success).toBe(true);
 
       // Test invalid email
-      expect(loginSchema.safeParse({ email: invalidEmail, password: 'pass' }).success).toBe(false);
-      expect(registerSchema.safeParse({ email: invalidEmail, password: 'Pass123!' }).success).toBe(false);
+      expect(loginSchema.safeParse({ email: invalidEmail, password: "pass" }).success).toBe(false);
+      expect(registerSchema.safeParse({ email: invalidEmail, password: "Pass123!" }).success).toBe(false);
       expect(forgotPasswordSchema.safeParse({ email: invalidEmail }).success).toBe(false);
     });
 
-    it('should use same strong password validation in register and reset schemas', () => {
-      const weakPassword = 'weak';
-      const strongPassword = 'Strong123!';
+    it("should use same strong password validation in register and reset schemas", () => {
+      const weakPassword = "weak";
+      const strongPassword = "Strong123!";
 
       // Test weak password
-      expect(
-        registerSchema.safeParse({ email: 'test@test.com', password: weakPassword }).success
-      ).toBe(false);
+      expect(registerSchema.safeParse({ email: "test@test.com", password: weakPassword }).success).toBe(false);
       expect(
         resetPasswordSchema.safeParse({
-          accessToken: 'token',
-          refreshToken: 'token',
+          accessToken: "token",
+          refreshToken: "token",
           password: weakPassword,
         }).success
       ).toBe(false);
 
       // Test strong password
-      expect(
-        registerSchema.safeParse({ email: 'test@test.com', password: strongPassword }).success
-      ).toBe(true);
+      expect(registerSchema.safeParse({ email: "test@test.com", password: strongPassword }).success).toBe(true);
       expect(
         resetPasswordSchema.safeParse({
-          accessToken: 'token',
-          refreshToken: 'token',
+          accessToken: "token",
+          refreshToken: "token",
           password: strongPassword,
         }).success
       ).toBe(true);
     });
 
-    it('should have consistent Polish error messages', () => {
+    it("should have consistent Polish error messages", () => {
       const schemas = [
-        loginSchema.safeParse({ email: '', password: 'pass' }),
-        registerSchema.safeParse({ email: '', password: 'Pass123!' }),
-        forgotPasswordSchema.safeParse({ email: '' }),
+        loginSchema.safeParse({ email: "", password: "pass" }),
+        registerSchema.safeParse({ email: "", password: "Pass123!" }),
+        forgotPasswordSchema.safeParse({ email: "" }),
       ];
 
       schemas.forEach((result) => {
         expect(result.success).toBe(false);
         if (!result.success) {
-          const emailError = result.error.errors.find((err) => err.path[0] === 'email');
-          expect(emailError?.message).toBe('E-mail jest wymagany');
+          const emailError = result.error.errors.find((err) => err.path[0] === "email");
+          expect(emailError?.message).toBe("E-mail jest wymagany");
         }
       });
     });

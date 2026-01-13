@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AuthService } from '@/lib/services/auth.service';
-import { ConflictError, UnauthorizedError } from '@/lib/errors/api-errors';
-import type { SupabaseClient } from '@/db/supabase.client';
-import type { User, AuthError } from '@supabase/supabase-js';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { AuthService } from "@/lib/services/auth.service";
+import { ConflictError, UnauthorizedError } from "@/lib/errors/api-errors";
+import type { SupabaseClient } from "@/db/supabase.client";
+import type { User, AuthError } from "@supabase/supabase-js";
 
 /**
  * Unit tests for AuthService
@@ -18,15 +18,15 @@ import type { User, AuthError } from '@supabase/supabase-js';
  */
 
 // Mock Supabase createClient for resetPassword test
-vi.mock('@supabase/supabase-js', async () => {
-  const actual = await vi.importActual('@supabase/supabase-js');
+vi.mock("@supabase/supabase-js", async () => {
+  const actual = await vi.importActual("@supabase/supabase-js");
   return {
     ...actual,
     createClient: vi.fn(),
   };
 });
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let authService: AuthService;
   let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
 
@@ -56,16 +56,16 @@ describe('AuthService', () => {
   // =================================================================
   // REGISTER
   // =================================================================
-  describe('register', () => {
-    const validEmail = 'newuser@example.com';
-    const validPassword = 'SecurePass123!';
+  describe("register", () => {
+    const validEmail = "newuser@example.com";
+    const validPassword = "SecurePass123!";
 
-    describe('successful registration', () => {
-      it('should register user successfully with valid credentials', async () => {
+    describe("successful registration", () => {
+      it("should register user successfully with valid credentials", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: {
-            user: { id: 'user-123', email: validEmail } as User,
+            user: { id: "user-123", email: validEmail } as User,
             session: null,
           },
           error: null,
@@ -82,7 +82,7 @@ describe('AuthService', () => {
         });
       });
 
-      it('should not throw error when registration succeeds', async () => {
+      it("should not throw error when registration succeeds", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: {} as User, session: null },
@@ -93,7 +93,7 @@ describe('AuthService', () => {
         await expect(authService.register(validEmail, validPassword)).resolves.not.toThrow();
       });
 
-      it('should return void on successful registration', async () => {
+      it("should return void on successful registration", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: {} as User, session: null },
@@ -108,13 +108,13 @@ describe('AuthService', () => {
       });
     });
 
-    describe('conflict errors (user already exists)', () => {
-      it('should throw ConflictError when user already registered', async () => {
+    describe("conflict errors (user already exists)", () => {
+      it("should throw ConflictError when user already registered", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
           error: {
-            message: 'User already registered',
+            message: "User already registered",
             status: 409,
           } as AuthError,
         });
@@ -122,16 +122,16 @@ describe('AuthService', () => {
         // Act & Assert
         await expect(authService.register(validEmail, validPassword)).rejects.toThrow(ConflictError);
         await expect(authService.register(validEmail, validPassword)).rejects.toThrow(
-          'Użytkownik z tym adresem e-mail już istnieje'
+          "Użytkownik z tym adresem e-mail już istnieje"
         );
       });
 
-      it('should throw ConflictError when email already exists', async () => {
+      it("should throw ConflictError when email already exists", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
           error: {
-            message: 'Email already exists in the system',
+            message: "Email already exists in the system",
             status: 409,
           } as AuthError,
         });
@@ -140,11 +140,11 @@ describe('AuthService', () => {
         await expect(authService.register(validEmail, validPassword)).rejects.toThrow(ConflictError);
       });
 
-      it('should have correct error name for ConflictError', async () => {
+      it("should have correct error name for ConflictError", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
-          error: { message: 'User already registered' } as AuthError,
+          error: { message: "User already registered" } as AuthError,
         });
 
         // Act
@@ -153,18 +153,18 @@ describe('AuthService', () => {
         } catch (error) {
           // Assert
           expect(error).toBeInstanceOf(ConflictError);
-          expect((error as ConflictError).name).toBe('ConflictError');
+          expect((error as ConflictError).name).toBe("ConflictError");
         }
       });
     });
 
-    describe('other registration errors', () => {
-      it('should throw generic Error for non-conflict errors', async () => {
+    describe("other registration errors", () => {
+      it("should throw generic Error for non-conflict errors", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
           error: {
-            message: 'Database connection failed',
+            message: "Database connection failed",
             status: 500,
           } as AuthError,
         });
@@ -172,15 +172,15 @@ describe('AuthService', () => {
         // Act & Assert
         await expect(authService.register(validEmail, validPassword)).rejects.toThrow(Error);
         await expect(authService.register(validEmail, validPassword)).rejects.toThrow(
-          'Registration failed: Database connection failed'
+          "Registration failed: Database connection failed"
         );
       });
 
-      it('should not throw ConflictError for generic errors', async () => {
+      it("should not throw ConflictError for generic errors", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
-          error: { message: 'Network error' } as AuthError,
+          error: { message: "Network error" } as AuthError,
         });
 
         // Act & Assert
@@ -188,9 +188,9 @@ describe('AuthService', () => {
         await expect(authService.register(validEmail, validPassword)).rejects.not.toThrow(ConflictError);
       });
 
-      it('should include original error message in thrown error', async () => {
+      it("should include original error message in thrown error", async () => {
         // Arrange
-        const originalMessage = 'Specific validation error';
+        const originalMessage = "Specific validation error";
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: null, session: null },
           error: { message: originalMessage } as AuthError,
@@ -203,8 +203,8 @@ describe('AuthService', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle empty string password', async () => {
+    describe("edge cases", () => {
+      it("should handle empty string password", async () => {
         // Arrange
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: {} as User, session: null },
@@ -212,18 +212,18 @@ describe('AuthService', () => {
         });
 
         // Act
-        await authService.register(validEmail, '');
+        await authService.register(validEmail, "");
 
         // Assert
         expect(mockSupabaseClient.auth.signUp).toHaveBeenCalledWith({
           email: validEmail,
-          password: '',
+          password: "",
         });
       });
 
-      it('should handle special characters in email', async () => {
+      it("should handle special characters in email", async () => {
         // Arrange
-        const specialEmail = 'user+tag@example.com';
+        const specialEmail = "user+tag@example.com";
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: {} as User, session: null },
           error: null,
@@ -239,9 +239,9 @@ describe('AuthService', () => {
         });
       });
 
-      it('should handle very long password', async () => {
+      it("should handle very long password", async () => {
         // Arrange
-        const longPassword = 'A'.repeat(1000) + 'a1!';
+        const longPassword = "A".repeat(1000) + "a1!";
         mockSupabaseClient.auth.signUp.mockResolvedValue({
           data: { user: {} as User, session: null },
           error: null,
@@ -256,18 +256,18 @@ describe('AuthService', () => {
   // =================================================================
   // LOGIN
   // =================================================================
-  describe('login', () => {
-    const validEmail = 'user@example.com';
-    const validPassword = 'password123';
-    const mockAccessToken = 'mock-access-token-xyz123';
-    const mockRefreshToken = 'mock-refresh-token-abc456';
+  describe("login", () => {
+    const validEmail = "user@example.com";
+    const validPassword = "password123";
+    const mockAccessToken = "mock-access-token-xyz123";
+    const mockRefreshToken = "mock-refresh-token-abc456";
 
-    describe('successful login', () => {
-      it('should login user successfully with valid credentials', async () => {
+    describe("successful login", () => {
+      it("should login user successfully with valid credentials", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
-            user: { id: 'user-123', email: validEmail } as User,
+            user: { id: "user-123", email: validEmail } as User,
             session: {
               access_token: mockAccessToken,
               refresh_token: mockRefreshToken,
@@ -286,7 +286,7 @@ describe('AuthService', () => {
         });
       });
 
-      it('should call signInWithPassword with correct parameters', async () => {
+      it("should call signInWithPassword with correct parameters", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
@@ -310,7 +310,7 @@ describe('AuthService', () => {
         });
       });
 
-      it('should return tokens with correct structure', async () => {
+      it("should return tokens with correct structure", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
@@ -327,37 +327,37 @@ describe('AuthService', () => {
         const result = await authService.login(validEmail, validPassword);
 
         // Assert
-        expect(result).toHaveProperty('accessToken');
-        expect(result).toHaveProperty('refreshToken');
-        expect(typeof result.accessToken).toBe('string');
-        expect(typeof result.refreshToken).toBe('string');
+        expect(result).toHaveProperty("accessToken");
+        expect(result).toHaveProperty("refreshToken");
+        expect(typeof result.accessToken).toBe("string");
+        expect(typeof result.refreshToken).toBe("string");
       });
     });
 
-    describe('authentication errors', () => {
-      it('should throw UnauthorizedError for invalid credentials', async () => {
+    describe("authentication errors", () => {
+      it("should throw UnauthorizedError for invalid credentials", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: { user: null, session: null },
           error: {
-            message: 'Invalid login credentials',
+            message: "Invalid login credentials",
             status: 401,
           } as AuthError,
         });
 
         // Act & Assert
-        await expect(authService.login(validEmail, 'wrongpassword')).rejects.toThrow(UnauthorizedError);
-        await expect(authService.login(validEmail, 'wrongpassword')).rejects.toThrow(
-          'Nieprawidłowy adres e-mail lub hasło'
+        await expect(authService.login(validEmail, "wrongpassword")).rejects.toThrow(UnauthorizedError);
+        await expect(authService.login(validEmail, "wrongpassword")).rejects.toThrow(
+          "Nieprawidłowy adres e-mail lub hasło"
         );
       });
 
-      it('should throw UnauthorizedError for any Supabase auth error', async () => {
+      it("should throw UnauthorizedError for any Supabase auth error", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: { user: null, session: null },
           error: {
-            message: 'User not found',
+            message: "User not found",
             status: 404,
           } as AuthError,
         });
@@ -366,11 +366,11 @@ describe('AuthService', () => {
         await expect(authService.login(validEmail, validPassword)).rejects.toThrow(UnauthorizedError);
       });
 
-      it('should have correct error name for UnauthorizedError', async () => {
+      it("should have correct error name for UnauthorizedError", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: { user: null, session: null },
-          error: { message: 'Invalid credentials' } as AuthError,
+          error: { message: "Invalid credentials" } as AuthError,
         });
 
         // Act
@@ -379,29 +379,27 @@ describe('AuthService', () => {
         } catch (error) {
           // Assert
           expect(error).toBeInstanceOf(UnauthorizedError);
-          expect((error as UnauthorizedError).name).toBe('UnauthorizedError');
+          expect((error as UnauthorizedError).name).toBe("UnauthorizedError");
         }
       });
     });
 
-    describe('missing session errors', () => {
-      it('should throw Error when session is null despite no error', async () => {
+    describe("missing session errors", () => {
+      it("should throw Error when session is null despite no error", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
-            user: { id: 'user-123' } as User,
+            user: { id: "user-123" } as User,
             session: null,
           },
           error: null,
         });
 
         // Act & Assert
-        await expect(authService.login(validEmail, validPassword)).rejects.toThrow(
-          'No session returned from Supabase'
-        );
+        await expect(authService.login(validEmail, validPassword)).rejects.toThrow("No session returned from Supabase");
       });
 
-      it('should throw generic Error (not UnauthorizedError) for missing session', async () => {
+      it("should throw generic Error (not UnauthorizedError) for missing session", async () => {
         // Arrange
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: { user: {} as User, session: null },
@@ -414,10 +412,10 @@ describe('AuthService', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle email with different casing', async () => {
+    describe("edge cases", () => {
+      it("should handle email with different casing", async () => {
         // Arrange
-        const uppercaseEmail = 'USER@EXAMPLE.COM';
+        const uppercaseEmail = "USER@EXAMPLE.COM";
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
             user: {} as User,
@@ -439,9 +437,9 @@ describe('AuthService', () => {
         });
       });
 
-      it('should handle password with special characters', async () => {
+      it("should handle password with special characters", async () => {
         // Arrange
-        const specialPassword = 'P@ssw0rd!#$%^&*()';
+        const specialPassword = "P@ssw0rd!#$%^&*()";
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
             user: {} as User,
@@ -463,9 +461,9 @@ describe('AuthService', () => {
         });
       });
 
-      it('should handle whitespace in password', async () => {
+      it("should handle whitespace in password", async () => {
         // Arrange
-        const passwordWithSpaces = '  password with spaces  ';
+        const passwordWithSpaces = "  password with spaces  ";
         mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
           data: {
             user: {} as User,
@@ -492,8 +490,8 @@ describe('AuthService', () => {
   // =================================================================
   // LOGOUT
   // =================================================================
-  describe('logout', () => {
-    it('should call signOut on Supabase client', async () => {
+  describe("logout", () => {
+    it("should call signOut on Supabase client", async () => {
       // Arrange
       mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
 
@@ -505,7 +503,7 @@ describe('AuthService', () => {
       expect(mockSupabaseClient.auth.signOut).toHaveBeenCalledWith();
     });
 
-    it('should not throw error on successful logout', async () => {
+    it("should not throw error on successful logout", async () => {
       // Arrange
       mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
 
@@ -513,7 +511,7 @@ describe('AuthService', () => {
       await expect(authService.logout()).resolves.not.toThrow();
     });
 
-    it('should return void on successful logout', async () => {
+    it("should return void on successful logout", async () => {
       // Arrange
       mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
 
@@ -524,10 +522,10 @@ describe('AuthService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should handle logout even when error occurs', async () => {
+    it("should handle logout even when error occurs", async () => {
       // Arrange
       mockSupabaseClient.auth.signOut.mockResolvedValue({
-        error: { message: 'Logout failed' } as AuthError,
+        error: { message: "Logout failed" } as AuthError,
       });
 
       // Act & Assert - AuthService doesn't check for errors, so it shouldn't throw
@@ -538,12 +536,12 @@ describe('AuthService', () => {
   // =================================================================
   // SEND PASSWORD RESET EMAIL
   // =================================================================
-  describe('sendPasswordResetEmail', () => {
-    const email = 'user@example.com';
-    const redirectUrl = 'https://example.com/reset-password';
+  describe("sendPasswordResetEmail", () => {
+    const email = "user@example.com";
+    const redirectUrl = "https://example.com/reset-password";
 
-    describe('successful email send', () => {
-      it('should send reset email with correct parameters', async () => {
+    describe("successful email send", () => {
+      it("should send reset email with correct parameters", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
@@ -560,7 +558,7 @@ describe('AuthService', () => {
         });
       });
 
-      it('should not throw error on success', async () => {
+      it("should not throw error on success", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
@@ -571,7 +569,7 @@ describe('AuthService', () => {
         await expect(authService.sendPasswordResetEmail(email, redirectUrl)).resolves.not.toThrow();
       });
 
-      it('should return void on success', async () => {
+      it("should return void on success", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
@@ -586,34 +584,34 @@ describe('AuthService', () => {
       });
     });
 
-    describe('user enumeration prevention', () => {
-      it('should NOT throw error even when email does not exist', async () => {
+    describe("user enumeration prevention", () => {
+      it("should NOT throw error even when email does not exist", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
-          error: { message: 'User not found' } as AuthError,
+          error: { message: "User not found" } as AuthError,
         });
 
         // Act & Assert
         await expect(authService.sendPasswordResetEmail(email, redirectUrl)).resolves.not.toThrow();
       });
 
-      it('should NOT throw error for any Supabase error (security)', async () => {
+      it("should NOT throw error for any Supabase error (security)", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
-          error: { message: 'Rate limit exceeded' } as AuthError,
+          error: { message: "Rate limit exceeded" } as AuthError,
         });
 
         // Act & Assert - Always succeeds to prevent user enumeration
         await expect(authService.sendPasswordResetEmail(email, redirectUrl)).resolves.not.toThrow();
       });
 
-      it('should always succeed regardless of error', async () => {
+      it("should always succeed regardless of error", async () => {
         // Arrange
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
-          error: { message: 'Database error', status: 500 } as AuthError,
+          error: { message: "Database error", status: 500 } as AuthError,
         });
 
         // Act
@@ -624,10 +622,10 @@ describe('AuthService', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle URLs with query parameters', async () => {
+    describe("edge cases", () => {
+      it("should handle URLs with query parameters", async () => {
         // Arrange
-        const urlWithParams = 'https://example.com/reset?token=abc&user=123';
+        const urlWithParams = "https://example.com/reset?token=abc&user=123";
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
           error: null,
@@ -642,9 +640,9 @@ describe('AuthService', () => {
         });
       });
 
-      it('should handle localhost URLs', async () => {
+      it("should handle localhost URLs", async () => {
         // Arrange
-        const localhostUrl = 'http://localhost:3000/reset';
+        const localhostUrl = "http://localhost:3000/reset";
         mockSupabaseClient.auth.resetPasswordForEmail.mockResolvedValue({
           data: {},
           error: null,
@@ -664,20 +662,20 @@ describe('AuthService', () => {
   // =================================================================
   // RESET PASSWORD
   // =================================================================
-  describe('resetPassword', () => {
-    const accessToken = 'valid-access-token';
-    const refreshToken = 'valid-refresh-token';
-    const newPassword = 'NewSecurePass123!';
+  describe("resetPassword", () => {
+    const accessToken = "valid-access-token";
+    const refreshToken = "valid-refresh-token";
+    const newPassword = "NewSecurePass123!";
 
     let mockCreateClient: any;
 
     beforeEach(async () => {
-      const { createClient } = await import('@supabase/supabase-js');
+      const { createClient } = await import("@supabase/supabase-js");
       mockCreateClient = createClient as any;
     });
 
-    describe('successful password reset', () => {
-      it('should reset password successfully with valid tokens', async () => {
+    describe("successful password reset", () => {
+      it("should reset password successfully with valid tokens", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
@@ -700,7 +698,7 @@ describe('AuthService', () => {
         });
       });
 
-      it('should create Supabase client with authorization header', async () => {
+      it("should create Supabase client with authorization header", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
@@ -717,12 +715,12 @@ describe('AuthService', () => {
         expect(mockCreateClient).toHaveBeenCalledTimes(1);
         // Verify the third argument has the correct authorization header structure
         const callArgs = mockCreateClient.mock.calls[0];
-        expect(callArgs[2]).toHaveProperty('global');
-        expect(callArgs[2].global).toHaveProperty('headers');
+        expect(callArgs[2]).toHaveProperty("global");
+        expect(callArgs[2].global).toHaveProperty("headers");
         expect(callArgs[2].global.headers.Authorization).toBe(`Bearer ${accessToken}`);
       });
 
-      it('should not throw error on successful reset', async () => {
+      it("should not throw error on successful reset", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
@@ -737,15 +735,15 @@ describe('AuthService', () => {
       });
     });
 
-    describe('token expiration errors', () => {
-      it('should throw UnauthorizedError when token is expired', async () => {
+    describe("token expiration errors", () => {
+      it("should throw UnauthorizedError when token is expired", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({
               data: null,
               error: {
-                message: 'Token has expired',
+                message: "Token has expired",
                 status: 401,
               } as AuthError,
             }),
@@ -759,18 +757,18 @@ describe('AuthService', () => {
           UnauthorizedError
         );
         await expect(authService.resetPassword(accessToken, refreshToken, newPassword)).rejects.toThrow(
-          'Link resetujący wygasł lub jest nieprawidłowy'
+          "Link resetujący wygasł lub jest nieprawidłowy"
         );
       });
 
-      it('should throw UnauthorizedError when token is invalid', async () => {
+      it("should throw UnauthorizedError when token is invalid", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({
               data: null,
               error: {
-                message: 'invalid token signature', // lowercase to match code check
+                message: "invalid token signature", // lowercase to match code check
                 status: 401,
               } as AuthError,
             }),
@@ -785,13 +783,13 @@ describe('AuthService', () => {
         );
       });
 
-      it('should have correct error name for token errors', async () => {
+      it("should have correct error name for token errors", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({
               data: null,
-              error: { message: 'Token expired' } as AuthError,
+              error: { message: "Token expired" } as AuthError,
             }),
           },
         };
@@ -804,20 +802,20 @@ describe('AuthService', () => {
         } catch (error) {
           // Assert
           expect(error).toBeInstanceOf(UnauthorizedError);
-          expect((error as UnauthorizedError).name).toBe('UnauthorizedError');
+          expect((error as UnauthorizedError).name).toBe("UnauthorizedError");
         }
       });
     });
 
-    describe('other password reset errors', () => {
-      it('should throw generic Error for non-auth errors', async () => {
+    describe("other password reset errors", () => {
+      it("should throw generic Error for non-auth errors", async () => {
         // Arrange
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({
               data: null,
               error: {
-                message: 'Database connection error',
+                message: "Database connection error",
                 status: 500,
               } as AuthError,
             }),
@@ -829,13 +827,13 @@ describe('AuthService', () => {
         // Act & Assert
         await expect(authService.resetPassword(accessToken, refreshToken, newPassword)).rejects.toThrow(Error);
         await expect(authService.resetPassword(accessToken, refreshToken, newPassword)).rejects.toThrow(
-          'Password reset failed: Database connection error'
+          "Password reset failed: Database connection error"
         );
       });
 
-      it('should include original error message', async () => {
+      it("should include original error message", async () => {
         // Arrange
-        const originalMessage = 'Specific database error';
+        const originalMessage = "Specific database error";
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({
@@ -854,10 +852,10 @@ describe('AuthService', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle very long tokens', async () => {
+    describe("edge cases", () => {
+      it("should handle very long tokens", async () => {
         // Arrange
-        const longToken = 'A'.repeat(10000);
+        const longToken = "A".repeat(10000);
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({ data: {}, error: null }),
@@ -870,9 +868,9 @@ describe('AuthService', () => {
         await expect(authService.resetPassword(longToken, refreshToken, newPassword)).resolves.not.toThrow();
       });
 
-      it('should handle password with special characters', async () => {
+      it("should handle password with special characters", async () => {
         // Arrange
-        const specialPassword = 'P@ssw0rd!#$%^&*()';
+        const specialPassword = "P@ssw0rd!#$%^&*()";
         const mockSupabaseWithToken = {
           auth: {
             updateUser: vi.fn().mockResolvedValue({ data: {}, error: null }),
@@ -895,14 +893,14 @@ describe('AuthService', () => {
   // =================================================================
   // GET CURRENT USER
   // =================================================================
-  describe('getCurrentUser', () => {
-    describe('authenticated user', () => {
-      it('should return user when authenticated', async () => {
+  describe("getCurrentUser", () => {
+    describe("authenticated user", () => {
+      it("should return user when authenticated", async () => {
         // Arrange
         const mockUser = {
-          id: 'user-123',
-          email: 'user@example.com',
-          created_at: '2024-01-01',
+          id: "user-123",
+          email: "user@example.com",
+          created_at: "2024-01-01",
         } as User;
 
         mockSupabaseClient.auth.getUser.mockResolvedValue({
@@ -915,11 +913,11 @@ describe('AuthService', () => {
 
         // Assert
         expect(result).toEqual(mockUser);
-        expect(result?.id).toBe('user-123');
-        expect(result?.email).toBe('user@example.com');
+        expect(result?.id).toBe("user-123");
+        expect(result?.email).toBe("user@example.com");
       });
 
-      it('should call getUser on Supabase client', async () => {
+      it("should call getUser on Supabase client", async () => {
         // Arrange
         mockSupabaseClient.auth.getUser.mockResolvedValue({
           data: { user: {} as User },
@@ -934,15 +932,15 @@ describe('AuthService', () => {
         expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledWith();
       });
 
-      it('should return User type with correct properties', async () => {
+      it("should return User type with correct properties", async () => {
         // Arrange
         const mockUser = {
-          id: 'user-123',
-          email: 'test@example.com',
+          id: "user-123",
+          email: "test@example.com",
           app_metadata: {},
           user_metadata: {},
-          aud: 'authenticated',
-          created_at: '2024-01-01',
+          aud: "authenticated",
+          created_at: "2024-01-01",
         } as User;
 
         mockSupabaseClient.auth.getUser.mockResolvedValue({
@@ -954,14 +952,14 @@ describe('AuthService', () => {
         const result = await authService.getCurrentUser();
 
         // Assert
-        expect(result).toHaveProperty('id');
-        expect(result).toHaveProperty('email');
-        expect(result).toHaveProperty('created_at');
+        expect(result).toHaveProperty("id");
+        expect(result).toHaveProperty("email");
+        expect(result).toHaveProperty("created_at");
       });
     });
 
-    describe('unauthenticated user', () => {
-      it('should return null when user is not authenticated', async () => {
+    describe("unauthenticated user", () => {
+      it("should return null when user is not authenticated", async () => {
         // Arrange
         mockSupabaseClient.auth.getUser.mockResolvedValue({
           data: { user: null },
@@ -975,12 +973,12 @@ describe('AuthService', () => {
         expect(result).toBeNull();
       });
 
-      it('should return null when error occurs', async () => {
+      it("should return null when error occurs", async () => {
         // Arrange
         mockSupabaseClient.auth.getUser.mockResolvedValue({
           data: { user: null },
           error: {
-            message: 'No active session',
+            message: "No active session",
             status: 401,
           } as AuthError,
         });
@@ -992,11 +990,11 @@ describe('AuthService', () => {
         expect(result).toBeNull();
       });
 
-      it('should return null when both user and error are present', async () => {
+      it("should return null when both user and error are present", async () => {
         // Arrange - Edge case where both exist
         mockSupabaseClient.auth.getUser.mockResolvedValue({
-          data: { user: { id: 'user-123' } as User },
-          error: { message: 'Some error' } as AuthError,
+          data: { user: { id: "user-123" } as User },
+          error: { message: "Some error" } as AuthError,
         });
 
         // Act
@@ -1007,11 +1005,11 @@ describe('AuthService', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('should handle user object with minimal data', async () => {
+    describe("edge cases", () => {
+      it("should handle user object with minimal data", async () => {
         // Arrange
         const minimalUser = {
-          id: 'user-123',
+          id: "user-123",
         } as User;
 
         mockSupabaseClient.auth.getUser.mockResolvedValue({
@@ -1024,14 +1022,14 @@ describe('AuthService', () => {
 
         // Assert
         expect(result).toEqual(minimalUser);
-        expect(result?.id).toBe('user-123');
+        expect(result?.id).toBe("user-123");
       });
 
-      it('should not throw error in any scenario', async () => {
+      it("should not throw error in any scenario", async () => {
         // Arrange
         mockSupabaseClient.auth.getUser.mockResolvedValue({
           data: { user: null },
-          error: { message: 'Critical error' } as AuthError,
+          error: { message: "Critical error" } as AuthError,
         });
 
         // Act & Assert
@@ -1043,8 +1041,8 @@ describe('AuthService', () => {
   // =================================================================
   // CONSTRUCTOR & TYPE SAFETY
   // =================================================================
-  describe('constructor and type safety', () => {
-    it('should create instance with Supabase client', () => {
+  describe("constructor and type safety", () => {
+    it("should create instance with Supabase client", () => {
       // Arrange & Act
       const service = new AuthService(mockSupabaseClient);
 
@@ -1052,26 +1050,26 @@ describe('AuthService', () => {
       expect(service).toBeInstanceOf(AuthService);
     });
 
-    it('should store Supabase client as private property', () => {
+    it("should store Supabase client as private property", () => {
       // Arrange & Act
       const service = new AuthService(mockSupabaseClient);
 
       // Assert - Can't access private property directly, but can verify through method calls
       expect(service).toBeDefined();
-      expect(typeof service.login).toBe('function');
+      expect(typeof service.login).toBe("function");
     });
 
-    it('should have all public methods defined', () => {
+    it("should have all public methods defined", () => {
       // Arrange & Act
       const service = new AuthService(mockSupabaseClient);
 
       // Assert
-      expect(typeof service.register).toBe('function');
-      expect(typeof service.login).toBe('function');
-      expect(typeof service.logout).toBe('function');
-      expect(typeof service.sendPasswordResetEmail).toBe('function');
-      expect(typeof service.resetPassword).toBe('function');
-      expect(typeof service.getCurrentUser).toBe('function');
+      expect(typeof service.register).toBe("function");
+      expect(typeof service.login).toBe("function");
+      expect(typeof service.logout).toBe("function");
+      expect(typeof service.sendPasswordResetEmail).toBe("function");
+      expect(typeof service.resetPassword).toBe("function");
+      expect(typeof service.getCurrentUser).toBe("function");
     });
   });
 });

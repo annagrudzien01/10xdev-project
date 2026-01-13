@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { validateEmail, validateLoginPassword } from "@/lib/validators/auth.validators";
 
 interface LoginFormState {
   email: string;
@@ -27,18 +28,8 @@ export default function LoginForm({ returnUrl = "/profiles" }: LoginFormProps) {
     errors: {},
   });
 
-  const validateEmail = (email: string): string | null => {
-    if (!email) return "E-mail jest wymagany";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return "Podaj prawidłowy adres e-mail";
-    }
-    return null;
-  };
-
-  const validatePassword = (password: string): string | null => {
-    if (!password) return "Hasło jest wymagane";
-    return null;
-  };
+  // Validation functions are now imported from auth.validators
+  // This makes them reusable and easily testable
 
   const handleBlur = (field: "email" | "password") => {
     const newErrors = { ...formState.errors };
@@ -51,7 +42,7 @@ export default function LoginForm({ returnUrl = "/profiles" }: LoginFormProps) {
         delete newErrors.email;
       }
     } else if (field === "password") {
-      const passwordError = validatePassword(formState.password);
+      const passwordError = validateLoginPassword(formState.password);
       if (passwordError) {
         newErrors.password = passwordError;
       } else {
@@ -73,7 +64,7 @@ export default function LoginForm({ returnUrl = "/profiles" }: LoginFormProps) {
     const emailError = validateEmail(formState.email);
     if (emailError) newErrors.email = emailError;
 
-    const passwordError = validatePassword(formState.password);
+    const passwordError = validateLoginPassword(formState.password);
     if (passwordError) newErrors.password = passwordError;
 
     if (Object.keys(newErrors).length > 0) {

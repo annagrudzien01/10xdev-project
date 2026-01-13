@@ -1,25 +1,25 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { DemoGameState, DemoTask } from '@/lib/hooks/useDemoGame';
+import { describe, it, expect, beforeEach } from "vitest";
+import type { DemoGameState, DemoTask } from "@/lib/hooks/useDemoGame";
 
 // Import reducer from the hook file (will need to export it)
 // For now, we'll test the hook's behavior indirectly through integration tests
 // This is a simplified test to demonstrate the pattern
 
-describe('useDemoGame reducer logic', () => {
+describe("useDemoGame reducer logic", () => {
   let mockTask: DemoTask;
 
   beforeEach(() => {
     mockTask = {
-      id: 'test-task-1',
+      id: "test-task-1",
       levelId: 1,
-      beginning: 'C-D-E',
+      beginning: "C-D-E",
       expectedSlots: 2,
-      correctAnswer: 'F-G',
+      correctAnswer: "F-G",
     };
   });
 
-  describe('Task state management', () => {
-    it('should have correct initial state structure', () => {
+  describe("Task state management", () => {
+    it("should have correct initial state structure", () => {
       const initialState: DemoGameState = {
         level: 1,
         taskCount: 0,
@@ -29,7 +29,7 @@ describe('useDemoGame reducer logic', () => {
         selectedNotes: [],
         attemptsLeft: 3,
         showPrompt: false,
-        promptVariant: 'early',
+        promptVariant: "early",
         promptDismissed: false,
         isGameEnding: false,
         feedback: null,
@@ -41,23 +41,23 @@ describe('useDemoGame reducer logic', () => {
       expect(initialState.selectedNotes).toEqual([]);
     });
 
-    it('should validate correct answer format', () => {
-      const userAnswer = 'F-G';
+    it("should validate correct answer format", () => {
+      const userAnswer = "F-G";
       const correctAnswer = mockTask.correctAnswer;
 
       expect(userAnswer).toBe(correctAnswer);
     });
 
-    it('should validate incorrect answer format', () => {
-      const userAnswer = 'F-A';
+    it("should validate incorrect answer format", () => {
+      const userAnswer = "F-A";
       const correctAnswer = mockTask.correctAnswer;
 
       expect(userAnswer).not.toBe(correctAnswer);
     });
   });
 
-  describe('Scoring logic', () => {
-    it('should calculate correct score for first attempt', () => {
+  describe("Scoring logic", () => {
+    it("should calculate correct score for first attempt", () => {
       const attemptsLeft = 3;
       let score = 0;
 
@@ -68,7 +68,7 @@ describe('useDemoGame reducer logic', () => {
       expect(score).toBe(10);
     });
 
-    it('should calculate correct score for second attempt', () => {
+    it("should calculate correct score for second attempt", () => {
       const attemptsLeft = 2;
       let score = 0;
 
@@ -79,7 +79,7 @@ describe('useDemoGame reducer logic', () => {
       expect(score).toBe(5);
     });
 
-    it('should calculate correct score for third attempt', () => {
+    it("should calculate correct score for third attempt", () => {
       const attemptsLeft = 1;
       let score = 0;
 
@@ -90,7 +90,7 @@ describe('useDemoGame reducer logic', () => {
       expect(score).toBe(2);
     });
 
-    it('should give zero score for incorrect answer', () => {
+    it("should give zero score for incorrect answer", () => {
       const isCorrect = false;
       const score = isCorrect ? 10 : 0;
 
@@ -98,9 +98,9 @@ describe('useDemoGame reducer logic', () => {
     });
   });
 
-  describe('Note selection logic', () => {
-    it('should not exceed expected slots', () => {
-      const selectedNotes = ['F', 'G'];
+  describe("Note selection logic", () => {
+    it("should not exceed expected slots", () => {
+      const selectedNotes = ["F", "G"];
       const expectedSlots = 2;
 
       const canAddMore = selectedNotes.length < expectedSlots;
@@ -109,8 +109,8 @@ describe('useDemoGame reducer logic', () => {
       expect(selectedNotes.length).toBe(expectedSlots);
     });
 
-    it('should allow adding notes when slots available', () => {
-      const selectedNotes = ['F'];
+    it("should allow adding notes when slots available", () => {
+      const selectedNotes = ["F"];
       const expectedSlots = 2;
 
       const canAddMore = selectedNotes.length < expectedSlots;
@@ -118,16 +118,16 @@ describe('useDemoGame reducer logic', () => {
       expect(canAddMore).toBe(true);
     });
 
-    it('should format answer correctly', () => {
-      const selectedNotes = ['F', 'G'];
-      const userAnswer = selectedNotes.join('-');
+    it("should format answer correctly", () => {
+      const selectedNotes = ["F", "G"];
+      const userAnswer = selectedNotes.join("-");
 
-      expect(userAnswer).toBe('F-G');
+      expect(userAnswer).toBe("F-G");
     });
   });
 
-  describe('Level progression logic', () => {
-    it('should trigger level up after 5 completed tasks', () => {
+  describe("Level progression logic", () => {
+    it("should trigger level up after 5 completed tasks", () => {
       const completedTasksInLevel = 5;
       const tasksRequiredForLevelUp = 5;
 
@@ -136,7 +136,7 @@ describe('useDemoGame reducer logic', () => {
       expect(shouldLevelUp).toBe(true);
     });
 
-    it('should not level up before 5 completed tasks', () => {
+    it("should not level up before 5 completed tasks", () => {
       const completedTasksInLevel = 4;
       const tasksRequiredForLevelUp = 5;
 
@@ -146,8 +146,8 @@ describe('useDemoGame reducer logic', () => {
     });
   });
 
-  describe('Prompt display logic', () => {
-    it('should show early prompt between tasks 7-8', () => {
+  describe("Prompt display logic", () => {
+    it("should show early prompt between tasks 7-8", () => {
       const taskCount = 7;
       const promptDismissed = false;
 
@@ -156,7 +156,7 @@ describe('useDemoGame reducer logic', () => {
       expect(shouldShowPrompt).toBe(true);
     });
 
-    it('should not show prompt if already dismissed', () => {
+    it("should not show prompt if already dismissed", () => {
       const taskCount = 7;
       const promptDismissed = true;
 
@@ -165,7 +165,7 @@ describe('useDemoGame reducer logic', () => {
       expect(shouldShowPrompt).toBe(false);
     });
 
-    it('should show final prompt at game end', () => {
+    it("should show final prompt at game end", () => {
       const completedTasksInLevel = 5;
       const shouldShowFinalPrompt = completedTasksInLevel >= 5;
 

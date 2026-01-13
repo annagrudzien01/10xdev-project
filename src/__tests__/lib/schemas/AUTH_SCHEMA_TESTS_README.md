@@ -7,6 +7,7 @@ Kompletny zestaw testów jednostkowych dla schematów walidacji autoryzacji (`au
 ## 📂 Struktura testów
 
 ### Lokalizacja
+
 Wszystkie testy jednostkowe znajdują się w dedykowanym katalogu **`src/__tests__/`** w strukturze mirror odpowiadającej strukturze `src/`:
 
 ```
@@ -23,9 +24,11 @@ src/
 ```
 
 ### 1. `auth.schema.test.ts` (1,411 linii)
+
 **Główny plik testowy** - kompletne pokrycie podstawowej funkcjonalności.
 
 #### Pokrycie:
+
 - ✅ **4 schematy**: `loginSchema`, `registerSchema`, `forgotPasswordSchema`, `resetPasswordSchema`
 - ✅ **Walidacja email**: format, wymagalność, edge cases
 - ✅ **Walidacja hasła**: długość, złożoność (uppercase, lowercase, digit, special chars)
@@ -35,9 +38,11 @@ src/
 - ✅ **Cross-schema consistency**: spójność reguł między schematami
 
 ### 2. `auth.schema.enhanced.test.ts` (732 linie)
+
 **Rozszerzone testy** - zaawansowane praktyki Vitest i dodatkowe edge cases.
 
 #### Rozszerzenia:
+
 - 🎯 **Type safety**: `expectTypeOf()` dla type-level assertions
 - 📸 **Inline snapshots**: czytelne asercje struktur błędów
 - 🔍 **Dodatkowe edge cases**: normalizacja email, tokeny JWT/UUID/Base64
@@ -48,6 +53,7 @@ src/
 ## 🎯 Pokrycie testowe
 
 ### Statystyki:
+
 - **Łącznie testów**: 144 (wszystkie ✅)
 - **Czas wykonania**: ~2.8s
 - **Pokrycie kodu**: ~100% dla `auth.schema.ts`
@@ -55,6 +61,7 @@ src/
 ### Kategorie testów:
 
 #### 1️⃣ **Login Schema** (29 testów)
+
 ```typescript
 ✓ Valid inputs (5)
 ✓ Invalid email (6)
@@ -66,6 +73,7 @@ src/
 ```
 
 #### 2️⃣ **Register Schema** (49 testów)
+
 ```typescript
 ✓ Valid inputs (5)
 ✓ Password length validation (3)
@@ -82,6 +90,7 @@ src/
 ```
 
 #### 3️⃣ **Forgot Password Schema** (9 testów)
+
 ```typescript
 ✓ Valid inputs (2)
 ✓ Invalid inputs (3)
@@ -90,6 +99,7 @@ src/
 ```
 
 #### 4️⃣ **Reset Password Schema** (28 testów)
+
 ```typescript
 ✓ Valid inputs (3)
 ✓ Token validation (4)
@@ -101,6 +111,7 @@ src/
 ```
 
 #### 5️⃣ **Security & Edge Cases** (29 testów)
+
 ```typescript
 ✓ Whitespace handling (4)
 ✓ Null and undefined values (4)
@@ -121,6 +132,7 @@ src/
 ## 🔑 Kluczowe reguły biznesowe
 
 ### Email (wszystkie schematy)
+
 ```typescript
 ✅ Wymagane: niepuste pole
 ✅ Format: RFC 5322 subset (Zod email validator)
@@ -130,6 +142,7 @@ src/
 ```
 
 ### Hasło - Login Schema
+
 ```typescript
 ✅ Wymagane: niepuste pole (min 1 znak)
 ⚠️ Brak walidacji złożoności (backward compatibility)
@@ -138,6 +151,7 @@ src/
 ```
 
 ### Hasło - Register & Reset Schemas
+
 ```typescript
 ✅ Długość: minimum 8 znaków
 ✅ Wielkie litery: minimum 1x [A-Z]
@@ -154,6 +168,7 @@ src/
 ```
 
 ### Tokeny - Reset Password Schema
+
 ```typescript
 ✅ Access token: wymagany, min 1 znak
 ✅ Refresh token: wymagany, min 1 znak
@@ -166,6 +181,7 @@ src/
 ## 🛡️ Aspekty bezpieczeństwa testowane
 
 ### 1. **Injection Attacks**
+
 ```typescript
 ✓ SQL injection w email/hasło
 ✓ XSS (script tags, HTML)
@@ -173,6 +189,7 @@ src/
 ```
 
 ### 2. **DoS Protection**
+
 ```typescript
 ✓ Bardzo długie stringi (10,000+ chars)
 ✓ ReDoS (catastrophic backtracking)
@@ -180,6 +197,7 @@ src/
 ```
 
 ### 3. **Data Sanitization**
+
 ```typescript
 ✓ Null bytes
 ✓ Control characters
@@ -187,6 +205,7 @@ src/
 ```
 
 ### 4. **Type Safety**
+
 ```typescript
 ✓ Type coercion attempts
 ✓ Wrong data types
@@ -199,15 +218,16 @@ src/
 
 ```typescript
 // ✅ DOBRZE - używaj aliasów
-import { loginSchema } from '@/lib/schemas/auth.schema';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { loginSchema } from "@/lib/schemas/auth.schema";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // ❌ ŹLE - nie używaj względnych ścieżek z __tests__/
-import { loginSchema } from '../../../lib/schemas/auth.schema';
+import { loginSchema } from "../../../lib/schemas/auth.schema";
 ```
 
 **Dlaczego aliasy?**
+
 - ✅ Niezależne od lokalizacji pliku testowego
 - ✅ Łatwiejsze w refactoringu
 - ✅ Bardziej czytelne
@@ -216,6 +236,7 @@ import { loginSchema } from '../../../lib/schemas/auth.schema';
 ## 📊 Przykładowe użycie
 
 ### Uruchomienie testów:
+
 ```bash
 # Wszystkie testy auth schema
 npm run test -- auth.schema
@@ -237,6 +258,7 @@ npm run test -- auth.schema --ui
 ```
 
 ### Filtrowanie testów:
+
 ```bash
 # Tylko testy login
 npm run test -- auth.schema -t "loginSchema"
@@ -251,20 +273,22 @@ npm run test -- auth.schema -t "performance"
 ## 🎨 Wzorce testowe wykorzystane
 
 ### 1. **Arrange-Act-Assert (AAA)**
+
 ```typescript
-it('should reject empty email', () => {
+it("should reject empty email", () => {
   // Arrange
-  const input = { email: '', password: 'password' };
-  
+  const input = { email: "", password: "password" };
+
   // Act
   const result = loginSchema.safeParse(input);
-  
+
   // Assert
   expect(result.success).toBe(false);
 });
 ```
 
 ### 2. **Inline Snapshots**
+
 ```typescript
 expect(result.error.format()).toMatchInlineSnapshot(`
   {
@@ -277,6 +301,7 @@ expect(result.error.format()).toMatchInlineSnapshot(`
 ```
 
 ### 3. **Type-level Assertions**
+
 ```typescript
 expectTypeOf<LoginInput>().toEqualTypeOf<{
   email: string;
@@ -285,19 +310,21 @@ expectTypeOf<LoginInput>().toEqualTypeOf<{
 ```
 
 ### 4. **Parametrized Tests**
+
 ```typescript
 const testCases = [
-  { email: 'test@example.com', shouldPass: true },
-  { email: 'invalid', shouldPass: false },
+  { email: "test@example.com", shouldPass: true },
+  { email: "invalid", shouldPass: false },
 ];
 
 testCases.forEach(({ email, shouldPass }) => {
-  const result = loginSchema.safeParse({ email, password: 'pass' });
+  const result = loginSchema.safeParse({ email, password: "pass" });
   expect(result.success).toBe(shouldPass);
 });
 ```
 
 ### 5. **Performance Benchmarks**
+
 ```typescript
 const start = performance.now();
 // ... run validation 1000x
@@ -308,30 +335,37 @@ expect(duration).toBeLessThan(100);
 ## 🔍 Debugging testów
 
 ### Sprawdzanie konkretnych błędów:
+
 ```typescript
 if (!result.success) {
-  console.log('Errors:', result.error.errors);
-  console.log('Formatted:', result.error.format());
-  console.log('Messages:', result.error.errors.map(e => e.message));
+  console.log("Errors:", result.error.errors);
+  console.log("Formatted:", result.error.format());
+  console.log(
+    "Messages:",
+    result.error.errors.map((e) => e.message)
+  );
 }
 ```
 
 ### Analiza performance:
+
 ```typescript
-console.time('validation');
+console.time("validation");
 loginSchema.safeParse(input);
-console.timeEnd('validation');
+console.timeEnd("validation");
 ```
 
 ## 📈 Metryki jakości
 
 ### Coverage targets (vitest.config.ts):
+
 - ✅ **Lines**: 70% (auth.schema.ts: 100%)
 - ✅ **Functions**: 70% (auth.schema.ts: 100%)
 - ✅ **Branches**: 70% (auth.schema.ts: 100%)
 - ✅ **Statements**: 70% (auth.schema.ts: 100%)
 
 ### Test execution:
+
 - ⚡ **Szybkość**: <3s dla wszystkich testów
 - 🎯 **Niezawodność**: 100% pass rate
 - 🔄 **Powtarzalność**: Deterministyczne wyniki
@@ -339,6 +373,7 @@ console.timeEnd('validation');
 ## 🚀 Najlepsze praktyki
 
 ### ✅ DO:
+
 1. **Testuj reguły biznesowe** - każda reguła = osobny test
 2. **Użyj descriptive names** - jasne komunikaty testów
 3. **Test edge cases** - null, undefined, empty, extreme values
@@ -348,6 +383,7 @@ console.timeEnd('validation');
 7. **Performance aware** - benchmark krytycznych ścieżek
 
 ### ❌ DON'T:
+
 1. **Nie testuj implementacji Zod** - testuj swoją logikę
 2. **Nie duplikuj testów** - DRY principle
 3. **Nie ignoruj edge cases** - szczególnie security
@@ -357,12 +393,14 @@ console.timeEnd('validation');
 ## 🔄 Maintenance
 
 ### Aktualizacja testów przy zmianach:
+
 1. **Nowa reguła walidacji** → dodaj testy pokrywające wszystkie przypadki
 2. **Zmiana komunikatu błędu** → zaktualizuj snapshoty: `npm run test -- -u`
 3. **Nowe pole w schemacie** → dodaj testy walidacji + type inference
 4. **Performance regression** → dodaj benchmark test
 
 ### Monitorowanie:
+
 ```bash
 # Check coverage
 npm run test -- auth.schema --coverage
@@ -381,6 +419,7 @@ npm run test -- auth.schema --reporter=verbose
 ## 👥 Dla deweloperów
 
 ### Dodawanie nowych testów:
+
 1. Określ kategorię (validation, security, edge case, etc.)
 2. Użyj AAA pattern
 3. Dodaj explicit assertion messages
@@ -388,6 +427,7 @@ npm run test -- auth.schema --reporter=verbose
 5. Uruchom: `npm run test -- auth.schema --watch`
 
 ### Code review checklist:
+
 - [ ] Wszystkie testy przechodzą
 - [ ] Pokrycie ≥70% (target: 100%)
 - [ ] Descriptive test names

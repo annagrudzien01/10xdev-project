@@ -68,11 +68,11 @@ npm run test -- MyComponent.test
 Utwórz plik `e2e/my-feature.spec.ts`:
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('My Feature', () => {
-  test('should work', async ({ page }) => {
-    await page.goto('/');
+test.describe("My Feature", () => {
+  test("should work", async ({ page }) => {
+    await page.goto("/");
     await expect(page).toHaveTitle(/10x/i);
   });
 });
@@ -87,6 +87,7 @@ npm run test:e2e -- my-feature.spec.ts
 ## 🔍 Debugowanie
 
 ### Vitest
+
 ```bash
 # UI mode (najłatwiejszy)
 npm run test:ui
@@ -96,6 +97,7 @@ npm run test -- -t "nazwa testu"
 ```
 
 ### Playwright
+
 ```bash
 # Debug mode z Playwright Inspector
 npm run test:e2e:debug
@@ -120,16 +122,16 @@ open coverage/index.html
 
 ## 🎯 Najważniejsze Komendy
 
-| Komenda | Opis |
-|---------|------|
-| `npm run test` | Testy jednostkowe (watch mode) |
-| `npm run test:run` | Testy jednostkowe (jednokrotnie) |
-| `npm run test:ui` | Testy jednostkowe (UI mode) |
-| `npm run test:coverage` | Coverage testów jednostkowych |
-| `npm run test:e2e` | Testy E2E |
-| `npm run test:e2e:ui` | Testy E2E (UI mode) |
-| `npm run test:e2e:debug` | Testy E2E (debug mode) |
-| `npm run test:all` | Wszystkie testy |
+| Komenda                  | Opis                             |
+| ------------------------ | -------------------------------- |
+| `npm run test`           | Testy jednostkowe (watch mode)   |
+| `npm run test:run`       | Testy jednostkowe (jednokrotnie) |
+| `npm run test:ui`        | Testy jednostkowe (UI mode)      |
+| `npm run test:coverage`  | Coverage testów jednostkowych    |
+| `npm run test:e2e`       | Testy E2E                        |
+| `npm run test:e2e:ui`    | Testy E2E (UI mode)              |
+| `npm run test:e2e:debug` | Testy E2E (debug mode)           |
+| `npm run test:all`       | Wszystkie testy                  |
 
 ## 📚 Więcej Informacji
 
@@ -147,16 +149,19 @@ A: Użyj MSW dla testów jednostkowych lub `page.route()` dla Playwright
 
 **Q: Testy E2E nie działają**  
 A: Upewnij się że:
+
 1. Zbudowałeś projekt: `npm run build`
 2. Zainstalowałeś Chromium: `npx playwright install chromium`
 
 **Q: Jak uruchomić tylko wybrane testy?**  
-A: 
+A:
+
 - Vitest: `npm run test -- NazwaPliku.test.ts`
 - Playwright: `npm run test:e2e -- nazwa-pliku.spec.ts`
 
 **Q: Testy są wolne**  
-A: 
+A:
+
 - Vitest: Używaj watch mode (`npm run test`)
 - Playwright: Używaj `test.only()` do uruchamiania pojedynczych testów podczas developmentu
 
@@ -184,9 +189,9 @@ describe('Button', () => {
   it('handles clicks', async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();
-    
+
     renderWithProviders(<Button onClick={onClick}>Click</Button>);
-    
+
     await user.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalled();
   });
@@ -197,11 +202,11 @@ describe('Button', () => {
 
 ```typescript
 // e2e/navigation.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('navigates to demo', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: /demo/i }).click();
+test("navigates to demo", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: /demo/i }).click();
   await expect(page).toHaveURL(/demo/);
 });
 ```
@@ -210,11 +215,11 @@ test('navigates to demo', async ({ page }) => {
 
 ```typescript
 // e2e/home.spec.ts
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test('no a11y violations', async ({ page }) => {
-  await page.goto('/');
+test("no a11y violations", async ({ page }) => {
+  await page.goto("/");
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });

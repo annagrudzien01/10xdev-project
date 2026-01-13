@@ -3,6 +3,7 @@
 ## Przegląd
 
 Projekt wykorzystuje dwa główne narzędzia do testowania:
+
 - **Vitest** - testy jednostkowe i integracyjne
 - **Playwright** - testy E2E (end-to-end)
 
@@ -11,6 +12,7 @@ Projekt wykorzystuje dwa główne narzędzia do testowania:
 ### Konfiguracja
 
 Konfiguracja znajduje się w pliku `vitest.config.ts`. Projekt wykorzystuje:
+
 - **jsdom** jako środowisko testowe dla komponentów React
 - **@testing-library/react** do testowania komponentów
 - **@testing-library/user-event** do symulacji interakcji użytkownika
@@ -68,19 +70,19 @@ describe('Button', () => {
   it('should render correctly', () => {
     renderWithProviders(<Button>Click me</Button>);
     const button = screen.getByRole('button', { name: /click me/i });
-    
+
     expect(button).toBeInTheDocument();
   });
 
   it('should handle click events', async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
-    
+
     renderWithProviders(<Button onClick={handleClick}>Click me</Button>);
     const button = screen.getByRole('button', { name: /click me/i });
-    
+
     await user.click(button);
-    
+
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 });
@@ -89,13 +91,13 @@ describe('Button', () => {
 #### Testowanie Funkcji Pomocniczych
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { cn } from './utils';
+import { describe, it, expect } from "vitest";
+import { cn } from "./utils";
 
-describe('cn', () => {
-  it('should merge class names', () => {
-    const result = cn('class1', 'class2');
-    expect(result).toBe('class1 class2');
+describe("cn", () => {
+  it("should merge class names", () => {
+    const result = cn("class1", "class2");
+    expect(result).toBe("class1 class2");
   });
 });
 ```
@@ -103,17 +105,17 @@ describe('cn', () => {
 #### Mockowanie z vi.mock()
 
 ```typescript
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Mock na poziomie modułu
-vi.mock('@/lib/api', () => ({
-  fetchData: vi.fn(() => Promise.resolve({ data: 'test' })),
+vi.mock("@/lib/api", () => ({
+  fetchData: vi.fn(() => Promise.resolve({ data: "test" })),
 }));
 
 // Mock w teście
 const mockFn = vi.fn();
-mockFn.mockImplementation(() => 'mocked value');
-mockFn.mockReturnValue('mocked value');
+mockFn.mockImplementation(() => "mocked value");
+mockFn.mockReturnValue("mocked value");
 ```
 
 ### Best Practices dla Vitest
@@ -131,6 +133,7 @@ mockFn.mockReturnValue('mocked value');
 ### Konfiguracja
 
 Konfiguracja znajduje się w pliku `playwright.config.ts`. Projekt wykorzystuje:
+
 - **Chromium** jako jedyny browser (zgodnie z guidelines)
 - **Page Object Model** dla maintainable testów
 - **@axe-core/playwright** dla testów dostępności (WCAG 2.1)
@@ -172,14 +175,14 @@ npm run test:e2e:report
 #### Podstawowy Test
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Home Page', () => {
+test.describe("Home Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
   });
 
-  test('should load successfully', async ({ page }) => {
+  test("should load successfully", async ({ page }) => {
     await expect(page).toHaveTitle(/10x/i);
   });
 });
@@ -188,14 +191,14 @@ test.describe('Home Page', () => {
 #### Testy Dostępności
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test('should have no accessibility violations', async ({ page }) => {
-  await page.goto('/');
-  
+test("should have no accessibility violations", async ({ page }) => {
+  await page.goto("/");
+
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
@@ -205,10 +208,10 @@ test('should have no accessibility violations', async ({ page }) => {
 #### Visual Regression Tests
 
 ```typescript
-test('should match screenshot', async ({ page }) => {
-  await page.goto('/');
-  
-  await expect(page).toHaveScreenshot('home-page.png', {
+test("should match screenshot", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page).toHaveScreenshot("home-page.png", {
     fullPage: true,
     maxDiffPixels: 100,
   });
@@ -218,17 +221,17 @@ test('should match screenshot', async ({ page }) => {
 #### Używanie Helpers
 
 ```typescript
-import { navigateTo, clickButton, fillField } from './utils/test-helpers';
+import { navigateTo, clickButton, fillField } from "./utils/test-helpers";
 
-test('should submit form', async ({ page }) => {
-  await navigateTo(page, '/login');
-  
-  await fillField(page, 'Email', 'test@example.com');
-  await fillField(page, 'Password', 'password123');
-  
+test("should submit form", async ({ page }) => {
+  await navigateTo(page, "/login");
+
+  await fillField(page, "Email", "test@example.com");
+  await fillField(page, "Password", "password123");
+
   await clickButton(page, /sign in/i);
-  
-  await page.waitForURL('/dashboard');
+
+  await page.waitForURL("/dashboard");
 });
 ```
 
@@ -259,6 +262,7 @@ npm run test:coverage
 ### Thresholdy Coverage
 
 Projekt ma ustawione następujące minimalne progi:
+
 - **Lines**: 70%
 - **Functions**: 70%
 - **Branches**: 70%
@@ -288,19 +292,19 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests
         run: npm run test:run
-      
+
       - name: Install Playwright Browsers
         run: npx playwright install chromium
-      
+
       - name: Run E2E tests
         run: npm run test:e2e
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
@@ -343,12 +347,12 @@ npx playwright show-trace trace.zip
 ### MSW dla Testów Jednostkowych
 
 ```typescript
-import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { setupServer } from "msw/node";
+import { rest } from "msw";
 
 const server = setupServer(
-  rest.get('/api/data', (req, res, ctx) => {
-    return res(ctx.json({ data: 'mocked' }));
+  rest.get("/api/data", (req, res, ctx) => {
+    return res(ctx.json({ data: "mocked" }));
   })
 );
 
@@ -360,16 +364,16 @@ afterAll(() => server.close());
 ### Route Mocking w Playwright
 
 ```typescript
-test('should mock API', async ({ page }) => {
-  await page.route('/api/data', (route) => {
+test("should mock API", async ({ page }) => {
+  await page.route("/api/data", (route) => {
     route.fulfill({
       status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ data: 'mocked' }),
+      contentType: "application/json",
+      body: JSON.stringify({ data: "mocked" }),
     });
   });
-  
-  await page.goto('/');
+
+  await page.goto("/");
 });
 ```
 

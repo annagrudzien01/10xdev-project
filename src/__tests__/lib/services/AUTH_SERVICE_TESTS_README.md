@@ -21,6 +21,7 @@ src/
 ## 🎯 Pokrycie testowe
 
 ### Statystyki:
+
 - **Łącznie testów**: 56 (wszystkie ✅)
 - **Czas wykonania**: ~1.2s
 - **Pokrycie kodu**: 100% dla `auth.service.ts`
@@ -28,6 +29,7 @@ src/
 ### Kategorie testów:
 
 #### 1️⃣ **register()** - 12 testów
+
 ```typescript
 ✓ Successful registration (3)
   - should register user successfully with valid credentials
@@ -51,6 +53,7 @@ src/
 ```
 
 #### 2️⃣ **login()** - 11 testów
+
 ```typescript
 ✓ Successful login (3)
   - should login user successfully with valid credentials
@@ -73,6 +76,7 @@ src/
 ```
 
 #### 3️⃣ **logout()** - 4 testy
+
 ```typescript
 ✓ Logout operations (4)
   - should call signOut on Supabase client
@@ -82,6 +86,7 @@ src/
 ```
 
 #### 4️⃣ **sendPasswordResetEmail()** - 7 testów
+
 ```typescript
 ✓ Successful email send (3)
   - should send reset email with correct parameters
@@ -99,6 +104,7 @@ src/
 ```
 
 #### 5️⃣ **resetPassword()** - 11 testów
+
 ```typescript
 ✓ Successful password reset (3)
   - should reset password successfully with valid tokens
@@ -120,6 +126,7 @@ src/
 ```
 
 #### 6️⃣ **getCurrentUser()** - 8 testów
+
 ```typescript
 ✓ Authenticated user (3)
   - should return user when authenticated
@@ -137,6 +144,7 @@ src/
 ```
 
 #### 7️⃣ **Constructor & Type Safety** - 3 testy
+
 ```typescript
 ✓ Constructor and type safety (3)
   - should create instance with Supabase client
@@ -147,6 +155,7 @@ src/
 ## 🔑 Kluczowe reguły biznesowe testowane
 
 ### Registration (`register`)
+
 ```typescript
 ✅ Sukces: Rejestracja nowego użytkownika
 ❌ ConflictError: Email już istnieje w systemie
@@ -155,6 +164,7 @@ src/
 ```
 
 ### Login (`login`)
+
 ```typescript
 ✅ Sukces: Zwraca { accessToken, refreshToken }
 ❌ UnauthorizedError: Nieprawidłowe credentials
@@ -163,12 +173,14 @@ src/
 ```
 
 ### Logout (`logout`)
+
 ```typescript
 ✅ Zawsze sukces: Wywołuje signOut() bez sprawdzania błędów
 🔒 Bezpieczne: Nie wyrzuca błędów nawet przy problemach
 ```
 
 ### Send Password Reset Email (`sendPasswordResetEmail`)
+
 ```typescript
 ✅ Zawsze sukces: Nigdy nie wyrzuca błędów
 🛡️ User enumeration prevention: Nie ujawnia czy email istnieje
@@ -176,6 +188,7 @@ src/
 ```
 
 ### Reset Password (`resetPassword`)
+
 ```typescript
 ✅ Sukces: Aktualizuje hasło z użyciem tokena
 ❌ UnauthorizedError: Token wygasł lub nieprawidłowy
@@ -185,6 +198,7 @@ src/
 ```
 
 ### Get Current User (`getCurrentUser`)
+
 ```typescript
 ✅ Zwraca User: Gdy zalogowany
 ✅ Zwraca null: Gdy niezalogowany lub błąd
@@ -194,6 +208,7 @@ src/
 ## 🛡️ Aspekty bezpieczeństwa testowane
 
 ### 1. **User Enumeration Prevention**
+
 ```typescript
 ✓ sendPasswordResetEmail() zawsze sukces
 ✓ Brak różnicy w odpowiedzi dla istniejącego/nieistniejącego email
@@ -201,6 +216,7 @@ src/
 ```
 
 ### 2. **Error Transformation**
+
 ```typescript
 ✓ Supabase errors → Internal error types (ConflictError, UnauthorizedError)
 ✓ Spójne komunikaty błędów w języku polskim
@@ -208,6 +224,7 @@ src/
 ```
 
 ### 3. **Token Security**
+
 ```typescript
 ✓ resetPassword() tworzy izolowany client z tokenem
 ✓ Token przekazywany w Authorization header
@@ -215,6 +232,7 @@ src/
 ```
 
 ### 4. **Input Handling**
+
 ```typescript
 ✓ Special characters w email/password
 ✓ Whitespace preservation w password
@@ -225,9 +243,10 @@ src/
 ## 🎨 Wzorce testowe użyte
 
 ### 1. **vi.mock() Factory Pattern**
+
 ```typescript
-vi.mock('@supabase/supabase-js', async () => {
-  const actual = await vi.importActual('@supabase/supabase-js');
+vi.mock("@supabase/supabase-js", async () => {
+  const actual = await vi.importActual("@supabase/supabase-js");
   return {
     ...actual,
     createClient: vi.fn(),
@@ -236,6 +255,7 @@ vi.mock('@supabase/supabase-js', async () => {
 ```
 
 ### 2. **Mock Factory Helper**
+
 ```typescript
 function createMockSupabaseClient() {
   return {
@@ -249,20 +269,22 @@ function createMockSupabaseClient() {
 ```
 
 ### 3. **AAA Pattern (Arrange-Act-Assert)**
+
 ```typescript
 it('should login user successfully', async () => {
   // Arrange
   mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({...});
-  
+
   // Act
   const result = await authService.login(email, password);
-  
+
   // Assert
   expect(result).toEqual({accessToken, refreshToken});
 });
 ```
 
 ### 4. **beforeEach/afterEach Hooks**
+
 ```typescript
 beforeEach(() => {
   mockSupabaseClient = createMockSupabaseClient();
@@ -275,15 +297,15 @@ afterEach(() => {
 ```
 
 ### 5. **Explicit Assertion Messages**
+
 ```typescript
-await expect(service.register(email, password))
-  .rejects
-  .toThrow('Użytkownik z tym adresem e-mail już istnieje');
+await expect(service.register(email, password)).rejects.toThrow("Użytkownik z tym adresem e-mail już istnieje");
 ```
 
 ## 📊 Przykładowe użycie
 
 ### Uruchomienie testów:
+
 ```bash
 # Wszystkie testy auth.service
 npm run test -- auth.service.test
@@ -299,6 +321,7 @@ npm run test -- auth.service.test -t "should login user successfully"
 ```
 
 ### Filtrowanie:
+
 ```bash
 # Tylko testy register
 npm run test -- auth.service.test -t "register"
@@ -313,6 +336,7 @@ npm run test -- auth.service.test -t "edge cases"
 ## 🔍 Struktura mocków
 
 ### Mock Supabase Client
+
 ```typescript
 const mockSupabaseClient = {
   auth: {
@@ -327,13 +351,14 @@ const mockSupabaseClient = {
 ```
 
 ### Mock Success Response
+
 ```typescript
 mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
   data: {
-    user: { id: 'user-123', email: 'test@example.com' } as User,
+    user: { id: "user-123", email: "test@example.com" } as User,
     session: {
-      access_token: 'mock-token',
-      refresh_token: 'mock-refresh',
+      access_token: "mock-token",
+      refresh_token: "mock-refresh",
     } as any,
   },
   error: null,
@@ -341,11 +366,12 @@ mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
 ```
 
 ### Mock Error Response
+
 ```typescript
 mockSupabaseClient.auth.signUp.mockResolvedValue({
   data: { user: null, session: null },
   error: {
-    message: 'User already registered',
+    message: "User already registered",
     status: 409,
   } as AuthError,
 });
@@ -354,6 +380,7 @@ mockSupabaseClient.auth.signUp.mockResolvedValue({
 ## 🚀 Najlepsze praktyki
 
 ### ✅ DO:
+
 1. **Mock external dependencies** - Izoluj Supabase client
 2. **Test business logic** - Nie testuj Supabase implementation
 3. **Test error transformations** - Verify ConflictError, UnauthorizedError
@@ -364,6 +391,7 @@ mockSupabaseClient.auth.signUp.mockResolvedValue({
 8. **Test security** - User enumeration, error messages
 
 ### ❌ DON'T:
+
 1. **Test Supabase** - Nie testuj external library
 2. **Skip error cases** - Testuj wszystkie ścieżki błędów
 3. **Hardcode values** - Użyj zmiennych dla reusability
@@ -374,6 +402,7 @@ mockSupabaseClient.auth.signUp.mockResolvedValue({
 ## 🔧 Troubleshooting
 
 ### Mock nie działa?
+
 ```typescript
 // ✅ DOBRZE - Mock na top level
 vi.mock('@supabase/supabase-js', async () => {...});
@@ -385,6 +414,7 @@ describe('test', () => {
 ```
 
 ### Type errors w mockach?
+
 ```typescript
 // ✅ DOBRZE - Use type assertion
 const mock = {
@@ -396,6 +426,7 @@ const mock: SupabaseClient = { auth: {...} };
 ```
 
 ### Test intermittent failures?
+
 ```typescript
 // ✅ DOBRZE - Clear mocks
 afterEach(() => {
@@ -408,12 +439,14 @@ afterEach(() => {
 ## 📈 Metryki jakości
 
 ### Coverage:
+
 - ✅ **Lines**: 100%
 - ✅ **Functions**: 100% (wszystkie 6 metod)
 - ✅ **Branches**: 100% (wszystkie if/else)
 - ✅ **Statements**: 100%
 
 ### Test reliability:
+
 - ⚡ **Szybkość**: <1.2s dla wszystkich testów
 - 🎯 **Pass rate**: 100%
 - 🔄 **Deterministyczne**: Brak flaky tests
@@ -421,15 +454,18 @@ afterEach(() => {
 ## 🔗 Powiązane pliki
 
 ### Kod źródłowy:
+
 - `src/lib/services/auth.service.ts` - Testowany service
 - `src/lib/errors/api-errors.ts` - Error classes
 - `src/db/supabase.client.ts` - Supabase client type
 
 ### Inne testy:
+
 - `__tests__/lib/schemas/auth.schema.test.ts` - Schema validation
 - `__tests__/lib/schemas/auth.schema.enhanced.test.ts` - Advanced schemas
 
 ### Dokumentacja:
+
 - `__tests__/README.md` - Ogólne wytyczne testów
 - `TESTING.md` - Strategia testowania projektu
 
@@ -443,6 +479,7 @@ afterEach(() => {
 ## 👥 Dla deweloperów
 
 ### Dodawanie nowych testów:
+
 1. Zidentyfikuj metodę/scenariusz do przetestowania
 2. Dodaj w odpowiedniej sekcji describe()
 3. Użyj AAA pattern
@@ -451,6 +488,7 @@ afterEach(() => {
 6. Sprawdź edge cases
 
 ### Code review checklist:
+
 - [ ] Wszystkie testy przechodzą
 - [ ] Mock setup w beforeEach
 - [ ] Mock cleanup w afterEach

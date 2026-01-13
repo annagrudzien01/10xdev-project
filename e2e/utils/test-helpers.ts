@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page, expect } from "@playwright/test";
 
 /**
  * Helper functions for E2E tests
@@ -8,8 +8,8 @@ import { Page, expect } from '@playwright/test';
  * Wait for page to be fully loaded
  */
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState('networkidle');
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 }
 
 /**
@@ -45,24 +45,21 @@ export async function fillField(page: Page, label: string, value: string) {
  * Click button by text
  */
 export async function clickButton(page: Page, text: string | RegExp) {
-  await page.getByRole('button', { name: text }).click();
+  await page.getByRole("button", { name: text }).click();
 }
 
 /**
  * Click link by text
  */
 export async function clickLink(page: Page, text: string | RegExp) {
-  await page.getByRole('link', { name: text }).click();
+  await page.getByRole("link", { name: text }).click();
 }
 
 /**
  * Wait for navigation after action
  */
 export async function waitForNavigation(page: Page, action: () => Promise<void>) {
-  await Promise.all([
-    page.waitForNavigation(),
-    action(),
-  ]);
+  await Promise.all([page.waitForNavigation(), action()]);
 }
 
 /**
@@ -77,9 +74,9 @@ export async function takeScreenshot(page: Page, name: string) {
  */
 export function setupConsoleErrorListener(page: Page) {
   const errors: string[] = [];
-  
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
+
+  page.on("console", (msg) => {
+    if (msg.type() === "error") {
       errors.push(msg.text());
     }
   });
@@ -93,16 +90,11 @@ export function setupConsoleErrorListener(page: Page) {
 /**
  * Mock API response
  */
-export async function mockApiResponse(
-  page: Page,
-  url: string | RegExp,
-  response: any,
-  status = 200
-) {
+export async function mockApiResponse(page: Page, url: string | RegExp, response: any, status = 200) {
   await page.route(url, (route) => {
     route.fulfill({
       status,
-      contentType: 'application/json',
+      contentType: "application/json",
       body: JSON.stringify(response),
     });
   });

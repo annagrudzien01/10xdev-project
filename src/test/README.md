@@ -5,14 +5,18 @@ Ten katalog zawiera pliki pomocnicze dla testów jednostkowych.
 ## Pliki
 
 ### `setup.ts`
+
 Globalny setup dla wszystkich testów jednostkowych. Zawiera:
+
 - Import `@testing-library/jest-dom` dla custom matchers
 - Cleanup po każdym teście
 - Mocki dla Web APIs (matchMedia, IntersectionObserver, ResizeObserver)
 - Rozszerzenia dla `expect`
 
 ### `utils.tsx`
+
 Funkcje pomocnicze dla testów komponentów React:
+
 - `renderWithProviders()` - render z QueryClientProvider
 - `createTestQueryClient()` - tworzenie test QueryClient
 - Re-eksport wszystkich funkcji z `@testing-library/react`
@@ -28,12 +32,12 @@ import { MyComponent } from './MyComponent';
 
 test('should render and interact', async () => {
   const user = userEvent.setup();
-  
+
   renderWithProviders(<MyComponent />);
-  
+
   const button = screen.getByRole('button');
   await user.click(button);
-  
+
   expect(screen.getByText('Clicked')).toBeInTheDocument();
 });
 ```
@@ -46,7 +50,7 @@ import { MyQueryComponent } from './MyQueryComponent';
 
 test('should fetch and display data', async () => {
   renderWithProviders(<MyQueryComponent />);
-  
+
   await waitFor(() => {
     expect(screen.getByText('Data loaded')).toBeInTheDocument();
   });
@@ -76,7 +80,7 @@ expect.extend({
 Dodaj do `setup.ts`:
 
 ```typescript
-vi.stubGlobal('fetch', vi.fn());
+vi.stubGlobal("fetch", vi.fn());
 ```
 
 ### Module Mocks
@@ -84,8 +88,8 @@ vi.stubGlobal('fetch', vi.fn());
 Na początku pliku testowego:
 
 ```typescript
-vi.mock('@/lib/api', () => ({
-  fetchData: vi.fn(() => Promise.resolve({ data: 'test' })),
+vi.mock("@/lib/api", () => ({
+  fetchData: vi.fn(() => Promise.resolve({ data: "test" })),
 }));
 ```
 

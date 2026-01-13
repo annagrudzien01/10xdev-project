@@ -1,6 +1,6 @@
-import '@testing-library/jest-dom';
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import "@testing-library/jest-dom";
+import { expect, afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
 
 // Cleanup after each test
 afterEach(() => {
@@ -8,7 +8,7 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,

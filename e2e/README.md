@@ -40,20 +40,20 @@ npm run test:e2e:debug
 ## Przykład
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
-import { navigateTo } from './utils/test-helpers';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+import { navigateTo } from "./utils/test-helpers";
 
-test.describe('My Feature', () => {
+test.describe("My Feature", () => {
   test.beforeEach(async ({ page }) => {
-    await navigateTo(page, '/my-feature');
+    await navigateTo(page, "/my-feature");
   });
 
-  test('should work correctly', async ({ page }) => {
+  test("should work correctly", async ({ page }) => {
     // Your test here
   });
 
-  test('should have no a11y violations', async ({ page }) => {
+  test("should have no a11y violations", async ({ page }) => {
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
