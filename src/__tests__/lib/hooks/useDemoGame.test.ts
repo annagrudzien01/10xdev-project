@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { DemoGameState, DemoTask } from './useDemoGame';
+import type { DemoGameState, DemoTask } from '@/lib/hooks/useDemoGame';
 
 // Import reducer from the hook file (will need to export it)
 // For now, we'll test the hook's behavior indirectly through integration tests

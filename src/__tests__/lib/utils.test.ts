@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn, getInitialIcon } from './utils';
+import { cn, getInitialIcon } from '@/lib/utils';
 
 describe('utils', () => {
   describe('cn (className merger)', () => {
