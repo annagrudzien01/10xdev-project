@@ -76,6 +76,7 @@ export interface GameState {
   resetGame: () => void;
   clearFeedback: () => void;
   ensureActiveSession: () => Promise<string>;
+  refreshSession: () => Promise<void>;
 }
 
 /**
@@ -120,7 +121,12 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     const cookieName = `game_session_${profileId}`;
     const cookies = document.cookie.split("; ");
     const sessionCookie = cookies.find((cookie) => cookie.startsWith(`${cookieName}=`));
-    return sessionCookie ? sessionCookie.split("=")[1] : null;
+    if (!sessionCookie) return null;
+
+    // Remove the cookie name and the first "=" to get the value
+    // This handles values that contain "=" characters
+    const value = sessionCookie.substring(cookieName.length + 1);
+    return value;
   }, [profileId]);
 
   /**
@@ -518,13 +524,21 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     setTaskCompletionState(null);
   }, []);
 
-  // Auto-load current or next task on mount
-  useEffect(() => {
-    loadCurrentOrNextTask().catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error("Failed to initialize game:", error);
-    });
+  // Auto-load current or next task on mount (once)
+  const hasInitialized = useRef(false);
+  const initializeGame = useCallback(() => {
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      loadCurrentOrNextTask().catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error("Failed to initialize game:", error);
+      });
+    }
   }, [loadCurrentOrNextTask]);
+
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
 
   // Setup automatic session refresh every 2 minutes
   useEffect(() => {
@@ -574,6 +588,7 @@ export function GameProvider({ children, profileId, initialLevel, initialScore }
     resetGame,
     clearFeedback,
     ensureActiveSession,
+    refreshSession,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
