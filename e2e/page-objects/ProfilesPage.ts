@@ -159,7 +159,7 @@ export class ProfilesPage extends BasePage {
     // Wait for either the title (with profiles) or empty state
     const titleOrEmpty = this.page.locator('[data-testid="profiles-page-title"], [data-testid="empty-state"]');
     await titleOrEmpty.first().waitFor({ state: "visible", timeout: 10000 });
-    
+
     // If we have profiles, verify the title
     if (await this.pageTitle.isVisible()) {
       await expect(this.pageTitle).toHaveText("Wybierz profil");

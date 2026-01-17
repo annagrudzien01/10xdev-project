@@ -54,12 +54,13 @@ export default defineConfig({
     },
   ],
 
-  // Run local dev server before starting tests  
+  // Run local dev server before starting tests
   webServer: {
     // Load .env.test and start Astro dev server
-    command: process.platform === 'win32'
-      ? 'powershell -Command "$env:SUPABASE_URL=\\"$env:PUBLIC_SUPABASE_URL\\"; $env:SUPABASE_KEY=\\"$env:PUBLIC_SUPABASE_ANON_KEY\\"; npx astro dev --mode test"'
-      : "SUPABASE_URL=$PUBLIC_SUPABASE_URL SUPABASE_KEY=$PUBLIC_SUPABASE_ANON_KEY npx astro dev --mode test",
+    command:
+      process.platform === "win32"
+        ? 'powershell -Command "$env:SUPABASE_URL=\\"$env:PUBLIC_SUPABASE_URL\\"; $env:SUPABASE_KEY=\\"$env:PUBLIC_SUPABASE_ANON_KEY\\"; npx astro dev --mode test"'
+        : "SUPABASE_URL=$PUBLIC_SUPABASE_URL SUPABASE_KEY=$PUBLIC_SUPABASE_ANON_KEY npx astro dev --mode test",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

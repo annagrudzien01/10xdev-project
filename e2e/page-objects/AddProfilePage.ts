@@ -87,7 +87,7 @@ export class AddProfilePage extends BasePage {
     // Wait for form to be interactive
     await this.nameInput.waitFor({ state: "visible" });
     await this.page.waitForLoadState("domcontentloaded");
-    
+
     await this.fillName(name);
     await this.fillDateOfBirth(dateOfBirth);
   }
