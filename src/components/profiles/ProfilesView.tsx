@@ -53,16 +53,20 @@ function ProfilesViewContent() {
           {/* Profile Counter */}
           {!isLoading && count > 0 && (
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold">Wybierz profil</h1>
+              <h1 className="text-3xl font-bold" data-testid="profiles-page-title">
+                Wybierz profil
+              </h1>
               <ProfileCounter count={count} />
             </div>
           )}
 
           {/* Loading State */}
           {isLoading && (
-            <div>
+            <div data-testid="profiles-loading-state">
               <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Wybierz profil</h1>
+                <h1 className="text-3xl font-bold" data-testid="profiles-page-title">
+                  Wybierz profil
+                </h1>
                 <div className="h-6 w-24 bg-muted animate-pulse rounded" />
               </div>
               <ul
@@ -80,7 +84,10 @@ function ProfilesViewContent() {
 
           {/* Error State */}
           {isError && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+            <div
+              className="flex flex-col items-center justify-center py-16 text-center space-y-4"
+              data-testid="profiles-error-state"
+            >
               <div className="w-32 h-32 bg-destructive/10 rounded-full flex items-center justify-center text-5xl">
                 ⚠️
               </div>
@@ -114,7 +121,7 @@ function ProfilesViewContent() {
 
           {/* Max Profiles Reached Message */}
           {!isLoading && !isError && count >= 10 && (
-            <div className="text-center text-sm text-muted-foreground mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-4" data-testid="profiles-max-limit-message">
               Osiągnięto maksymalną liczbę profili (10)
             </div>
           )}

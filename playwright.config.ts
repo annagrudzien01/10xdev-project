@@ -34,7 +34,7 @@ export default defineConfig({
   // Shared settings for all projects
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: process.env.BASE_URL || "http://localhost:4321",
+    baseURL: process.env.BASE_URL || "http://localhost:3000",
 
     // Collect trace when retrying the failed test
     trace: "on-first-retry",
@@ -54,11 +54,18 @@ export default defineConfig({
     },
   ],
 
-  // Run local dev server before starting tests
+  // Run local dev server before starting tests  
   webServer: {
-    command: "npm run preview",
-    url: "http://localhost:4321",
+    // Load .env.test and start Astro dev server
+    command: process.platform === 'win32'
+      ? 'powershell -Command "$env:SUPABASE_URL=\\"$env:PUBLIC_SUPABASE_URL\\"; $env:SUPABASE_KEY=\\"$env:PUBLIC_SUPABASE_ANON_KEY\\"; npx astro dev --mode test"'
+      : "SUPABASE_URL=$PUBLIC_SUPABASE_URL SUPABASE_KEY=$PUBLIC_SUPABASE_ANON_KEY npx astro dev --mode test",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      // Pass all test environment variables to the command
+      ...process.env,
+    },
   },
 });
