@@ -102,11 +102,13 @@ function AddProfileFormContent() {
   return (
     <>
       <HeaderAuthenticated userEmail={userEmail} />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8" data-testid="add-profile-page">
         <div className="max-w-2xl mx-auto">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Nowy profil dziecka</h1>
+            <h1 className="text-3xl font-bold mb-2" data-testid="add-profile-page-title">
+              Nowy profil dziecka
+            </h1>
             <p className="text-muted-foreground">Dodaj profil dziecka, aby rozpocząć muzyczną przygodę</p>
           </div>
 

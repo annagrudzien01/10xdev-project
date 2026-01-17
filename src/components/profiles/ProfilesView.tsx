@@ -97,6 +97,7 @@ function ProfilesViewContent() {
             <ul
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
               aria-label="Lista profili dzieci"
+              data-testid="profiles-list"
             >
               {profiles.map((profile) => (
                 <li key={profile.id}>

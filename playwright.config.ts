@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import path from "path";
+
+// Load environment variables from .env.test
+dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
 
 /**
  * Playwright configuration for E2E tests

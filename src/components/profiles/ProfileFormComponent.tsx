@@ -109,11 +109,11 @@ export default function ProfileFormComponent({
   const isSaveDisabled = mode === "create" ? !isValid || isSubmitting : !isDirty || isSubmitting;
 
   return (
-    <div className="bg-card border rounded-lg p-6 shadow-sm">
+    <div className="bg-card border rounded-lg p-6 shadow-sm" data-testid="profile-form">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* General API Error (not field-specific) */}
         {apiError && !apiErrorField && (
-          <div className="rounded-lg bg-destructive/10 p-4">
+          <div className="rounded-lg bg-destructive/10 p-4" data-testid="profile-form-general-error">
             <FormError>{apiError}</FormError>
           </div>
         )}
@@ -131,11 +131,18 @@ export default function ProfileFormComponent({
             aria-invalid={!!errors.profileName || apiErrorField === "profileName"}
             aria-describedby={errors.profileName || apiErrorField === "profileName" ? "profileName-error" : undefined}
             disabled={isFormDisabled}
+            data-testid="profile-form-name-input"
             {...register("profileName")}
           />
-          {errors.profileName && <FormError id="profileName-error">{errors.profileName.message}</FormError>}
+          {errors.profileName && (
+            <FormError id="profileName-error" data-testid="profile-form-name-error">
+              {errors.profileName.message}
+            </FormError>
+          )}
           {!errors.profileName && apiErrorField === "profileName" && apiError && (
-            <FormError id="profileName-error">{apiError}</FormError>
+            <FormError id="profileName-error" data-testid="profile-form-name-error">
+              {apiError}
+            </FormError>
           )}
           <p className="text-xs text-muted-foreground">
             Imię może zawierać tylko litery, spacje i myślniki (2-50 znaków)
@@ -153,23 +160,37 @@ export default function ProfileFormComponent({
             aria-invalid={!!errors.dateOfBirth || apiErrorField === "dateOfBirth"}
             aria-describedby={errors.dateOfBirth || apiErrorField === "dateOfBirth" ? "dateOfBirth-error" : undefined}
             disabled={isFormDisabled}
+            data-testid="profile-form-date-input"
             {...register("dateOfBirth")}
             min={minDate}
             max={maxDate}
           />
-          {errors.dateOfBirth && <FormError id="dateOfBirth-error">{errors.dateOfBirth.message}</FormError>}
+          {errors.dateOfBirth && (
+            <FormError id="dateOfBirth-error" data-testid="profile-form-date-error">
+              {errors.dateOfBirth.message}
+            </FormError>
+          )}
           {!errors.dateOfBirth && apiErrorField === "dateOfBirth" && apiError && (
-            <FormError id="dateOfBirth-error">{apiError}</FormError>
+            <FormError id="dateOfBirth-error" data-testid="profile-form-date-error">
+              {apiError}
+            </FormError>
           )}
           <p className="text-xs text-muted-foreground">Dziecko musi mieć od 3 do 18 lat</p>
         </div>
 
         {/* Form Actions */}
         <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={handleCancel} disabled={isFormDisabled} className="flex-1">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isFormDisabled}
+            className="flex-1"
+            data-testid="profile-form-cancel-button"
+          >
             Anuluj
           </Button>
-          <Button type="submit" disabled={isSaveDisabled} className="flex-1">
+          <Button type="submit" disabled={isSaveDisabled} className="flex-1" data-testid="profile-form-submit-button">
             {isSubmitting ? "Zapisywanie..." : mode === "create" ? "Zapisz profil" : "Zapisz zmiany"}
           </Button>
         </div>

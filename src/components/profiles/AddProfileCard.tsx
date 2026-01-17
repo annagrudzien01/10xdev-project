@@ -22,6 +22,7 @@ export default function AddProfileCard({ disabled }: AddProfileCardProps) {
     <button
       onClick={handleClick}
       disabled={disabled}
+      data-testid="add-profile-card"
       className={cn(
         "bg-card rounded-lg border-2 border-dashed border-muted-foreground/25 p-4 flex flex-col items-center justify-center text-center min-h-[200px] transition-all",
         !disabled &&
