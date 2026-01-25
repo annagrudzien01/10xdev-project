@@ -116,13 +116,12 @@ test.describe("Profile Management", () => {
       const submitPromise = addProfilePage.submit();
 
       // Assert - Check if submitting state is active (may be too fast to catch)
-      // This is a best-effort check as submission might be instant
+      // This is a best-effort check as submission might be instant because of the way the form is implemented
       try {
         expect(await addProfilePage.isSubmitting()).toBe(true);
       } catch {
         // Submission was too fast - that's OK
       }
-
       await submitPromise;
 
       // Cleanup - Wait for redirect and delete the created profile
