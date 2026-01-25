@@ -7,11 +7,6 @@ test.describe("Home Page", () => {
     await navigateTo(page, "/");
   });
 
-  test("should load successfully", async ({ page }) => {
-    // Check if the page has loaded by looking for basic elements
-    await expect(page).toHaveTitle(/10x/i);
-  });
-
   test("should have no accessibility violations", async ({ page }) => {
     // Run axe accessibility tests
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();

@@ -65,8 +65,36 @@ export class AddProfilePage extends BasePage {
    * @param name - Profile name to enter
    */
   async fillName(name: string): Promise<void> {
-    await this.nameInput.click();
-    await this.nameInput.fill(name);
+    await this.nameInput.waitFor({ state: "visible", timeout: 10000 });
+
+    // Multiple attempts to fill with verification after blur
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.nameInput.click({ force: true });
+      await this.nameInput.fill(name);
+      await this.nameInput.blur();
+
+      // Wait for React to process and validate
+      await this.page.waitForTimeout(500);
+
+      const value = await this.nameInput.inputValue();
+      if (value === name) {
+        return; // Success
+      }
+
+      // Retry with pressSequentially for better reliability
+      await this.nameInput.clear();
+      await this.nameInput.pressSequentially(name, { delay: 100 });
+      await this.page.waitForTimeout(300);
+
+      const retryValue = await this.nameInput.inputValue();
+      if (retryValue === name) {
+        await this.nameInput.blur();
+        await this.page.waitForTimeout(300);
+        return;
+      }
+    }
+
+    throw new Error(`Failed to fill name input with "${name}" after 3 attempts`);
   }
 
   /**
@@ -74,8 +102,11 @@ export class AddProfilePage extends BasePage {
    * @param date - Date in YYYY-MM-DD format
    */
   async fillDateOfBirth(date: string): Promise<void> {
+    await this.dateInput.waitFor({ state: "visible" });
     await this.dateInput.click();
+    await this.dateInput.clear();
     await this.dateInput.fill(date);
+    await this.dateInput.blur(); // Trigger validation
   }
 
   /**
@@ -90,12 +121,20 @@ export class AddProfilePage extends BasePage {
 
     await this.fillName(name);
     await this.fillDateOfBirth(dateOfBirth);
+
+    // Wait for validation to complete
+    await this.page.waitForTimeout(500);
   }
 
   /**
    * Submit the form
    */
   async submit(): Promise<void> {
+    // Wait for submit button to be enabled
+    await this.submitButton.waitFor({ state: "visible", timeout: 5000 });
+    await this.page.waitForTimeout(500); // Wait for validation
+
+    // Click submit button
     await this.submitButton.click();
   }
 
@@ -116,6 +155,19 @@ export class AddProfilePage extends BasePage {
    */
   async createProfile(name: string, dateOfBirth: string): Promise<void> {
     await this.fillForm(name, dateOfBirth);
+
+    // Verify values before submitting
+    const nameValue = await this.getNameValue();
+    const dateValue = await this.getDateValue();
+
+    if (nameValue !== name || dateValue !== dateOfBirth) {
+      throw new Error(
+        `Form values mismatch before submit!\n` +
+          `Expected name: "${name}", got: "${nameValue}"\n` +
+          `Expected date: "${dateOfBirth}", got: "${dateValue}"`
+      );
+    }
+
     await this.submit();
   }
 
@@ -227,7 +279,7 @@ export class AddProfilePage extends BasePage {
    * (Waits for navigation to profiles page)
    */
   async waitForSubmitSuccess(): Promise<void> {
-    await this.page.waitForURL("/profiles");
+    await this.page.waitForURL(/\/profiles/, { timeout: 10000 });
   }
 
   /**

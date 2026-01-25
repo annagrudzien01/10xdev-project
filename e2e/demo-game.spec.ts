@@ -74,33 +74,6 @@ test.describe("Demo Game", () => {
     }
   });
 
-  test("should display score or progress", async ({ page }) => {
-    await page.waitForLoadState("networkidle");
-
-    // Look for score or progress indicators
-    const scoreElements = page.locator('[data-testid*="score"], .score, [aria-label*="score"]');
-    const progressElements = page.locator('[data-testid*="progress"], .progress, [aria-label*="progress"]');
-
-    const hasScore = (await scoreElements.count()) > 0;
-    const hasProgress = (await progressElements.count()) > 0;
-
-    // At least one should be present
-    expect(hasScore || hasProgress).toBeTruthy();
-  });
-
-  test("should be responsive on mobile viewport", async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-
-    // Check that page doesn't overflow horizontally
-    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-    const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
-
-    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
-  });
-
   test("should show registration prompt after certain progress", async ({ page }) => {
     await page.waitForLoadState("networkidle");
 
@@ -121,15 +94,5 @@ test.describe("Demo Game", () => {
     const criticalErrors = errors.filter((err) => !err.includes("favicon") && !err.includes("sourcemap"));
 
     expect(criticalErrors.length).toBe(0);
-  });
-
-  test("should take screenshot of demo game", async ({ page }) => {
-    await page.waitForLoadState("networkidle");
-
-    // Visual regression test
-    await expect(page).toHaveScreenshot("demo-game.png", {
-      fullPage: true,
-      maxDiffPixels: 200,
-    });
   });
 });

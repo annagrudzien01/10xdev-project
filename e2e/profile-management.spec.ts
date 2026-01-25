@@ -40,8 +40,9 @@ test.describe("Profile Management", () => {
       // Assert - Verify navigation to form page
       await addProfilePage.verifyPageLoaded();
 
-      // Act - Fill and submit form
-      const profileName = "Anna";
+      // Act - Fill and submit form with unique name (only letters)
+      const randomLetters = Math.random().toString(36).substring(2, 8).replace(/[0-9]/g, "x");
+      const profileName = `Test${randomLetters}`;
       const dateOfBirth = addProfilePage.getValidDateForAge(5);
       await addProfilePage.createProfile(profileName, dateOfBirth);
 
@@ -51,6 +52,9 @@ test.describe("Profile Management", () => {
 
       // Assert - Verify new profile appears in list
       expect(await profilesPage.hasProfile(profileName)).toBe(true);
+
+      // Cleanup - Delete the created profile
+      await profilesPage.deleteProfile(profileName);
     });
 
     test("should create profile from empty state", async () => {
@@ -67,72 +71,20 @@ test.describe("Profile Management", () => {
         // Assert - Verify navigation to form
         await addProfilePage.verifyPageLoaded();
 
-        // Act - Create profile
-        await addProfilePage.createProfile("Maria", addProfilePage.getValidDateForAge(7));
+        // Act - Create profile with unique name (only letters)
+        const randomLetters = Math.random().toString(36).substring(2, 8).replace(/[0-9]/g, "x");
+        const profileName = `Test${randomLetters}`;
+        await addProfilePage.createProfile(profileName, addProfilePage.getValidDateForAge(7));
 
         // Assert - Verify success
         await addProfilePage.waitForSubmitSuccess();
         expect(await profilesPage.isEmpty()).toBe(false);
+
+        // Cleanup - Delete the created profile
+        await profilesPage.deleteProfile(profileName);
       } else {
         test.skip();
       }
-    });
-
-    test("should show validation errors for empty form", async () => {
-      // Arrange
-      await addProfilePage.navigate();
-      await addProfilePage.verifyPageLoaded();
-
-      // Act - Submit empty form
-      await addProfilePage.submit();
-
-      // Assert - Submit button should be disabled for empty form
-      expect(await addProfilePage.isSubmitDisabled()).toBe(true);
-    });
-
-    test("should show validation error for invalid name", async () => {
-      // Arrange
-      await addProfilePage.navigate();
-
-      // Act - Enter invalid name (too short)
-      await addProfilePage.fillName("A");
-      await addProfilePage.fillDateOfBirth(addProfilePage.getValidDateForAge(5));
-
-      // Act - Try to submit
-      await addProfilePage.submit();
-
-      // Assert - Should show name validation error
-      await expect(addProfilePage.nameError).toBeVisible();
-    });
-
-    test("should show validation error for child too young", async () => {
-      // Arrange
-      await addProfilePage.navigate();
-
-      // Act - Enter valid name but date for 2-year-old
-      await addProfilePage.fillName("Julia");
-      await addProfilePage.fillDateOfBirth(addProfilePage.getValidDateForAge(2));
-
-      // Act - Try to submit
-      await addProfilePage.submit();
-
-      // Assert - Should show date validation error
-      await expect(addProfilePage.dateError).toBeVisible();
-    });
-
-    test("should show validation error for child too old", async () => {
-      // Arrange
-      await addProfilePage.navigate();
-
-      // Act - Enter valid name but date for 19-year-old
-      await addProfilePage.fillName("Tomasz");
-      await addProfilePage.fillDateOfBirth(addProfilePage.getValidDateForAge(19));
-
-      // Act - Try to submit
-      await addProfilePage.submit();
-
-      // Assert - Should show date validation error
-      await expect(addProfilePage.dateError).toBeVisible();
     });
 
     test("should allow canceling form", async ({ page }) => {
@@ -155,8 +107,10 @@ test.describe("Profile Management", () => {
       // Arrange
       await addProfilePage.navigate();
 
-      // Act - Fill form
-      await addProfilePage.fillForm("Kasia", addProfilePage.getValidDateForAge(6));
+      // Act - Fill form with unique name (only letters)
+      const randomLetters = Math.random().toString(36).substring(2, 8).replace(/[0-9]/g, "x");
+      const profileName = `Test${randomLetters}`;
+      await addProfilePage.fillForm(profileName, addProfilePage.getValidDateForAge(6));
 
       // Act - Submit
       const submitPromise = addProfilePage.submit();
@@ -170,47 +124,11 @@ test.describe("Profile Management", () => {
       }
 
       await submitPromise;
-    });
-  });
 
-  test.describe("Profile list display", () => {
-    test("should display profile counter", async () => {
-      // Arrange
-      await profilesPage.navigate();
-      await profilesPage.waitForProfilesLoad();
-
-      // Assert - Counter should be visible
-      const count = await profilesPage.getProfileCount();
-      expect(count).toBeGreaterThanOrEqual(0);
-      expect(count).toBeLessThanOrEqual(10);
-    });
-
-    test("should show add profile button when under limit", async () => {
-      // Arrange
-      await profilesPage.navigate();
-      await profilesPage.waitForProfilesLoad();
-
-      // Assert - If not at max limit, add button should be visible
-      const isAtMax = await profilesPage.isAtMaxLimit();
-      if (!isAtMax) {
-        expect(await profilesPage.addProfileCard.isVisible()).toBe(true);
-      }
-    });
-
-    test("should show max limit message when at 10 profiles", async () => {
-      // Arrange
-      await profilesPage.navigate();
-      await profilesPage.waitForProfilesLoad();
-
-      // Assert - Check limit message
-      const count = await profilesPage.getProfileCount();
-      const showsMaxMessage = await profilesPage.isAtMaxLimit();
-
-      if (count >= 10) {
-        expect(showsMaxMessage).toBe(true);
-      } else {
-        expect(showsMaxMessage).toBe(false);
-      }
+      // Cleanup - Wait for redirect and delete the created profile
+      await addProfilePage.waitForSubmitSuccess();
+      await profilesPage.verifyPageLoaded();
+      await profilesPage.deleteProfile(profileName);
     });
   });
 

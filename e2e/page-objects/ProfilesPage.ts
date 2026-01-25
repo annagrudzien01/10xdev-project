@@ -62,10 +62,20 @@ export class ProfilesPage extends BasePage {
   }
 
   /**
-   * Click "Add Profile" card button
+   * Click "Add Profile" card button or empty state button (whichever is visible)
    */
   async clickAddProfile(): Promise<void> {
-    await this.addProfileCard.click();
+    // Check if empty state is visible (no profiles yet)
+    const isEmptyStateVisible = await this.emptyState.isVisible().catch(() => false);
+
+    if (isEmptyStateVisible) {
+      // Click empty state button
+      await this.emptyStateAddButton.click();
+    } else {
+      // Click add profile card (when there are existing profiles)
+      await this.addProfileCard.click();
+    }
+
     await this.waitForNavigation();
   }
 
@@ -109,11 +119,25 @@ export class ProfilesPage extends BasePage {
 
   /**
    * Check if a profile exists by name
+   * Waits for profiles list to be loaded first
    * @param profileName - Name of the profile to check
    */
   async hasProfile(profileName: string): Promise<boolean> {
+    // Wait for loading state to disappear
+    try {
+      await this.loadingState.waitFor({ state: "hidden", timeout: 5000 });
+    } catch {
+      // Ignore - might not be in loading state
+    }
+
+    // Check if profile is visible
     const profile = this.page.locator(`text=${profileName}`).first();
-    return await profile.isVisible();
+    try {
+      await profile.waitFor({ state: "visible", timeout: 5000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

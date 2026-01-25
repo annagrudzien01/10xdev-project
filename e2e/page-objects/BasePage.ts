@@ -27,7 +27,13 @@ export class BasePage {
    * Wait for the page to be fully loaded
    */
   async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForLoadState("domcontentloaded");
+    // Try networkidle with short timeout, but don't fail if it times out
+    try {
+      await this.page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {
+      // Ignore - some pages have long-running requests
+    }
   }
 
   /**
