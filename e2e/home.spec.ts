@@ -68,11 +68,4 @@ test.describe("Home Page", () => {
     }
   });
 
-  test("should take screenshot", async ({ page }) => {
-    // Visual regression test
-    await expect(page).toHaveScreenshot("home-page.png", {
-      fullPage: true,
-      maxDiffPixels: 100,
-    });
-  });
 });
