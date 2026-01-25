@@ -6,7 +6,6 @@ alwaysApply: false
 
 ## Github Action Rules
 
-
 - Check if `package.json` exists in project root and summarize key scripts
 - Check if `.nvmrc` exists in project root
 - Check if `.env.example` exists in project root to identify key `env:` variables
