@@ -78,6 +78,23 @@ npm run preview
 | `npm run format`   | Formats files with Prettier                     |
 | `npm run supabase` | Executes the Supabase CLI (if installed)        |
 
+## CI/CD (minimal)
+
+This repo includes a minimal GitHub Actions workflow at `.github/workflows/ci.yml` that runs:
+
+- `npm run test:run` (Vitest)
+- `npm run build` (production build)
+- `npm run test:e2e` (Playwright E2E)
+
+### Required GitHub Secrets for E2E
+
+Playwright E2E expects `.env.test` variables. In CI it is generated from these secrets:
+
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_ANON_KEY`
+- `E2E_USERNAME`
+- `E2E_PASSWORD`
+
 ## Project Scope
 
 The repository demonstrates two core capabilities:
