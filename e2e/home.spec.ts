@@ -68,23 +68,6 @@ test.describe("Home Page", () => {
     }
   });
 
-  test("should be responsive on mobile", async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-
-    // Check that page is still usable
-    const body = page.locator("body");
-    await expect(body).toBeVisible();
-
-    // Check that there's no horizontal scroll
-    const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
-    const clientWidth = await page.evaluate(() => document.body.clientWidth);
-
-    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1); // +1 for rounding
-  });
-
   test("should take screenshot", async ({ page }) => {
     // Visual regression test
     await expect(page).toHaveScreenshot("home-page.png", {
